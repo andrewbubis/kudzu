@@ -15,6 +15,7 @@ const PUBLIC = path.join(__dirname, 'public');
 // 1. /<slug> → /<slug>.html if the file exists
 app.use((req, res, next) => {
   if (req.method !== 'GET' && req.method !== 'HEAD') return next();
+  // already has an extension, or root → let static handle it
   if (req.path === '/' || path.extname(req.path)) return next();
   const candidate = path.join(PUBLIC, req.path + '.html');
   if (fs.existsSync(candidate)) {
