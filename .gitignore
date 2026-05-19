@@ -1,0 +1,15 @@
+node_modules/
+.env
+.env.local
+.DS_Store
+*.log
+.vscode/
+.idea/
+
+# design exploration scratchpad — keep or delete as you like
+design-explorations.html
+direction-1-heritage.jsx
+direction-2-verdant.jsx
+direction-3-editorial.jsx
+design-canvas.jsx
+.design-canvas.state.json
