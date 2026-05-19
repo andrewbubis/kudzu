@@ -1,6 +1,6 @@
 # Kudzu Arts
 
-Atlanta-founded (2021) art consultancy and 501(c)(3) that argues for Southern artists — through advisory work, curation, design, and public programming. Named for the vine.
+Nashville-founded (2021) art consultancy and 501(c)(3) that argues for Southern artists — through advisory work, curation, design, and public programming. Named for the vine.
 
 The practice has two halves: a fee-based consultancy (advisory, curation, identity/design, cultural strategy) and The Vine, the non-profit side that funds workshops, residencies, and public art. Consultancy fees underwrite the non-profit work.
 
