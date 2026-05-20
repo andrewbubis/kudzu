@@ -3,7 +3,6 @@ node_modules/
 .env.local
 .DS_Store
 *.log
-*.zip
 .vscode/
 .idea/
 
@@ -14,3 +13,6 @@ direction-2-verdant.jsx
 direction-3-editorial.jsx
 design-canvas.jsx
 .design-canvas.state.json
+
+# archives
+*.zip

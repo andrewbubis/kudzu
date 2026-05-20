@@ -1,7 +1,7 @@
 {
-  "name": "kudzo-site",
+  "name": "kudzu-site",
   "version": "1.0.0",
-  "description": "Kudzo — an art consultancy and 501(c)(3) rooted in the American South.",
+  "description": "Kudzu — an art consultancy and 501(c)(3) rooted in the American South.",
   "private": true,
   "main": "server.js",
   "scripts": {

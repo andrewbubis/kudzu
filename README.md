@@ -1,4 +1,4 @@
-# Kudzo
+# Kudzu
 
 > An art consultancy and 501(c)(3) rooted in the American South.
 
@@ -71,7 +71,7 @@ relevant secrets under **Variables** in your Railway service.
 ```bash
 git init
 git add .
-git commit -m "Initial commit: kudzo site"
+git commit -m "Initial commit: kudzu site"
 git branch -M main
 git remote add origin https://github.com/<your-username>/<repo-name>.git
 git push -u origin main
@@ -173,7 +173,7 @@ Tour these before publishing:
 
 - [ ] **Founding year, location, EIN** — currently "Atlanta, 2021, EIN
       pending." Update across all pages.
-- [ ] **Phone, email, address** — currently `hello@kudzo.studio` /
+- [ ] **Phone, email, address** — currently `hello@kudzu.studio` /
       `(404) 555-0118`. Search/replace.
 - [ ] **Team bios** on `/about` — three placeholder cards.
 - [ ] **Press list** on `/about#press` — invented outlets and headlines.
@@ -197,5 +197,5 @@ modest backdrop-filter. No polyfills shipped.
 
 ## License
 
-All rights reserved by Kudzo (replace with your actual license/copyright
+All rights reserved by Kudzu (replace with your actual license/copyright
 notice when ready).

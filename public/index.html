@@ -3,288 +3,513 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Kudzo — Art consultancy & non-profit, rooted in the South</title>
-<meta name="description" content="Kudzo is an art consultancy and 501(c)(3) named for the green insistence of the South — advising collectors, curating exhibitions, designing for cultural ventures, and funding the next wave of Southern artists.">
-<meta name="theme-color" content="#1d2a22">
+<title>Kudzu — Coming Soon</title>
+<meta name="description" content="Kudzu — an art consultancy and design practice rooted in the American South. Coming soon.">
+<meta name="theme-color" content="#ece5d3">
 
 <link rel="icon" href="img/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&family=Albert+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css">
 
-<!-- Open Graph -->
-<meta property="og:title" content="Kudzo — Art consultancy & non-profit">
-<meta property="og:description" content="An art practice and 501(c)(3) rooted in the South, climbing everywhere.">
+<meta property="og:title" content="Kudzu — Coming Soon">
+<meta property="og:description" content="An art consultancy and design practice rooted in the South. Coming soon.">
 <meta property="og:type" content="website">
+
+<style>
+  /* ── Palette pulled from the logo ────────────────────────────
+     dark plum K:    #211c2a
+     plum shadow:    #342d40
+     olive vine:     #8a8f43
+     dark olive:     #5f5a2c
+     forest leaf:    #36502f / #1f3a23
+     leaf highlight: #7d9468 / #4a6b3d
+     gold accent:    #cdbf86
+     cream paper:    #ece5d3
+     bone:           #f4eedb
+  */
+  :root {
+    --paper:       #ece5d3;
+    --paper-warm:  #e0d8c1;
+    --bone:        #f4eedb;
+    --ink:         #211c2a;
+    --ink-soft:    #342d40;
+    --ink-mute:    #5a5366;
+    --olive:       #8a8f43;
+    --olive-deep:  #5f5a2c;
+    --forest:      #36502f;
+    --leaf:        #4a6b3d;
+    --gold:        #cdbf86;
+    --gold-deep:   #a89d63;
+    --line:        rgba(33, 28, 42, 0.15);
+
+    --serif: "Spectral", "Cormorant Garamond", Garamond, serif;
+    --sans:  "Albert Sans", "DM Sans", system-ui, -apple-system, sans-serif;
+    --mono:  "JetBrains Mono", ui-monospace, monospace;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+
+  body {
+    min-height: 100vh;
+    min-height: 100svh;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--sans);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  /* subtle paper grain so the cream doesn't feel flat */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background-image:
+      radial-gradient(circle at 20% 30%, rgba(33,28,42,0.04) 0, transparent 50%),
+      radial-gradient(circle at 80% 70%, rgba(138,143,67,0.05) 0, transparent 55%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  ::selection { background: var(--ink); color: var(--paper); }
+
+  /* ── Layout ─────────────────────────────────────────────── */
+  .stage {
+    position: relative;
+    z-index: 1;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: clamp(28px, 5vw, 56px);
+    max-width: 1240px;
+    width: 100%;
+    margin-inline: auto;
+  }
+
+  /* Top row: small wordmark · Instagram ─────────────────── */
+  .top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+  .brand {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0;
+    font-family: var(--serif);
+    font-weight: 500;
+    font-size: 22px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink);
+    text-decoration: none;
+  }
+  .brand .arts {
+    font-style: italic;
+    font-weight: 400;
+    color: var(--olive);
+    letter-spacing: 0.04em;
+    margin-left: 8px;
+    text-transform: none;
+    font-size: 18px;
+  }
+
+  .ig-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 18px;
+    color: var(--ink);
+    text-decoration: none;
+    border: 1px solid var(--ink);
+    font-family: var(--sans);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    transition: background .2s, color .2s;
+  }
+  .ig-link:hover {
+    background: var(--ink);
+    color: var(--paper);
+  }
+  .ig-link svg { display: block; }
+
+  /* ── Middle: logo + message ───────────────────────────── */
+  .middle {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 0.95fr 1.05fr;
+    gap: clamp(40px, 6vw, 80px);
+    align-items: center;
+    padding-block: clamp(48px, 8vw, 80px);
+  }
+
+  .logo-wrap {
+    position: relative;
+    width: 100%;
+    max-width: 540px;
+    justify-self: center;
+  }
+  .logo-wrap img {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  .message { max-width: 580px; }
+
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--olive-deep);
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 36px;
+  }
+  .eyebrow::before {
+    content: "";
+    width: 28px;
+    height: 1px;
+    background: var(--olive);
+  }
+
+  h1 {
+    font-family: var(--serif);
+    font-weight: 300;
+    font-size: clamp(48px, 7.5vw, 96px);
+    line-height: 1.0;
+    letter-spacing: -0.025em;
+    color: var(--ink);
+    margin: 0;
+  }
+  h1 .ital {
+    font-style: italic;
+    color: var(--olive);
+  }
+  h1 .dot { color: var(--olive); }
+
+  .lede {
+    font-family: var(--serif);
+    font-size: clamp(17px, 1.6vw, 20px);
+    line-height: 1.6;
+    color: var(--ink-soft);
+    margin: clamp(28px, 4vw, 40px) 0 0;
+    max-width: 520px;
+  }
+
+  /* ── Signup ────────────────────────────────────────────── */
+  .signup {
+    margin-top: clamp(36px, 5vw, 48px);
+    max-width: 520px;
+  }
+  .signup-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--olive-deep);
+    margin-bottom: 14px;
+    display: block;
+  }
+  .signup-row {
+    display: flex;
+    gap: 12px;
+    border-bottom: 1.5px solid var(--ink);
+    padding-bottom: 12px;
+    transition: border-color .25s;
+  }
+  .signup-row:focus-within { border-bottom-color: var(--olive); }
+
+  .signup input[type="email"] {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: var(--ink);
+    font-family: var(--serif);
+    font-size: clamp(17px, 1.6vw, 19px);
+    padding: 6px 0;
+    outline: none;
+    min-width: 0;
+  }
+  .signup input::placeholder {
+    color: var(--ink-mute);
+    opacity: 0.7;
+    font-style: italic;
+  }
+
+  .signup button {
+    background: var(--ink);
+    color: var(--paper);
+    border: none;
+    cursor: pointer;
+    font-family: var(--sans);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    padding: 0 22px;
+    transition: background .2s, transform .2s;
+    white-space: nowrap;
+  }
+  .signup button:hover {
+    background: var(--olive-deep);
+    transform: translateY(-1px);
+  }
+  .signup button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .signup-note {
+    font-family: var(--sans);
+    font-size: 12px;
+    color: var(--ink-mute);
+    margin-top: 14px;
+    letter-spacing: 0.02em;
+  }
+  .signup-status {
+    margin-top: 18px;
+    padding: 12px 16px;
+    border: 1px solid var(--olive);
+    background: rgba(138,143,67,0.08);
+    color: var(--olive-deep);
+    font-family: var(--sans);
+    font-size: 13px;
+    letter-spacing: 0.04em;
+    display: none;
+  }
+  .signup-status.is-visible { display: block; }
+
+  .or-write {
+    margin-top: clamp(36px, 5vw, 48px);
+    font-family: var(--sans);
+    font-size: 14px;
+    color: var(--ink-mute);
+  }
+  .or-write a {
+    color: var(--ink);
+    text-decoration: none;
+    border-bottom: 1px solid var(--olive);
+    transition: color .2s, border-color .2s;
+  }
+  .or-write a:hover { color: var(--olive-deep); border-bottom-color: var(--ink); }
+
+  /* ── Bottom: cities + credit ───────────────────────────── */
+  .bottom {
+    border-top: 1px solid var(--line);
+    padding-top: clamp(20px, 3vw, 28px);
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+
+  .cities {
+    display: flex;
+    flex-wrap: wrap;
+    gap: clamp(10px, 2vw, 22px);
+    align-items: baseline;
+  }
+  .cities .label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--olive-deep);
+    margin-right: 8px;
+  }
+  .cities .city {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 17px;
+    color: var(--ink);
+  }
+  .cities .sep {
+    color: var(--olive);
+    font-family: var(--serif);
+  }
+
+  .credit {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+  }
+
+  /* ── Responsive ───────────────────────────────────────── */
+  @media (max-width: 880px) {
+    .middle {
+      grid-template-columns: 1fr;
+      gap: clamp(36px, 6vw, 56px);
+      padding-block: clamp(32px, 6vw, 56px);
+    }
+    .logo-wrap { max-width: 380px; order: 1; }
+    .message { order: 2; }
+  }
+
+  @media (max-width: 600px) {
+    .top { gap: 14px; }
+    .ig-link { padding: 8px 14px; font-size: 11px; gap: 8px; }
+    .ig-link svg { width: 14px; height: 14px; }
+    .ig-link span { display: none; }
+    .ig-link::after { content: "Instagram"; }
+    .logo-wrap { max-width: 280px; }
+    .signup-row { flex-direction: column; gap: 14px; padding-bottom: 0; border-bottom: none; }
+    .signup input[type="email"] {
+      border-bottom: 1.5px solid var(--ink);
+      padding: 10px 0;
+    }
+    .signup input[type="email"]:focus { border-bottom-color: var(--olive); }
+    .signup button { padding: 14px 20px; }
+    .bottom { flex-direction: column; align-items: flex-start; gap: 16px; }
+    .cities .sep { display: none; }
+    .cities { gap: 12px 18px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+  }
+</style>
 </head>
 <body>
 
-<header class="site-header">
-  <a href="index.html" class="brand">
-    <svg width="28" height="28" viewBox="0 0 80 80" fill="none" stroke="#c8a558" stroke-width="1.2" aria-hidden="true">
-      <path d="M40 78 C 40 60, 30 50, 18 44 C 8 38, 6 28, 12 18" stroke-linecap="round"/>
-      <path d="M40 78 C 40 58, 52 48, 64 42 C 72 38, 74 28, 70 18" stroke-linecap="round"/>
-      <ellipse cx="18" cy="44" rx="6" ry="3" transform="rotate(-30 18 44)" fill="#c8a558" fill-opacity="0.5"/>
-      <ellipse cx="64" cy="42" rx="6" ry="3" transform="rotate(30 64 42)" fill="#c8a558" fill-opacity="0.5"/>
-      <ellipse cx="40" cy="62" rx="5" ry="2.5" fill="#c8a558" fill-opacity="0.5"/>
-      <ellipse cx="12" cy="20" rx="5" ry="2.5" transform="rotate(-40 12 20)" fill="#c8a558" fill-opacity="0.3"/>
-      <ellipse cx="70" cy="20" rx="5" ry="2.5" transform="rotate(40 70 20)" fill="#c8a558" fill-opacity="0.3"/>
-    </svg>
-    kudzo<span class="dot">.</span>
-  </a>
-  <nav class="nav" aria-label="Primary">
-    <a href="services.html">The Practice</a>
-    <a href="work.html">Selected</a>
-    <a href="initiatives.html">The Vine</a>
-    <a href="about.html">About</a>
-    <a href="contact.html" class="btn-link">Inquire</a>
-  </nav>
-  <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="primary-nav">Menu</button>
-</header>
+<div class="stage">
 
-<!-- Hero ───────────────────────────────────────────────────────────── -->
-<section class="hero">
-  <svg class="hero-vine tr" width="220" height="220" viewBox="0 0 80 80" fill="none" stroke="#8c7642" stroke-width="0.9" aria-hidden="true">
-    <path d="M40 78 C 40 60, 30 50, 18 44 C 8 38, 6 28, 12 18" stroke-linecap="round"/>
-    <path d="M40 78 C 40 58, 52 48, 64 42 C 72 38, 74 28, 70 18" stroke-linecap="round"/>
-    <ellipse cx="18" cy="44" rx="6" ry="3" transform="rotate(-30 18 44)" fill="#8c7642" fill-opacity="0.4"/>
-    <ellipse cx="64" cy="42" rx="6" ry="3" transform="rotate(30 64 42)" fill="#8c7642" fill-opacity="0.4"/>
-    <ellipse cx="40" cy="62" rx="5" ry="2.5" fill="#8c7642" fill-opacity="0.4"/>
-  </svg>
-  <svg class="hero-vine bl" width="160" height="160" viewBox="0 0 80 80" fill="none" stroke="#8c7642" stroke-width="0.9" aria-hidden="true">
-    <path d="M40 78 C 40 60, 30 50, 18 44 C 8 38, 6 28, 12 18" stroke-linecap="round"/>
-    <path d="M40 78 C 40 58, 52 48, 64 42 C 72 38, 74 28, 70 18" stroke-linecap="round"/>
-    <ellipse cx="18" cy="44" rx="6" ry="3" transform="rotate(-30 18 44)" fill="#8c7642" fill-opacity="0.35"/>
-    <ellipse cx="64" cy="42" rx="6" ry="3" transform="rotate(30 64 42)" fill="#8c7642" fill-opacity="0.35"/>
-  </svg>
+  <!-- Top row: small wordmark · Instagram ───────────────────── -->
+  <header class="top">
+    <a href="#" class="brand" aria-label="Kudzu Arts">
+      KUDZU<span class="arts">arts</span>
+    </a>
 
-  <div class="hero-grid">
-    <div class="reveal">
+    <a class="ig-link"
+       href="https://instagram.com/kudzu.arts"
+       target="_blank"
+       rel="noopener noreferrer"
+       aria-label="Follow Kudzu on Instagram">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+        <rect x="3" y="3" width="18" height="18" rx="5"/>
+        <circle cx="12" cy="12" r="4.2"/>
+        <circle cx="17.4" cy="6.6" r="1.1" fill="currentColor" stroke="none"/>
+      </svg>
+      <span>Follow on Instagram</span>
+    </a>
+  </header>
+
+  <!-- Middle: logo + message side-by-side ────────────────── -->
+  <main class="middle">
+    <div class="logo-wrap">
+      <img src="img/logo.svg" alt="Kudzu Arts — K monogram with kudzu vines">
+    </div>
+
+    <div class="message">
       <span class="eyebrow">A southern art practice</span>
-      <h1 style="margin-top:36px">
-        We grow<br>
-        <span class="ital">where</span> we<br>
-        are <em>planted.</em>
+      <h1>
+        A new site is<br>
+        <span class="ital">coming soon</span><span class="dot">.</span>
       </h1>
       <p class="lede">
-        Kudzo is an art consultancy and 501(c)(3) named for the green
-        insistence of the South — for the way good things creep, climb,
-        and eventually cover everything.
+        Kudzu is an art consultancy and design practice named for the
+        green insistence of the South — for the way good things creep,
+        climb, and eventually cover everything. Leave us your email and
+        we'll let you know when we open the doors.
       </p>
-      <div class="hero-cta">
-        <a href="contact.html" class="btn btn-primary">Begin a project</a>
-        <a href="work.html" class="btn btn-ghost">See selected work</a>
-      </div>
-    </div>
-    <div class="hero-feature reveal">
-      <div class="ph r-4x5" data-label="Featured · Studio portrait"></div>
-      <div class="badge">
-        <div class="lbl">Now showing</div>
-        <em>Soft Tactics</em> — a group exhibition of nine Southern painters,
-        High Museum, through October.
-      </div>
-    </div>
-  </div>
-</section>
 
-<!-- Marquee ────────────────────────────────────────────────────────── -->
-<section class="marquee" aria-hidden="true">
-  <div class="marquee-track">
-    <span>Advisory</span><span class="sep">✻</span>
-    <span>Curation</span><span class="sep">✻</span>
-    <span>Design</span><span class="sep">✻</span>
-    <span>Cultural Strategy</span><span class="sep">✻</span>
-    <span>Public Art</span><span class="sep">✻</span>
-    <span>Workshops</span><span class="sep">✻</span>
-  </div>
-</section>
+      <form class="signup" id="signupForm" novalidate>
+        <label class="signup-label" for="emailInput">— Send me word</label>
+        <div class="signup-row">
+          <input type="email" id="emailInput" name="email" required
+                 placeholder="name@domain.com"
+                 autocomplete="email"
+                 aria-label="Email address">
+          <button type="submit">Subscribe</button>
+        </div>
+        <div class="signup-note">No spam, no newsletters until there's actually something to say.</div>
+        <div class="signup-status" id="signupStatus" role="status" aria-live="polite"></div>
+      </form>
 
-<!-- Practice (services overview) ────────────────────────────────────── -->
-<section class="reveal">
-  <div class="wrap">
-    <div class="practice-head">
-      <span class="eyebrow is-centered">— The Practice</span>
-      <h2>Four ways we tend the<br><em>garden.</em></h2>
-    </div>
-    <div class="practice-grid">
-      <a href="services.html#advisory" class="practice-card">
-        <div class="num">i.</div>
-        <div>
-          <h3>Advisory</h3>
-          <p>Helping collectors and institutions find work that matters — and live with it well.</p>
-          <div class="meta"><span>For collectors</span><span>Learn more →</span></div>
-        </div>
-      </a>
-      <a href="services.html#curation" class="practice-card">
-        <div class="num">ii.</div>
-        <div>
-          <h3>Curation</h3>
-          <p>Exhibitions, commissions, and programs that argue for the artists we believe in.</p>
-          <div class="meta"><span>Project-based</span><span>Learn more →</span></div>
-        </div>
-      </a>
-      <a href="services.html#design" class="practice-card">
-        <div class="num">iii.</div>
-        <div>
-          <h3>Design</h3>
-          <p>Identity, books, and spatial work for galleries, artists, and adjacent ventures.</p>
-          <div class="meta"><span>Engaged retainer</span><span>Learn more →</span></div>
-        </div>
-      </a>
-      <a href="services.html#strategy" class="practice-card">
-        <div class="num">iv.</div>
-        <div>
-          <h3>Cultural Strategy</h3>
-          <p>PR and influence work for brands & patrons stepping seriously into the field.</p>
-          <div class="meta"><span>Partner basis</span><span>Learn more →</span></div>
-        </div>
-      </a>
-    </div>
-  </div>
-</section>
-
-<!-- Selected work ──────────────────────────────────────────────────── -->
-<section class="on-bone reveal">
-  <div class="wrap">
-    <div class="work-intro">
-      <div>
-        <span class="eyebrow">Selected Work · 2024–2025</span>
-        <h2 style="margin-top:20px">A few rooms we’ve <em>recently been in.</em></h2>
-      </div>
-      <p class="lede">
-        We work with collectors, institutions, and brands one engagement
-        at a time. Below — a handful of projects from the past two years.
+      <p class="or-write">
+        Or write to us directly —
+        <a href="mailto:hello@kudzu.studio">hello@kudzu.studio</a>
       </p>
     </div>
-    <div class="work-grid">
-      <a href="work/lowndes-collection.html" class="work-card">
-        <div class="ph r-1x1 is-light" data-label="Advisory · 2024"></div>
-        <div class="tag">Advisory · 2024</div>
-        <h3>The Lowndes Collection</h3>
-        <p>A two-year build for a private collection rooted in works on paper from the Black Belt.</p>
-      </a>
-      <a href="work.html" class="work-card">
-        <div class="ph r-4x5 is-light" data-label="Curation · 2024"></div>
-        <div class="tag">Curation · 2024</div>
-        <h3>Soft Tactics</h3>
-        <p>A group show of nine Southern painters at the High Museum.</p>
-      </a>
-      <a href="work.html" class="work-card">
-        <div class="ph r-4x5 is-light" data-label="Design · 2025"></div>
-        <div class="tag">Design · 2025</div>
-        <h3>Field Notes Press</h3>
-        <p>Identity and a five-volume publication system for a regional art press.</p>
-      </a>
-      <a href="work.html" class="work-card">
-        <div class="ph r-1x1 is-light" data-label="Public Art · 2024"></div>
-        <div class="tag">Public Art · 2024</div>
-        <h3>Riverbed Mural</h3>
-        <p>A community-painted mural along the Chattahoochee, with sixty volunteers.</p>
-      </a>
-    </div>
-    <div style="margin-top:48px; text-align:center;">
-      <a href="work.html" class="btn btn-ghost">View the full portfolio →</a>
-    </div>
-  </div>
-</section>
+  </main>
 
-<!-- Initiatives teaser ──────────────────────────────────────────────── -->
-<section class="reveal" style="position:relative; overflow:hidden;">
-  <svg class="hero-vine" style="position:absolute; top:60px; right:-60px; opacity:0.25;" width="300" height="300" viewBox="0 0 80 80" fill="none" stroke="#8c7642" stroke-width="0.8" aria-hidden="true">
-    <path d="M40 78 C 40 60, 30 50, 18 44 C 8 38, 6 28, 12 18" stroke-linecap="round"/>
-    <path d="M40 78 C 40 58, 52 48, 64 42 C 72 38, 74 28, 70 18" stroke-linecap="round"/>
-    <ellipse cx="18" cy="44" rx="6" ry="3" transform="rotate(-30 18 44)" fill="#8c7642" fill-opacity="0.4"/>
-    <ellipse cx="64" cy="42" rx="6" ry="3" transform="rotate(30 64 42)" fill="#8c7642" fill-opacity="0.4"/>
-  </svg>
+  <!-- Bottom: cities + credit ───────────────────────────── -->
+  <footer class="bottom">
+    <div class="cities">
+      <span class="label">Working from</span>
+      <span class="city">Nashville</span>
+      <span class="sep">✻</span>
+      <span class="city">Los Angeles</span>
+      <span class="sep">✻</span>
+      <span class="city">Miami</span>
+      <span class="sep">✻</span>
+      <span class="city">Savannah, GA</span>
+    </div>
+    <div class="credit">© Kudzu Arts · MMXXVI</div>
+  </footer>
 
-  <div class="wrap" style="position:relative;">
-    <div style="text-align:center; margin-bottom:64px;">
-      <span class="eyebrow is-centered">The Vine · 501(c)(3)</span>
-      <h2 class="display" style="font-size:clamp(56px,8vw,88px); font-style:italic; margin-top:24px;">
-        Quietly covering<br>everything.
-      </h2>
-      <p class="lede" style="margin: 36px auto 0; max-width: 620px;">
-        The non-profit half of our work. Workshops, public projects,
-        and early-career grants in the towns we grew up in — from
-        Chattanooga to Charleston to the river bottoms in between.
-      </p>
-    </div>
+</div>
 
-    <div class="stats">
-      <div class="stat"><div class="n">47</div><div class="l">Artists supported</div></div>
-      <div class="stat"><div class="n">14</div><div class="l">Free workshops, 2025</div></div>
-      <div class="stat"><div class="n">9</div><div class="l">Residencies placed</div></div>
-      <div class="stat"><div class="n">$320k</div><div class="l">Granted to artists</div></div>
-    </div>
+<script>
+  (function () {
+    var ENDPOINT = ''; // set to your Formspree/Basin/API URL when ready
+    var form = document.getElementById('signupForm');
+    var input = document.getElementById('emailInput');
+    var status = document.getElementById('signupStatus');
+    if (!form) return;
 
-    <div style="text-align:center; margin-top:48px;">
-      <a href="initiatives.html" class="btn btn-primary">Support the work →</a>
-    </div>
-  </div>
-</section>
+    form.addEventListener('submit', async function (e) {
+      e.preventDefault();
+      if (!form.checkValidity()) { form.reportValidity(); return; }
+      var email = input.value.trim();
+      var btn = form.querySelector('button');
+      var original = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = 'Sending…';
 
-<!-- Inquiry CTA ────────────────────────────────────────────────────── -->
-<section class="on-deep reveal">
-  <div class="wrap" style="text-align:center; max-width:760px;">
-    <span class="eyebrow is-centered">— Begin a conversation</span>
-    <h2 class="display" style="font-size:clamp(48px,6vw,72px); margin-top:24px;">
-      Tell us what you’re<br><em>thinking about.</em>
-    </h2>
-    <p class="lede" style="margin: 32px auto 36px; max-width: 520px;">
-      Every engagement begins with a letter — no decks, no pitches.
-      We reply within three working days.
-    </p>
-    <div style="display:flex; gap:12px; justify-content:center; flex-wrap:wrap;">
-      <a href="contact.html" class="btn btn-primary">Write us a letter</a>
-      <a href="mailto:hello@kudzo.studio" class="btn btn-ghost">hello@kudzo.studio</a>
-    </div>
-  </div>
-</section>
-
-<!--#include footer -->
-<footer class="site-footer">
-  <div class="footer-grid">
-    <div class="footer-brand">
-      <a href="index.html" class="brand">
-        <svg width="32" height="32" viewBox="0 0 80 80" fill="none" stroke="#c8a558" stroke-width="1.2" aria-hidden="true">
-          <path d="M40 78 C 40 60, 30 50, 18 44 C 8 38, 6 28, 12 18" stroke-linecap="round"/>
-          <path d="M40 78 C 40 58, 52 48, 64 42 C 72 38, 74 28, 70 18" stroke-linecap="round"/>
-          <ellipse cx="18" cy="44" rx="6" ry="3" transform="rotate(-30 18 44)" fill="#c8a558" fill-opacity="0.5"/>
-          <ellipse cx="64" cy="42" rx="6" ry="3" transform="rotate(30 64 42)" fill="#c8a558" fill-opacity="0.5"/>
-        </svg>
-        kudzo<span class="dot">.</span>
-      </a>
-      <p class="blurb">An art consultancy and 501(c)(3) <em>rooted in the South, climbing everywhere.</em></p>
-    </div>
-    <div class="footer-col">
-      <h4>Studio</h4>
-      <a href="services.html">Practice</a>
-      <a href="work.html">Work</a>
-      <a href="about.html">About</a>
-      <a href="about.html#press">Press</a>
-    </div>
-    <div class="footer-col">
-      <h4>The Vine</h4>
-      <a href="initiatives.html">Mission</a>
-      <a href="initiatives.html#workshops">Workshops</a>
-      <a href="initiatives.html#patrons">Patrons</a>
-      <a href="#">Annual Report</a>
-    </div>
-    <div class="footer-col">
-      <h4>Visit</h4>
-      <a href="#">Nashville · TN</a>
-      <a href="#">By appointment</a>
-      <a href="mailto:hello@kudzo.studio">hello@kudzo.studio</a>
-      <a href="#" rel="noopener">Instagram</a>
-    </div>
-  </div>
-  <div class="footer-bot">
-    <div>© Kudzo, MMXXVI · Nashville · Charleston · Birmingham</div>
-    <div>A 501(c)(3) non-profit · EIN pending</div>
-  </div>
-</footer>
-
-<script src="js/main.js" defer></script>
+      try {
+        if (ENDPOINT) {
+          var r = await fetch(ENDPOINT, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({ email: email })
+          });
+          if (!r.ok) throw new Error('bad status');
+        } else {
+          console.info('[kudzu] signup (no endpoint configured):', email);
+          await new Promise(function (res) { setTimeout(res, 600); });
+        }
+        form.reset();
+        status.textContent = 'Thank you — we’ll be in touch when the site opens.';
+        status.classList.add('is-visible');
+      } catch (err) {
+        status.textContent = 'Something went wrong. Email hello@kudzu.studio directly?';
+        status.classList.add('is-visible');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = original;
+      }
+    });
+  })();
+</script>
 </body>
 </html>

@@ -38,5 +38,5 @@ app.use((req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`kudzo · listening on http://localhost:${PORT}`);
+  console.log(`kudzu · listening on http://localhost:${PORT}`);
 });

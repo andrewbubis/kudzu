@@ -1,4 +1,4 @@
-// Kudzo — front-end behavior
+// Kudzu — front-end behavior
 // - Mobile nav toggle
 // - Scroll-reveal via IntersectionObserver
 // - Marquee duplicate (so the looping animation has no seam)
@@ -104,7 +104,7 @@
           if (!r.ok) throw new Error('bad status');
         } else {
           // No endpoint configured — simulate, log, and tell the dev.
-          console.info('[kudzo] form submitted (no endpoint configured):', data);
+          console.info('[kudzu] form submitted (no endpoint configured):', data);
           await new Promise(r => setTimeout(r, 800));
         }
         form.reset();
@@ -114,7 +114,7 @@
         }
       } catch (err) {
         if (msg) {
-          msg.textContent = 'Something went wrong. Email hello@kudzo.studio directly?';
+          msg.textContent = 'Something went wrong. Email hello@kudzu.studio directly?';
           msg.classList.add('is-visible');
         }
       } finally {
