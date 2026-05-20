@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Skill(use-railway)",
+      "Skill(use-railway:*)",
+      "Bash(RAILWAY_CALLER=\"skill:use-railway@1.2.1\" RAILWAY_AGENT_SESSION=\"railway-skill-$\\(date +%s\\)-$$\" railway whoami --json)",
+      "mcp__railway__whoami",
+      "mcp__railway__list-projects",
+      "Bash(gh repo *)",
+      "Bash(git pull *)",
+      "Bash(git -C /Users/andrewbubis/Documents/kudzu status)",
+      "Bash(git -C /Users/andrewbubis/Documents/kudzu diff)",
+      "mcp__railway__get-status",
+      "mcp__railway__list-services",
+      "mcp__railway__get-logs"
+    ]
+  }
+}
