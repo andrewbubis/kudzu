@@ -1,5 +1,6 @@
 User-agent: *
 Allow: /
 Disallow: /full-site
+Disallow: /workinprogress
 
 Sitemap: https://kudzuarts.com/sitemap.xml
