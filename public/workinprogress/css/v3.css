@@ -145,6 +145,12 @@ section { position: relative; padding-block: clamp(72px, 9vw, 128px); }
 .nav a::after { content: ""; position: absolute; left: 0; bottom: 0; width: 100%; height: 2px; background: var(--clay); transform: scaleX(0); transform-origin: left; transition: transform .25s; }
 .nav a:hover::after, .nav a[aria-current="page"]::after { transform: scaleX(1); }
 .nav-cta { display: inline-flex; }
+.ig-top { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; flex: 0 0 auto; color: var(--ink); border: 2px solid var(--ink); transition: background .2s, color .2s, transform .2s; }
+.ig-top:hover { background: var(--clay); border-color: var(--clay); color: var(--paper); transform: translateY(-2px); }
+.ig-top svg { display: block; }
+.footer-ig { display: inline-flex; align-items: center; justify-content: center; width: max-content; margin: 26px auto 0; color: var(--cream-soft); transition: color .2s, transform .2s; }
+.footer-ig:hover { color: var(--gold-br); transform: translateY(-2px); }
+.footer-ig svg { display: block; }
 .nav-toggle { display: none; background: transparent; border: 2px solid var(--ink); color: var(--ink); padding: 9px 15px; font-size: 12px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; }
 
 /* ── Vine decals ──────────────────────────────────────────────── */
@@ -292,6 +298,15 @@ section { position: relative; padding-block: clamp(72px, 9vw, 128px); }
 .clothesline .hang img { display: block; width: 100%; aspect-ratio: 4/5; object-fit: cover; object-position: center top; background: var(--paper-3); }
 .clothesline .hang .peg { position: absolute; top: -9px; left: 50%; transform: translateX(-50%); width: 13px; height: 13px; background: var(--ink); border-radius: 3px; box-shadow: 0 1px 0 rgba(0,0,0,0.25); }
 .clothesline .hang .ed { position: absolute; bottom: 4px; left: 0; right: 0; text-align: center; font-family: var(--sans); font-size: 9px; font-weight: 600; letter-spacing: 0.1em; color: var(--ink-mute); }
+
+/* Looping clothesline marquee (all available prints) */
+.clothesline.loop { overflow: hidden; padding-top: 24px; }
+.clothesline.loop .cord { top: 11px; }
+.clothesline.loop .hangs { width: max-content; flex-wrap: nowrap; justify-content: flex-start; animation: clothesline-scroll 36s linear infinite; }
+.clothesline.loop .hangs:hover { animation-play-state: paused; }
+.clothesline.loop .hang { flex: 0 0 auto; width: clamp(110px, 16vw, 150px); max-width: none; }
+@keyframes clothesline-scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@media (prefers-reduced-motion: reduce) { .clothesline.loop .hangs { animation: none; } }
 @media (max-width: 560px) { .print-strip { grid-template-columns: 1fr 1fr; } }
 
 /* ── Visit / mission closer ───────────────────────────────────── */
