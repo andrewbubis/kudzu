@@ -80,6 +80,20 @@
   .more-grid { grid-template-columns:1fr 1fr; }
 }
 
+/* Print product page extras — size grid + material toggle */
+.opt-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+.opt-grid label { position:relative; cursor:pointer; }
+.opt-grid input { position:absolute; opacity:0; inset:0; cursor:pointer; }
+.opt-grid .cell { display:flex; flex-direction:column; gap:3px; padding:13px 12px; border:1.5px solid var(--line); transition:border-color .2s, background .2s; }
+.opt-grid .cell .sz { font-family:var(--sans); font-size:14px; font-weight:600; color:var(--ink); }
+.opt-grid .cell .dim { font-family:var(--sans); font-size:11px; color:var(--ink-mute); }
+.opt-grid input:checked + .cell { border-color:var(--ink); background:var(--ink); }
+.opt-grid input:checked + .cell .sz { color:var(--paper); }
+.opt-grid input:checked + .cell .dim { color:var(--cream-soft); }
+.opt-grid input:disabled + .cell { opacity:0.38; cursor:not-allowed; }
+.opt-grid input:focus-visible + .cell { outline:2px solid var(--clay); outline-offset:2px; }
+.opt-note { font-family:var(--sans); font-size:12px; color:var(--ink-mute); margin-top:10px; }
+
 /* ── Interior page head ───────────────────────────────────────── */
 .page-head { padding-block: clamp(48px,7vw,92px) clamp(28px,4vw,44px); overflow: hidden; }
 .page-head .wrap { max-width: 980px; }
@@ -145,6 +159,10 @@
 
 /* ── PRINT SHOP ───────────────────────────────────────────────── */
 .press-hero { background: var(--paper-2); overflow: hidden; }
+/* Tighten vertical space around the moving clothesline in the hero */
+.press-hero:first-of-type { padding-block: clamp(28px,3.5vw,48px); }
+.press-hero .clothesline.loop { padding-top: 14px; }
+.press-hero .clothesline.loop .hang { padding-bottom: 14px; }
 .press-grid { display: grid; grid-template-columns: 1.05fr 0.95fr; gap: clamp(32px,4vw,64px); align-items: center; }
 .press-grid .press-img { position: relative; }
 .press-grid .press-img .blob { position: absolute; inset: -6%; background: radial-gradient(closest-side, rgba(138,143,67,0.18), transparent); z-index: -1; }
