@@ -13,6 +13,14 @@
 <link rel="stylesheet" href="css/style.css">
 
 <style>
+/* ── Override text palette → dark purple on tan ─────────────────── */
+:root {
+  --cream:     #1e1630;  /* primary text — deep purple */
+  --cream-sft: #3a2d5c;  /* secondary text — medium purple */
+  --cream-dim: #5c4e7a;  /* muted text — soft purple */
+  --gold:      #7c6526;  /* keep gold accent as-is */
+}
+
 /* ── Grant Tracker custom styles ───────────────────────────────── */
 .grants-hero {
   padding: clamp(64px, 9vw, 100px) var(--pad) clamp(48px, 6vw, 72px);
@@ -221,6 +229,15 @@
   background: rgba(205, 191, 134, 0.07); border-left: 3px solid var(--gold);
   padding: 14px 18px; margin-top: 16px; font-size: 13px;
   color: var(--cream-sft); font-family: var(--serif); font-style: italic; line-height: 1.55;
+}
+
+/* ── Grant purpose statement ────────────────────────────────── */
+.grant-purpose {
+  font-family: var(--serif); font-size: 15px; line-height: 1.6;
+  color: var(--cream); margin: 0 0 16px;
+  padding: 12px 16px;
+  background: rgba(30, 22, 48, 0.05);
+  border-left: 3px solid var(--gold);
 }
 
 /* ── Grant bullet lists ──────────────────────────────────────── */
@@ -432,6 +449,7 @@
             <span class="amount-badge amt-md">$7,500</span>
           </div>
           <div class="grant-card-body">
+            <p class="grant-purpose">Money to make a specific new work — you propose a project, and this grant covers the materials, production, and studio costs needed to complete it. For work that needs funding to exist.</p>
             <div class="grant-row">
               <div class="grant-field">
                 <label>Deadline</label>
@@ -480,6 +498,7 @@
             <span class="amount-badge amt-sm">$5,000</span>
           </div>
           <div class="grant-card-body">
+            <p class="grant-purpose">A career honor, not a project grant — the state of Tennessee selects artists whose body of work demonstrates exceptional talent. The money is yours to use however your practice demands, with no reporting or restrictions.</p>
             <div class="grant-row">
               <div class="grant-field">
                 <label>Next Deadline</label>
@@ -527,6 +546,7 @@
             <span class="amount-badge amt-md">Varies</span>
           </div>
           <div class="grant-card-body">
+            <p class="grant-purpose">Funding to put art in a specific Nashville neighborhood — murals on buildings, installations in public spaces, community workshops, or placemaking projects. The art must live somewhere people can encounter it, and residents should be involved in making it.</p>
             <div class="grant-row">
               <div class="grant-field">
                 <label>Cycle</label>
@@ -576,6 +596,7 @@
             <span class="amount-badge amt-sm">Up to $3,000</span>
           </div>
           <div class="grant-card-body">
+            <p class="grant-purpose">Paying for the things a specific project needs — materials, supplies, equipment rental. You name the work you want to make and make the case that this money is what enables it to happen. Not for living expenses or work already done.</p>
             <div class="grant-row">
               <div class="grant-field">
                 <label>Cycle</label>
@@ -633,6 +654,7 @@
             <span class="amount-badge amt-xl">$5K – $50K</span>
           </div>
           <div class="grant-card-body">
+            <p class="grant-purpose">California's statewide artist honor — the state recognizes working artists at three career stages and gives them unrestricted money. No project required; the award is based entirely on the strength of existing work. Artists apply through their regional organization.</p>
             <div class="grant-row">
               <div class="grant-field">
                 <label>Deadline Range</label>
@@ -685,6 +707,7 @@
             <span class="amount-badge amt-sm">$6,000</span>
           </div>
           <div class="grant-card-body">
+            <p class="grant-purpose">Funding a specific new project — you describe what you want to make, and LACE pays for it. Painting, sculpture, installation, photography. The work doesn't exist yet; this grant is what makes it possible.</p>
             <div class="grant-row">
               <div class="grant-field">
                 <label>Opens</label>
@@ -736,6 +759,7 @@
             <span class="amount-badge amt-lg">$15K – $25K</span>
           </div>
           <div class="grant-card-body">
+            <p class="grant-purpose">Unrestricted recognition for outstanding visual artists in LA — Artadia reviews your body of work and gives you money with no project requirements and no reporting. The award is for who you are as an artist, not what you're planning to make next.</p>
             <div class="grant-row">
               <div class="grant-field">
                 <label>Next Cycle</label>
@@ -786,6 +810,7 @@
             <span class="amount-badge amt-md">Varies</span>
           </div>
           <div class="grant-card-body">
+            <p class="grant-purpose">Funding for a project that will be presented in a publicly accessible space in the City of LA — a gallery, community center, outdoor wall, plaza, or public venue. The art needs a specific place it's going, and that place needs to be in the city.</p>
             <div class="grant-row">
               <div class="grant-field">
                 <label>Cycle</label>
@@ -847,6 +872,7 @@
             <span class="amount-badge amt-xl">Up to $50,000</span>
           </div>
           <div class="grant-card-body">
+            <p class="grant-purpose">Enabling a bold new project that doesn't exist yet — the kind of work that requires significant resources, time, or risk to make. You pitch what you want to create, Creative Capital funds the making of it. The stronger and more ambitious the idea, the better the application.</p>
             <div class="grant-row">
               <div class="grant-field">
                 <label>Open Call</label>
@@ -900,6 +926,7 @@
             <span class="amount-badge amt-md">$10,000</span>
           </div>
           <div class="grant-card-body">
+            <p class="grant-purpose">Same project grant as the Creative Capital Award above — one application enters you for both prizes automatically. The difference: instead of competing against thousands of artists nationally, you only compete against other artists in your state. Kudzu artists in TN, CA, and NY each have their own state pool.</p>
             <div class="grant-row">
               <div class="grant-field">
                 <label>Open Call</label>
@@ -951,6 +978,7 @@
             <span class="amount-badge amt-md">Up to $10,000</span>
           </div>
           <div class="grant-card-body">
+            <p class="grant-purpose">Recognizing artists whose quality of work hasn't yet matched their public profile — the Harpo Foundation specifically looks for under-the-radar talent and gives them unrestricted money to keep working. No project required; no reporting on how the money is spent.</p>
             <div class="grant-row">
               <div class="grant-field">
                 <label>Deadline</label>
@@ -1001,6 +1029,7 @@
             <span class="amount-badge amt-md">$10,000</span>
           </div>
           <div class="grant-card-body">
+            <p class="grant-purpose">Advancing a young craft artist's studio practice — the $10,000 goes toward your work in ceramics, glass, textiles, metalwork, or related disciplines. Winners also travel to Crystal Bridges Museum in Bentonville, AR for the Spector Craft Summit and join a national professional network of craft artists and collectors.</p>
             <div class="grant-row">
               <div class="grant-field">
                 <label>Deadline</label>
@@ -1053,6 +1082,7 @@
             <span class="amount-badge amt-md">$10,000</span>
           </div>
           <div class="grant-card-body">
+            <p class="grant-purpose">Unrestricted support for an emerging NYC-area artist — but there's no application. A curator, critic, or arts professional in the Foundation's network has to nominate the artist. The money is for the artist's practice with no restrictions. For Kudzu to access this, we need to build relationships with NYC curators who participate in RHMF nominations.</p>
             <div class="grant-row">
               <div class="grant-field">
                 <label>Process</label>
