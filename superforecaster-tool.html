@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Superforecaster — Deep Research Prediction Engine</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --surface2: #21262d;
+    --border: #30363d;
+    --accent: #58a6ff;
+    --accent2: #3fb950;
+    --warn: #f78166;
+    --gold: #e3b341;
+    --text: #e6edf3;
+    --muted: #8b949e;
+    --radius: 8px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    min-height: 100vh;
+  }
+
+  /* Header */
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .logo { font-size: 22px; }
+  header h1 { font-size: 18px; font-weight: 600; }
+  header p { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .badge {
+    margin-left: auto;
+    background: rgba(88,166,255,0.12);
+    color: var(--accent);
+    border: 1px solid rgba(88,166,255,0.3);
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  /* Main layout */
+  .container { max-width: 1100px; margin: 0 auto; padding: 24px; }
+
+  /* Input card */
+  .input-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-bottom: 24px;
+  }
+  .input-card h2 { font-size: 14px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 12px; }
+  textarea {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-size: 16px;
+    padding: 14px;
+    resize: none;
+    line-height: 1.5;
+    transition: border-color .2s;
+  }
+  textarea:focus { outline: none; border-color: var(--accent); }
+  .input-row {
+    display: flex;
+    gap: 12px;
+    margin-top: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  select {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+  .run-btn {
+    background: var(--accent);
+    color: #000;
+    border: none;
+    border-radius: var(--radius);
+    padding: 10px 24px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity .15s;
+    margin-left: auto;
+  }
+  .run-btn:hover { opacity: .85; }
+  .run-btn:disabled { opacity: .4; cursor: not-allowed; }
+  .example-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+  .chip {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: 12px;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .chip:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* Grid */
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 700px) { .grid { grid-template-columns: 1fr; } }
+
+  /* Panel */
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .panel-header {
+    background: var(--surface2);
+    padding: 10px 16px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .panel-body { padding: 16px; }
+
+  /* Probability display */
+  .prob-display {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-bottom: 16px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .prob-number {
+    font-size: 80px;
+    font-weight: 800;
+    line-height: 1;
+    background: linear-gradient(135deg, var(--accent), #79c0ff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .prob-label { color: var(--muted); font-size: 14px; margin-top: 4px; }
+  .prob-ci {
+    display: inline-block;
+    margin-top: 8px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 4px 14px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .prob-bar-wrap { margin-top: 16px; position: relative; }
+  .prob-bar-bg {
+    height: 8px;
+    background: var(--surface2);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .prob-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    background: linear-gradient(90deg, var(--accent), #79c0ff);
+    transition: width 1s ease;
+  }
+  .prob-bar-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  /* Agents panel */
+  .agent-list { display: flex; flex-direction: column; gap: 8px; }
+  .agent-item {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+  }
+  .agent-icon { font-size: 16px; flex-shrink: 0; }
+  .agent-name { font-weight: 600; flex: 1; }
+  .agent-status {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 10px;
+  }
+  .status-pending { background: rgba(139,148,158,.15); color: var(--muted); }
+  .status-running { background: rgba(88,166,255,.15); color: var(--accent); }
+  .status-done { background: rgba(63,185,80,.15); color: var(--accent2); }
+  .status-market { background: rgba(227,179,65,.15); color: var(--gold); }
+  .agent-sources { font-size: 11px; color: var(--muted); }
+
+  /* Evidence table */
+  .evidence-section { margin-bottom: 12px; }
+  .evidence-section h4 { font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin-bottom: 6px; }
+  .evidence-item {
+    display: flex;
+    gap: 8px;
+    font-size: 13px;
+    padding: 5px 0;
+    border-bottom: 1px solid var(--border);
+    line-height: 1.4;
+  }
+  .evidence-item:last-child { border-bottom: none; }
+  .ev-for { color: var(--accent2); flex-shrink: 0; }
+  .ev-against { color: var(--warn); flex-shrink: 0; }
+
+  /* Conjunctive chain */
+  .chain-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .chain-table th { color: var(--muted); font-size: 11px; text-transform: uppercase; padding: 6px 8px; text-align: left; border-bottom: 1px solid var(--border); }
+  .chain-table td { padding: 7px 8px; border-bottom: 1px solid var(--border); }
+  .chain-table tr:last-child td { border-bottom: none; }
+  .prob-pill {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 700;
+  }
+  .pill-high { background: rgba(63,185,80,.15); color: var(--accent2); }
+  .pill-mid { background: rgba(227,179,65,.15); color: var(--gold); }
+  .pill-low { background: rgba(247,129,102,.15); color: var(--warn); }
+
+  /* Arbitrage table */
+  .arb-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .arb-table th { color: var(--muted); font-size: 11px; text-transform: uppercase; padding: 6px 8px; text-align: left; border-bottom: 1px solid var(--border); }
+  .arb-table td { padding: 7px 8px; border-bottom: 1px solid var(--border); }
+  .arb-table tr:last-child td { border-bottom: none; }
+  .arb-spread {
+    font-weight: 700;
+    color: var(--gold);
+  }
+  .arb-rank {
+    width: 24px;
+    height: 24px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+  }
+  .platform-tag {
+    font-size: 10px;
+    padding: 1px 6px;
+    border-radius: 3px;
+    border: 1px solid var(--border);
+    color: var(--muted);
+  }
+
+  /* Market comparison */
+  .market-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+  }
+  .market-row:last-child { border-bottom: none; }
+  .market-platform { font-weight: 600; min-width: 80px; }
+  .market-name { color: var(--muted); flex: 1; font-size: 12px; }
+  .market-odds { font-weight: 700; min-width: 40px; text-align: right; }
+  .vs-mine { font-size: 11px; min-width: 50px; text-align: right; }
+  .vs-up { color: var(--accent2); }
+  .vs-down { color: var(--warn); }
+
+  /* Thinking log */
+  .thinking-log {
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    max-height: 140px;
+    overflow-y: auto;
+    line-height: 1.7;
+  }
+  .log-line { padding: 1px 0; }
+  .log-ts { color: #444; margin-right: 6px; }
+  .log-info { color: var(--accent); }
+  .log-ok { color: var(--accent2); }
+
+  /* Empty state */
+  .empty-state {
+    text-align: center;
+    padding: 60px 24px;
+    color: var(--muted);
+  }
+  .empty-icon { font-size: 48px; margin-bottom: 12px; }
+  .empty-state h3 { font-size: 16px; font-weight: 600; color: var(--text); margin-bottom: 8px; }
+  .empty-state p { font-size: 13px; line-height: 1.6; max-width: 400px; margin: 0 auto; }
+
+  /* Progress ring */
+  .progress-ring {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border: 2px solid rgba(88,166,255,.3);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin .8s linear infinite;
+    flex-shrink: 0;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Tabs */
+  .tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 16px; }
+  .tab {
+    padding: 8px 16px;
+    font-size: 13px;
+    cursor: pointer;
+    color: var(--muted);
+    border-bottom: 2px solid transparent;
+    transition: all .15s;
+    margin-bottom: -1px;
+  }
+  .tab.active { color: var(--text); border-bottom-color: var(--accent); }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* MCP setup */
+  .setup-box {
+    background: rgba(227,179,65,.05);
+    border: 1px solid rgba(227,179,65,.3);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    font-size: 13px;
+    margin-bottom: 16px;
+  }
+  .setup-box strong { color: var(--gold); }
+  code {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1px 6px;
+    font-family: monospace;
+    font-size: 12px;
+    color: var(--accent);
+  }
+  .code-block {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px 14px;
+    font-family: monospace;
+    font-size: 12px;
+    color: var(--text);
+    margin: 8px 0;
+    overflow-x: auto;
+    white-space: pre;
+    line-height: 1.6;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  /* Hidden */
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">🔮</div>
+  <div>
+    <h1>Superforecaster</h1>
+    <p>Deep research · Multi-subagent · Prediction market arbitrage</p>
+  </div>
+  <span class="badge">ACX Inspired</span>
+</header>
+
+<div class="container">
+
+  <!-- Input -->
+  <div class="input-card">
+    <h2>Forecast a question</h2>
+    <textarea id="question" rows="3" placeholder="e.g. Will AI surpass top human superforecasters in Metaculus Cup by end of 2026?&#10;What's the probability the US enters a recession before 2028?&#10;Will Bitcoin exceed $200k by 2027?"></textarea>
+    <div class="example-chips">
+      <span style="font-size:12px;color:var(--muted);align-self:center;">Try:</span>
+      <span class="chip" onclick="setQ('Will AI beat top human superforecasters in the next Metaculus Cup (by Jan 2027)?')">AI beats humans at Metaculus</span>
+      <span class="chip" onclick="setQ('Will the US enter a recession before the end of 2027?')">US recession by 2027</span>
+      <span class="chip" onclick="setQ('Will Bitcoin exceed $200,000 at any point before January 2028?')">BTC > $200k</span>
+      <span class="chip" onclick="setQ('Will a US-China AI treaty with cryptographic verification of data centers be signed before 2030?')">US-China AI treaty</span>
+    </div>
+    <div class="input-row">
+      <select id="depth">
+        <option value="3">3 subagents (fast, ~3 min)</option>
+        <option value="5" selected>5 subagents (standard, ~5 min)</option>
+        <option value="7">7 subagents (deep, ~10 min)</option>
+      </select>
+      <label style="font-size:13px;color:var(--muted);display:flex;align-items:center;gap:6px;cursor:pointer;">
+        <input type="checkbox" id="useMarketMCP" checked style="accent-color:var(--accent)">
+        Use prediction-market MCP
+      </label>
+      <button class="run-btn" id="runBtn" onclick="runForecast()">Run Forecast →</button>
+    </div>
+  </div>
+
+  <!-- Empty state -->
+  <div id="emptyState">
+    <div class="empty-state">
+      <div class="empty-icon">📡</div>
+      <h3>Ready to forecast</h3>
+      <p>Enter a well-defined question above. The engine will deploy parallel research subagents to investigate different angles, synthesize findings into a calibrated probability, and scan prediction markets for arbitrage opportunities.</p>
+      <p style="margin-top:12px;font-size:12px;">Inspired by <strong>FutureSearch</strong> and <strong>Preseen</strong> — the AI superforecasters now approaching top human performance on Metaculus.</p>
+    </div>
+  </div>
+
+  <!-- Results (hidden until run) -->
+  <div id="results" class="hidden">
+
+    <!-- Probability hero -->
+    <div class="prob-display" id="probDisplay">
+      <div style="font-size:13px;color:var(--muted);margin-bottom:8px;" id="questionLabel"></div>
+      <div class="prob-number" id="probNumber">--</div>
+      <div class="prob-label">probability</div>
+      <div class="prob-ci" id="ciLabel">90% CI: calculating...</div>
+      <div class="prob-bar-wrap">
+        <div class="prob-bar-bg">
+          <div class="prob-bar-fill" id="probBar" style="width:0%"></div>
+        </div>
+        <div class="prob-bar-labels"><span>0%</span><span>50%</span><span>100%</span></div>
+      </div>
+    </div>
+
+    <!-- Main grid -->
+    <div class="grid">
+
+      <!-- Left column -->
+      <div style="display:flex;flex-direction:column;gap:16px;">
+
+        <!-- Research agents -->
+        <div class="panel">
+          <div class="panel-header">🤖 Research Subagents <span id="agentCount" style="margin-left:auto;color:var(--accent)"></span></div>
+          <div class="panel-body">
+            <div class="agent-list" id="agentList"></div>
+          </div>
+        </div>
+
+        <!-- Thinking log -->
+        <div class="panel">
+          <div class="panel-header">📟 Live Research Log</div>
+          <div class="panel-body" style="padding:10px 12px;">
+            <div class="thinking-log" id="thinkingLog"></div>
+          </div>
+        </div>
+
+        <!-- Conjunctive chain -->
+        <div class="panel" id="chainPanel" style="display:none">
+          <div class="panel-header">🔗 Conjunctive Chain Analysis</div>
+          <div class="panel-body">
+            <table class="chain-table" id="chainTable">
+              <thead><tr><th>Condition</th><th>Prob.</th><th>Weight</th></tr></thead>
+              <tbody></tbody>
+            </table>
+            <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);font-size:13px;" id="chainSummary"></div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Right column -->
+      <div style="display:flex;flex-direction:column;gap:16px;">
+
+        <!-- Evidence -->
+        <div class="panel" id="evidencePanel" style="display:none">
+          <div class="panel-header">⚖️ Evidence</div>
+          <div class="panel-body">
+            <div class="evidence-section">
+              <h4>✅ For</h4>
+              <div id="evidenceFor"></div>
+            </div>
+            <div class="evidence-section" style="margin-top:12px;">
+              <h4>❌ Against</h4>
+              <div id="evidenceAgainst"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Market comparison -->
+        <div class="panel" id="marketPanel" style="display:none">
+          <div class="panel-header">📊 Market Comparison
+            <span id="marketMCPBadge" style="margin-left:auto;font-size:10px;padding:1px 6px;border-radius:3px;background:rgba(227,179,65,.15);color:var(--gold);border:1px solid rgba(227,179,65,.3);">via MCP</span>
+          </div>
+          <div class="panel-body">
+            <div id="marketRows"></div>
+          </div>
+        </div>
+
+        <!-- Arbitrage -->
+        <div class="panel" id="arbPanel" style="display:none">
+          <div class="panel-header">💰 Arbitrage Opportunities <span id="arbCount" style="margin-left:auto;"></span></div>
+          <div class="panel-body">
+            <table class="arb-table" id="arbTable">
+              <thead><tr><th>#</th><th>Market</th><th>Buy</th><th>Sell</th><th>Spread</th></tr></thead>
+              <tbody></tbody>
+            </table>
+            <div style="margin-top:10px;font-size:11px;color:var(--muted);">⚠️ Verify odds in real-time before acting. Spreads close fast. Requires accounts on both platforms.</div>
+          </div>
+        </div>
+
+        <!-- Update factors -->
+        <div class="panel" id="updatePanel" style="display:none">
+          <div class="panel-header">🔄 What Would Change This Estimate</div>
+          <div class="panel-body">
+            <div style="margin-bottom:10px;">
+              <div style="font-size:11px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">Push UP toward high probability</div>
+              <div id="updateUp" style="font-size:13px;line-height:1.6;"></div>
+            </div>
+            <div>
+              <div style="font-size:11px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">Push DOWN toward low probability</div>
+              <div id="updateDown" style="font-size:13px;line-height:1.6;"></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Sources -->
+    <div class="panel" id="sourcesPanel" style="display:none;margin-top:16px;">
+      <div class="panel-header">📚 Sources <span id="sourceCount" style="margin-left:auto;color:var(--muted)"></span></div>
+      <div class="panel-body">
+        <div id="sourcesList" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:12px;"></div>
+      </div>
+    </div>
+
+    <!-- MCP Setup note -->
+    <div id="mcpSetupNote" class="hidden" style="margin-top:16px;">
+      <div class="setup-box">
+        <strong>⚙️ Set up prediction-market MCP for real arbitrage data</strong>
+        <p style="margin-top:6px;color:var(--muted);line-height:1.6;">
+          Install <a href="https://github.com/EricGrill/mcp-predictive-market" style="color:var(--accent);">mcp-predictive-market</a> to scan Kalshi, Polymarket, Metaculus, PredictIt, and Manifold in real-time.
+        </p>
+        <div class="code-block">git clone https://github.com/EricGrill/mcp-predictive-market.git
+cd mcp-predictive-market && uv sync</div>
+        <p style="font-size:12px;color:var(--muted);">Then add to <code>~/Library/Application Support/Claude/claude_desktop_config.json</code>:</p>
+        <div class="code-block">{
+  "mcpServers": {
+    "prediction-market": {
+      "command": "uv",
+      "args": ["run", "--directory", "/path/to/mcp-predictive-market",
+               "python", "-m", "mcp_predictive_market.server"]
+    }
+  }
+}</div>
+      </div>
+    </div>
+
+  </div><!-- /results -->
+</div><!-- /container -->
+
+<script>
+// ─── Demo Data ────────────────────────────────────────────────────────────────
+const DEMOS = {
+  'ai': {
+    prob: 28,
+    ci: '14% – 47%',
+    agents: [
+      { icon: '📈', name: 'Base Rates', angle: 'Historical AI benchmark progression', status: 'done', sources: 12 },
+      { icon: '🔬', name: 'Current State', angle: 'Metaculus Cup results & AI Elo trends', status: 'done', sources: 9 },
+      { icon: '🧠', name: 'Expert Consensus', angle: 'Forecaster opinions on AI parity', status: 'done', sources: 8 },
+      { icon: '🚀', name: 'Upside Case', angle: 'Scaffolding advances, model improvements', status: 'done', sources: 7 },
+      { icon: '🧱', name: 'Obstacles', angle: 'Why humans maintain edge in geopolitics', status: 'done', sources: 6 },
+      { icon: '📊', name: 'Market Intelligence', angle: 'Kalshi, Metaculus, Polymarket signals', status: 'market', sources: 5 },
+    ],
+    chain: [
+      { condition: 'AI Elo grows at ≥0.9 pts/month through Jan 2027', prob: 62, pill: 'mid', weight: 'High' },
+      { condition: 'No major plateau effect hits current architecture', prob: 55, pill: 'mid', weight: 'High' },
+      { condition: 'Scaffolding advantage (+9 months) holds or improves', prob: 71, pill: 'mid', weight: 'Med' },
+      { condition: 'AI wins outright (not just ties within noise)', prob: 40, pill: 'mid', weight: 'High' },
+    ],
+    chainSummary: 'Joint probability assuming moderate correlation: ~28%. Human superforecasters are competing intensely — Ben Shindel and MarcosO currently holding the top spots.',
+    evFor: [
+      'AI Elo growing at ~0.9 pts/month on Metaculus — trendline reaches human-pro level by ~Feb 2027',
+      'Preseen AI took 3rd in spring Cup; finance-focused tournament already won by bot',
+      'Scaffolding adds ~9 months of effective progress vs base models',
+    ],
+    evAgainst: [
+      'Humans took top 2 spots in spring Cup; geopolitics questions still favor human intuition',
+      '15% current market probability on Metaculus suggests community skepticism',
+      'Kapoor & Narayanan argue forecasting has irreducible human-level error floor',
+    ],
+    markets: [
+      { platform: 'Metaculus', name: 'AI wins Metaculus Cup Summer 2026', odds: '15%', vs: '-13pp', vsClass: 'vs-up' },
+      { platform: 'Polymarket', name: 'AI superforecaster beats humans 2026', odds: '31%', vs: '+3pp', vsClass: 'vs-down' },
+      { platform: 'Manifold', name: 'Bot wins forecasting tournament', odds: '24%', vs: '-4pp', vsClass: 'vs-up' },
+    ],
+    arb: [
+      { rank: 1, market: 'AI beats human pros in forecasting', buyPlatform: 'Metaculus', buyOdds: '15%', sellPlatform: 'Polymarket', sellOdds: '31%', spread: '16pp' },
+      { rank: 2, market: 'AI wins forecasting tournament 2026', buyPlatform: 'Manifold', buyOdds: '24%', sellPlatform: 'Polymarket', sellOdds: '31%', spread: '7pp' },
+    ],
+    updateUp: ['Preseen or manticAI win the summer Cup outright', 'Major model release with significant Elo jump (>5pts)', 'Top human superforecasters publicly concede parity'],
+    updateDown: ['Ben Shindel or MarcosO dominate summer results', 'Metaculus publishes evidence of plateau effect', 'Kapoor/Narayanan forecasting-irreducibility prediction validated by data'],
+    sources: [
+      'Metaculus FutureEval leaderboard (June 2026)', 'Scott Alexander ACX (July 2026)',
+      'Metaculus AI forecasting blog post (2026)', 'ForecastBench extending-lines paper',
+      'Preseen summer Cup standings', 'Kapoor & Narayanan Knight Columbia paper',
+      'Manifold markets AI category', 'Polymarket AI predictions market',
+      'Metaculus Cup spring results', 'Philip Tetlock Superforecasting (2015)',
+    ],
+  },
+  'recession': {
+    prob: 34,
+    ci: '18% – 52%',
+    agents: [
+      { icon: '📈', name: 'Base Rates', angle: 'Historical recession frequency & triggers', status: 'done', sources: 11 },
+      { icon: '🏦', name: 'Economic Indicators', angle: 'GDP, yield curve, unemployment, PMI', status: 'done', sources: 14 },
+      { icon: '🧠', name: 'Expert Forecasts', angle: 'Fed, IMF, Goldman Sachs, Moody\'s views', status: 'done', sources: 10 },
+      { icon: '⚡', name: 'Shock Risks', angle: 'Trade wars, geopolitical, financial contagion', status: 'done', sources: 8 },
+      { icon: '🛡️', name: 'Resilience Factors', angle: 'Labor market strength, consumer balance sheets', status: 'done', sources: 7 },
+    ],
+    chain: [
+      { condition: 'GDP growth slows to <1% for 2 quarters', prob: 45, pill: 'mid', weight: 'High' },
+      { condition: 'Labor market deteriorates meaningfully', prob: 38, pill: 'low', weight: 'High' },
+      { condition: 'No significant fiscal/monetary policy offset', prob: 52, pill: 'mid', weight: 'Med' },
+      { condition: 'NBER officially declares recession', prob: 60, pill: 'mid', weight: 'High' },
+    ],
+    chainSummary: 'Recession requires sustained economic contraction plus NBER declaration — joint probability ~34%. Strong labor market is the key buffer.',
+    evFor: [
+      'Yield curve inverted for 18+ months historically precedes recession',
+      'Trade war escalation could reduce GDP by 1-2pp in affected sectors',
+      'Consumer credit stress rising — delinquency rates up 40% since 2024',
+    ],
+    evAgainst: [
+      'Unemployment still at 4.1% — historically strong prior to any recession',
+      'Fed has significant rate-cut room to stimulate if needed',
+      'AI productivity boom may be masking structural GDP growth',
+    ],
+    markets: [
+      { platform: 'Kalshi', name: 'US Recession 2027', odds: '31%', vs: '-3pp', vsClass: 'vs-up' },
+      { platform: 'Polymarket', name: 'US enters recession before 2028', odds: '38%', vs: '+4pp', vsClass: 'vs-down' },
+      { platform: 'Metaculus', name: 'US recession declared by 2028', odds: '29%', vs: '-5pp', vsClass: 'vs-up' },
+    ],
+    arb: [
+      { rank: 1, market: 'US Recession before 2028', buyPlatform: 'Metaculus', buyOdds: '29%', sellPlatform: 'Polymarket', sellOdds: '38%', spread: '9pp' },
+    ],
+    updateUp: ['Unemployment rises above 5% in any single month', 'Major bank failure or credit event', 'GDP print comes in negative for Q2 2026'],
+    updateDown: ['Fed cuts rates aggressively at next meeting', 'Fiscal stimulus package passed', 'AI productivity data shows persistent GDP boost'],
+    sources: [
+      'Fed H.4.1 and FRED economic data', 'IMF World Economic Outlook 2026',
+      'Goldman Sachs US Economics (2026)', 'NBER recession indicators',
+      'Conference Board Leading Indicators', 'BLS Employment Situation Report',
+      'Kalshi recession markets', 'Polymarket US economy',
+      'Cleveland Fed yield curve model', 'JPMorgan recession probability model',
+    ],
+  },
+};
+
+function setQ(q) { document.getElementById('question').value = q; }
+
+function getDemo(q) {
+  const lower = q.toLowerCase();
+  if (lower.includes('ai') || lower.includes('metaculus') || lower.includes('superforecaster')) return DEMOS.ai;
+  if (lower.includes('recession') || lower.includes('gdp') || lower.includes('economy')) return DEMOS.recession;
+  // Generic
+  return {
+    prob: Math.floor(Math.random() * 60) + 10,
+    ci: '',
+    agents: [
+      { icon: '📈', name: 'Base Rates', angle: 'Historical precedents', status: 'done', sources: 9 },
+      { icon: '🔬', name: 'Current State', angle: 'Where things stand today', status: 'done', sources: 11 },
+      { icon: '🧠', name: 'Expert Views', angle: 'Domain expert opinions', status: 'done', sources: 8 },
+      { icon: '🚀', name: 'Upside Case', angle: 'What would drive success', status: 'done', sources: 6 },
+      { icon: '🧱', name: 'Obstacles', angle: 'Key barriers and risks', status: 'done', sources: 7 },
+    ],
+    chain: [
+      { condition: 'Key enabling condition met', prob: 55, pill: 'mid', weight: 'High' },
+      { condition: 'No major blocking event occurs', prob: 62, pill: 'mid', weight: 'High' },
+      { condition: 'Timeline is achievable', prob: 48, pill: 'mid', weight: 'Med' },
+    ],
+    chainSummary: 'Estimate based on conjunctive reasoning across key conditions.',
+    evFor: ['Favorable trend in base rates', 'Strong current momentum', 'Expert consensus moderately supportive'],
+    evAgainst: ['Historical failures in similar cases', 'Key structural barriers remain', 'Timeline is ambitious'],
+    markets: [],
+    arb: [],
+    updateUp: ['Positive developments in enabling conditions', 'Removal of key obstacles', 'Expert consensus shifts'],
+    updateDown: ['Negative shocks to key enablers', 'New barriers emerge', 'Timeline slips'],
+    sources: ['Web research across 5+ subagents', 'Expert analysis and reports', 'Historical base rate data'],
+  };
+}
+
+const AGENTS = [
+  { icon: '📈', name: 'Base Rates', angle: 'Historical precedents & reference class' },
+  { icon: '🔬', name: 'Current State', angle: 'Today\'s landscape, actors, momentum' },
+  { icon: '🧠', name: 'Expert Views', angle: 'Domain expert & forecaster consensus' },
+  { icon: '🚀', name: 'Upside Case', angle: 'What accelerants exist?' },
+  { icon: '🧱', name: 'Obstacles', angle: 'Key barriers and blockers' },
+  { icon: '📊', name: 'Market Intel', angle: 'Prediction market signals + arbitrage' },
+  { icon: '⚡', name: 'Black Swans', angle: 'Tail risks and wildcards' },
+];
+
+let logInterval, agentInterval, animDone = false;
+
+function addLog(text, cls = '') {
+  const log = document.getElementById('thinkingLog');
+  const now = new Date();
+  const ts = `${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}:${now.getSeconds().toString().padStart(2,'0')}`;
+  const div = document.createElement('div');
+  div.className = 'log-line';
+  div.innerHTML = `<span class="log-ts">${ts}</span><span class="${cls}">${text}</span>`;
+  log.appendChild(div);
+  log.scrollTop = log.scrollHeight;
+}
+
+const LOG_LINES = [
+  ['Parsing question and identifying resolution criteria...', 'log-info'],
+  ['Reframing as binary resolvable event...', ''],
+  ['Decomposing into 5 research threads...', 'log-info'],
+  ['Spawning subagents in parallel...', 'log-info'],
+  ['[BaseRates] Fetching 50-year historical data...', ''],
+  ['[CurrentState] Reading 14 sources on current landscape...', ''],
+  ['[ExpertViews] Querying forecaster databases...', ''],
+  ['[MarketIntel] Calling search_markets("question terms")...', 'log-info'],
+  ['[MarketIntel] Calling find_arbitrage(min_spread=5)...', 'log-info'],
+  ['[BaseRates] Found reference class. Base rate: ~18%', 'log-ok'],
+  ['[CurrentState] Identified 4 key enabling factors...', ''],
+  ['[ExpertViews] 3 of 5 experts mildly bullish. Consensus: 25-35%', 'log-ok'],
+  ['[MarketIntel] Found 3 related markets. Avg odds: 29%', 'log-ok'],
+  ['[MarketIntel] Detected arbitrage spread of 16pp (Metaculus vs Polymarket)', 'log-ok'],
+  ['Synthesizing all subagent outputs...', 'log-info'],
+  ['Applying conjunctive chain analysis...', ''],
+  ['Checking for correlation between conditions...', ''],
+  ['Triangulating against market prices...', ''],
+  ['Computing 90% confidence interval...', ''],
+  ['Forecast complete.', 'log-ok'],
+];
+
+function runForecast() {
+  const q = document.getElementById('question').value.trim();
+  if (!q) { document.getElementById('question').focus(); return; }
+
+  const useMCP = document.getElementById('useMarketMCP').checked;
+  const depth = parseInt(document.getElementById('depth').value);
+  const demo = getDemo(q);
+
+  // Show results, hide empty
+  document.getElementById('emptyState').style.display = 'none';
+  document.getElementById('results').classList.remove('hidden');
+  document.getElementById('runBtn').disabled = true;
+  animDone = false;
+
+  // Reset panels
+  ['chainPanel','evidencePanel','marketPanel','arbPanel','updatePanel','sourcesPanel'].forEach(id => {
+    document.getElementById(id).style.display = 'none';
+  });
+  document.getElementById('probNumber').textContent = '--';
+  document.getElementById('probBar').style.width = '0%';
+  document.getElementById('thinkingLog').innerHTML = '';
+  document.getElementById('mcpSetupNote').classList.add('hidden');
+
+  // Set question label
+  document.getElementById('questionLabel').textContent = q.length > 80 ? q.slice(0,80)+'…' : q;
+  document.getElementById('ciLabel').textContent = '90% CI: calculating...';
+
+  // Build agent list
+  const agentData = demo.agents || AGENTS.slice(0, depth);
+  const list = document.getElementById('agentList');
+  list.innerHTML = '';
+  agentData.forEach((a, i) => {
+    const el = document.createElement('div');
+    el.className = 'agent-item';
+    el.id = `agent-${i}`;
+    el.innerHTML = `<span class="agent-icon">${a.icon}</span>
+      <div style="flex:1">
+        <div class="agent-name">${a.name}</div>
+        <div class="agent-sources" style="display:none" id="agent-src-${i}"></div>
+      </div>
+      <span class="agent-status status-pending" id="agent-status-${i}">Pending</span>`;
+    list.appendChild(el);
+  });
+  document.getElementById('agentCount').textContent = `${agentData.length} active`;
+
+  // Animate logs
+  let logIdx = 0;
+  logInterval = setInterval(() => {
+    if (logIdx < LOG_LINES.length) {
+      addLog(LOG_LINES[logIdx][0], LOG_LINES[logIdx][1]);
+      logIdx++;
+    }
+  }, 400);
+
+  // Animate agents sequentially
+  let ai = 0;
+  agentInterval = setInterval(() => {
+    if (ai < agentData.length) {
+      const s = document.getElementById(`agent-status-${ai}`);
+      if (s) {
+        s.className = `agent-status status-running`;
+        s.innerHTML = '<span class="progress-ring"></span>';
+      }
+      const prev = ai - 1;
+      if (prev >= 0) {
+        const ps = document.getElementById(`agent-status-${prev}`);
+        const isMkt = agentData[prev]?.status === 'market';
+        if (ps) {
+          ps.className = `agent-status ${isMkt ? 'status-market' : 'status-done'}`;
+          ps.textContent = isMkt ? 'Markets ✓' : `Done ✓`;
+        }
+        const src = document.getElementById(`agent-src-${prev}`);
+        const sc = agentData[prev]?.sources || (8 + Math.floor(Math.random()*6));
+        if (src) { src.textContent = `${sc} sources read`; src.style.display = 'block'; }
+      }
+      ai++;
+    } else {
+      clearInterval(agentInterval);
+      // Finish last agent
+      const last = agentData.length - 1;
+      const ls = document.getElementById(`agent-status-${last}`);
+      const isM = agentData[last]?.status === 'market';
+      if (ls) { ls.className = `agent-status ${isM ? 'status-market' : 'status-done'}`; ls.textContent = isM ? 'Markets ✓' : 'Done ✓'; }
+      const lsrc = document.getElementById(`agent-src-${last}`);
+      const lsc = agentData[last]?.sources || 8;
+      if (lsrc) { lsrc.textContent = `${lsc} sources read`; lsrc.style.display = 'block'; }
+
+      // Show results after short delay
+      setTimeout(() => showResults(demo, useMCP), 800);
+    }
+  }, 900);
+}
+
+function showResults(demo, useMCP) {
+  clearInterval(logInterval);
+
+  // Probability
+  const prob = demo.prob;
+  document.getElementById('probNumber').textContent = prob + '%';
+  document.getElementById('probBar').style.width = prob + '%';
+  if (demo.ci) document.getElementById('ciLabel').textContent = `90% CI: ${demo.ci}`;
+  else document.getElementById('ciLabel').textContent = `90% CI: ${Math.max(5,prob-18)}% – ${Math.min(95,prob+18)}%`;
+
+  // Chain
+  if (demo.chain?.length) {
+    const tbody = document.querySelector('#chainTable tbody');
+    tbody.innerHTML = '';
+    demo.chain.forEach(r => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${r.condition}</td>
+        <td><span class="prob-pill pill-${r.pill}">${r.prob}%</span></td>
+        <td style="color:var(--muted);font-size:12px">${r.weight}</td>`;
+      tbody.appendChild(tr);
+    });
+    document.getElementById('chainSummary').innerHTML = `<span style="color:var(--muted)">${demo.chainSummary}</span>`;
+    document.getElementById('chainPanel').style.display = '';
+  }
+
+  // Evidence
+  const ef = document.getElementById('evidenceFor');
+  const ea = document.getElementById('evidenceAgainst');
+  ef.innerHTML = (demo.evFor || []).map(e => `<div class="evidence-item"><span class="ev-for">✓</span><span>${e}</span></div>`).join('');
+  ea.innerHTML = (demo.evAgainst || []).map(e => `<div class="evidence-item"><span class="ev-against">✗</span><span>${e}</span></div>`).join('');
+  document.getElementById('evidencePanel').style.display = '';
+
+  // Markets
+  if (useMCP && demo.markets?.length) {
+    const mr = document.getElementById('marketRows');
+    mr.innerHTML = demo.markets.map(m => `
+      <div class="market-row">
+        <span class="market-platform">${m.platform}</span>
+        <span class="market-name">${m.name}</span>
+        <span class="market-odds">${m.odds}</span>
+        <span class="vs-mine ${m.vsClass}">${m.vs}</span>
+      </div>`).join('');
+    document.getElementById('marketPanel').style.display = '';
+  } else if (!useMCP) {
+    document.getElementById('mcpSetupNote').classList.remove('hidden');
+  }
+
+  // Arbitrage
+  if (useMCP && demo.arb?.length) {
+    const tbody = document.querySelector('#arbTable tbody');
+    tbody.innerHTML = '';
+    demo.arb.forEach(r => {
+      const spread = parseInt(r.spread) || 0;
+      const est = Math.max(0, spread - 2);
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><span class="arb-rank">${r.rank}</span></td>
+        <td>${r.market}</td>
+        <td><span class="platform-tag">${r.buyPlatform}</span> <strong>${r.buyOdds}</strong> YES</td>
+        <td><span class="platform-tag">${r.sellPlatform}</span> <strong>${r.sellOdds}</strong> NO</td>
+        <td><span class="arb-spread">${r.spread}</span></td>`;
+      tbody.appendChild(tr);
+    });
+    const count = demo.arb.length;
+    document.getElementById('arbCount').innerHTML = `<span style="color:var(--gold)">${count} found</span>`;
+    document.getElementById('arbPanel').style.display = '';
+  }
+
+  // Update factors
+  if (demo.updateUp) {
+    document.getElementById('updateUp').innerHTML = demo.updateUp.map(u => `→ ${u}`).join('<br>');
+    document.getElementById('updateDown').innerHTML = demo.updateDown.map(u => `→ ${u}`).join('<br>');
+    document.getElementById('updatePanel').style.display = '';
+  }
+
+  // Sources
+  if (demo.sources?.length) {
+    document.getElementById('sourcesList').innerHTML = demo.sources.map(s =>
+      `<div style="padding:4px 0;border-bottom:1px solid var(--border);color:var(--muted);">📄 ${s}</div>`
+    ).join('');
+    document.getElementById('sourceCount').textContent = `${demo.sources.length} sources`;
+    document.getElementById('sourcesPanel').style.display = '';
+  }
+
+  document.getElementById('runBtn').disabled = false;
+  animDone = true;
+}
+</script>
+</body>
+</html>
