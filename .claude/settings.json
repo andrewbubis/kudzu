@@ -3,6 +3,10 @@
     "railway": {
       "type": "http",
       "url": "https://mcp.railway.com"
+    },
+    "npo-catalogue": {
+      "type": "http",
+      "url": "https://npo-catalogue-production.up.railway.app/mcp"
     }
   },
   "enabledPlugins": {
