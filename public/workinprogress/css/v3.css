@@ -23,8 +23,8 @@
   --leaf-hi:    #7d9468;
   --gold:       #9a7a31;   /* gold text on paper */
   --gold-br:    #cdbf86;   /* gold on dark */
-  --clay:       #bf522d;   /* energetic pop */
-  --clay-soft:  #d98a5f;
+  --clay:       #8a8f43;   /* olive-green (replaces clay) */
+  --clay-soft:  #7d9468;
   --line:       rgba(33, 28, 42, 0.16);
   --line-2:     rgba(33, 28, 42, 0.08);
   --line-cream: rgba(241, 234, 217, 0.16);
@@ -120,7 +120,7 @@ section { position: relative; padding-block: clamp(72px, 9vw, 128px); }
 .btn-line { background: transparent; color: var(--ink); border-color: var(--ink); }
 .btn-line:hover { background: var(--ink); color: var(--paper); }
 .btn-clay { background: var(--clay); color: var(--paper); }
-.btn-clay:hover { background: var(--ink); }
+.btn-clay:hover { background: var(--olive); }
 .btn-lg { padding: 17px 34px; font-size: 15px; }
 
 /* ── Header ───────────────────────────────────────────────────── */
