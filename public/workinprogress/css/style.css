@@ -16,10 +16,10 @@
   --cream-dim: #786f59;  /* muted text */
   --olive:     #5f6429;  /* olive accent TEXT */
   --olive-lt:  #6f7531;  /* secondary olive text */
-  --gold:      #7c6526;  /* gold accent TEXT (bronze-gold on cream) */
-  --gold-dp:   #5f4d1d;
+  --gold:      #5f6429;  /* olive-green accent TEXT (matches v3 palette) */
+  --gold-dp:   #4a5220;
   --olive-bg:  #8a8f43;  /* olive accent BACKGROUND (bright) */
-  --gold-bg:   #c6a256;  /* gold accent BACKGROUND (bright) */
+  --gold-bg:   #8a8f43;  /* olive-green accent BACKGROUND */
   --on-accent: #241f2c;  /* text on gold / olive backgrounds */
   --header-bg: rgba(236, 229, 211, 0.85);
   --line:      rgba(36, 31, 44, 0.18);
@@ -135,7 +135,7 @@ section { padding-block: clamp(72px, 10vw, 116px); position: relative; }
   border: 1px solid transparent; cursor: pointer;
   transition: background .2s, color .2s, border-color .2s, transform .2s;
 }
-.btn-primary { background: var(--gold-bg); color: var(--on-accent); }
+.btn-primary { background: var(--gold-bg); color: #f1ead9; }
 .btn-primary:hover { filter: brightness(1.06); transform: translateY(-1px); }
 .btn-ghost { background: transparent; color: var(--cream); border-color: var(--cream); }
 .btn-ghost:hover { background: var(--cream); color: var(--plum); }
