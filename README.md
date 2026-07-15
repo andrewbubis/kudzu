@@ -195,7 +195,7 @@ Modern evergreen browsers (Chrome, Safari, Firefox, Edge). Uses CSS
 custom properties, `aspect-ratio`, `clamp()`, IntersectionObserver, and
 modest backdrop-filter. No polyfills shipped.
 
-## License
+### License
 
 All rights reserved by Kudzu (replace with your actual license/copyright
 notice when ready).
