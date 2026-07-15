@@ -1,4 +1,4 @@
-# Kudzu
+# *Kudzu*
 
 > An art consultancy and 501(c)(3) rooted in the American South.
 
