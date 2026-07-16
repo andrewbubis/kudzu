@@ -1,0 +1,1646 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Grant Tracker · Kudzu Arts</title>
+<meta name="description" content="Monthly-updated arts grant opportunities for Tennessee and California — matched to the Kudzu Arts roster.">
+<meta name="theme-color" content="#ece5d3">
+<link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&family=Albert+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+
+<style>
+/* ── Override text palette → dark purple on tan ─────────────────── */
+:root {
+  --cream:     #1e1630;  /* primary text — deep purple */
+  --cream-sft: #3a2d5c;  /* secondary text — medium purple */
+  --cream-dim: #5c4e7a;  /* muted text — soft purple */
+  --gold:      #7c6526;  /* keep gold accent as-is */
+}
+
+/* ── Grant Tracker custom styles ───────────────────────────────── */
+.grants-hero {
+  padding: clamp(64px, 9vw, 100px) var(--pad) clamp(48px, 6vw, 72px);
+  position: relative; overflow: hidden;
+}
+.grants-hero .kicker {
+  display: flex; align-items: center; gap: 16px;
+  font-family: var(--mono); font-size: 11px; letter-spacing: 0.28em;
+  text-transform: uppercase; color: var(--gold); margin-bottom: 28px;
+}
+.grants-hero .kicker::before {
+  content: ""; width: 28px; height: 1px; background: var(--gold);
+}
+.grants-hero h1 {
+  font-family: var(--serif); font-weight: 300;
+  font-size: clamp(48px, 7vw, 84px); line-height: 1.02; letter-spacing: -0.02em;
+  color: var(--cream); max-width: 860px;
+}
+.grants-hero h1 em { font-style: italic; color: var(--gold); }
+.grants-hero .sub {
+  font-family: var(--serif); font-size: clamp(17px, 1.8vw, 20px);
+  line-height: 1.6; color: var(--cream-sft); max-width: 580px; margin-top: 28px;
+}
+.update-bar {
+  display: flex; align-items: center; gap: 12px; margin-top: 36px;
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.18em;
+  text-transform: uppercase; color: var(--cream-dim);
+}
+.update-bar .pulse {
+  width: 8px; height: 8px; border-radius: 50%; background: #2d7a2d;
+  animation: pulse 2s infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
+}
+
+/* ── Stats bar ───────────────────────────────────────────────── */
+.stats-bar {
+  background: var(--plum-alt);
+  border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);
+  padding: 28px var(--pad);
+  display: flex; gap: 0; overflow-x: auto;
+}
+.stat-item {
+  flex: 1; min-width: 140px; padding: 0 32px;
+  border-right: 1px solid var(--line);
+  text-align: center;
+}
+.stat-item:first-child { padding-left: 0; }
+.stat-item:last-child { border-right: none; }
+.stat-num {
+  font-family: var(--serif); font-size: 44px; font-weight: 300;
+  letter-spacing: -0.02em; color: var(--gold); line-height: 1;
+}
+.stat-label {
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.22em;
+  text-transform: uppercase; color: var(--cream-dim); margin-top: 8px;
+}
+
+/* ── Filter bar ──────────────────────────────────────────────── */
+.filter-zone {
+  padding: 28px var(--pad) 0;
+  position: sticky; top: 72px; z-index: 40;
+  background: var(--plum);
+  border-bottom: 1px solid var(--line);
+}
+.filter-row {
+  display: flex; align-items: center; gap: 0;
+  flex-wrap: wrap; gap: 0;
+}
+.filter-group { display: flex; gap: 0; flex-wrap: wrap; }
+.filter-group + .filter-group { margin-left: 20px; border-left: 1px solid var(--line); padding-left: 20px; }
+.filter-btn {
+  background: transparent; border: none; color: var(--cream-dim);
+  font-family: var(--mono); font-size: 11px; letter-spacing: 0.2em;
+  text-transform: uppercase; padding: 12px 16px; cursor: pointer;
+  transition: color .2s; position: relative;
+}
+.filter-btn::after {
+  content: ""; position: absolute; bottom: -1px; left: 0; right: 0; height: 2px;
+  background: var(--gold); transform: scaleX(0); transition: transform .2s;
+}
+.filter-btn:hover { color: var(--cream); }
+.filter-btn.active { color: var(--gold); }
+.filter-btn.active::after { transform: scaleX(1); }
+.filter-count {
+  display: inline-block;
+  background: var(--plum-alt);
+  color: var(--cream-dim);
+  font-size: 9px; padding: 1px 6px;
+  border-radius: 12px; margin-left: 6px;
+  font-family: var(--sans); letter-spacing: 0;
+}
+
+/* ── Grants grid ─────────────────────────────────────────────── */
+.grants-section {
+  padding: clamp(48px, 6vw, 72px) var(--pad);
+}
+.state-group { margin-bottom: 64px; }
+.state-group:last-child { margin-bottom: 0; }
+.state-heading {
+  display: flex; align-items: center; gap: 16px;
+  margin-bottom: 32px; padding-bottom: 16px;
+  border-bottom: 1px solid var(--line);
+}
+.state-heading h2 {
+  font-family: var(--serif); font-weight: 300;
+  font-size: clamp(28px, 3.5vw, 40px); color: var(--cream);
+}
+.state-heading h2 em { font-style: italic; color: var(--gold); }
+.state-badge {
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.2em;
+  text-transform: uppercase; padding: 5px 12px; border-radius: 2px;
+}
+.badge-tn { background: rgba(139, 90, 43, 0.15); color: #7a4e18; }
+.badge-ca { background: rgba(43, 100, 150, 0.15); color: #1a5a8a; }
+.badge-nat { background: rgba(60, 100, 20, 0.15); color: #3a6010; }
+
+.grants-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(400px, 1fr)); gap: 20px; }
+
+.grant-card {
+  background: #fff;
+  border: 1px solid var(--line);
+  display: flex; flex-direction: column;
+  transition: border-color .25s, transform .25s;
+  position: relative; overflow: hidden;
+}
+.grant-card:hover {
+  border-color: var(--gold);
+  transform: translateY(-2px);
+}
+.grant-card-top {
+  padding: 24px 24px 20px;
+  border-bottom: 1px solid var(--line);
+  display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;
+}
+.grant-funder {
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.22em;
+  text-transform: uppercase; color: var(--olive-lt); margin-bottom: 10px;
+}
+.grant-name {
+  font-family: var(--serif); font-weight: 400; font-size: 22px;
+  line-height: 1.2; color: var(--cream); margin: 0;
+}
+.amount-badge {
+  flex: 0 0 auto;
+  font-family: var(--sans); font-size: 13px; font-weight: 600;
+  padding: 6px 12px; white-space: nowrap; align-self: flex-start;
+}
+.amt-sm  { background: rgba(140, 100, 30, 0.1); color: var(--gold); border: 1px solid rgba(140, 100, 30, 0.25); }
+.amt-md  { background: rgba(80, 100, 20, 0.1); color: #4f6020; border: 1px solid rgba(80, 100, 20, 0.25); }
+.amt-lg  { background: rgba(30, 80, 140, 0.1); color: #1a5a8a; border: 1px solid rgba(30, 80, 140, 0.25); }
+.amt-xl  { background: rgba(140, 40, 80, 0.1); color: #8a2a50; border: 1px solid rgba(140, 40, 80, 0.25); }
+
+.grant-card-body { padding: 18px 24px; flex: 1; }
+.grant-row {
+  display: flex; justify-content: space-between; gap: 12px;
+  margin-bottom: 14px; flex-wrap: wrap;
+}
+.grant-field label {
+  display: block; font-family: var(--mono); font-size: 9.5px;
+  letter-spacing: 0.2em; text-transform: uppercase; color: var(--cream-dim); margin-bottom: 5px;
+}
+.grant-field span {
+  font-family: var(--sans); font-size: 13.5px; color: var(--cream-sft);
+}
+.deadline-open   { color: #2d7a2d !important; font-weight: 500; }
+.deadline-soon   { color: var(--gold) !important; font-weight: 500; }
+.deadline-closed { color: var(--cream-dim) !important; }
+.deadline-rolling { color: #4f6020 !important; }
+
+.tag-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; }
+.tag {
+  font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.14em;
+  text-transform: uppercase; padding: 3px 9px;
+  background: rgba(0,0,0,0.04); color: var(--cream-dim);
+  border: 1px solid var(--line); border-radius: 2px;
+}
+.tag.medium   { color: #4f6020; border-color: rgba(80, 96, 32, 0.3); }
+.tag.location { color: var(--gold); border-color: rgba(140, 100, 30, 0.3); }
+
+.grant-card-footer {
+  padding: 16px 24px 20px;
+  background: #f8f5ef;
+  border-top: 1px solid var(--line);
+}
+.match-label {
+  font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.2em;
+  text-transform: uppercase; color: var(--gold); margin-bottom: 10px;
+}
+.artist-matches { display: flex; flex-wrap: wrap; gap: 6px; }
+.artist-chip {
+  font-family: var(--sans); font-size: 12px; color: var(--cream-sft);
+  background: rgba(0,0,0,0.04); padding: 4px 10px;
+  border: 1px solid var(--line);
+  text-decoration: none; transition: border-color .2s, color .2s;
+}
+.artist-chip:hover { border-color: var(--gold); color: var(--cream); }
+.artist-chip .role {
+  font-family: var(--mono); font-size: 9px; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--cream-dim); margin-left: 4px;
+}
+
+.note-box {
+  background: rgba(205, 191, 134, 0.07); border-left: 3px solid var(--gold);
+  padding: 14px 18px; margin-top: 16px; font-size: 13px;
+  color: var(--cream-sft); font-family: var(--serif); font-style: italic; line-height: 1.55;
+}
+
+/* ── Grant purpose statement ────────────────────────────────── */
+.grant-purpose {
+  font-family: var(--serif); font-size: 15px; line-height: 1.6;
+  color: var(--cream); margin: 0 0 16px;
+  padding: 12px 16px;
+  background: rgba(30, 22, 48, 0.05);
+  border-left: 3px solid var(--gold);
+}
+
+/* ── Grant bullet lists ──────────────────────────────────────── */
+.grant-bullets {
+  margin: 8px 0 14px 0; padding: 0 0 0 16px;
+  font-family: var(--serif); font-size: 13.5px; line-height: 1.65;
+  color: var(--cream-sft); list-style: none;
+}
+.grant-bullets li { position: relative; padding-left: 14px; margin-bottom: 4px; }
+.grant-bullets li::before {
+  content: "—"; position: absolute; left: -2px;
+  color: var(--olive-lt); font-size: 12px; line-height: 1.8;
+}
+.grant-meta-line {
+  font-family: var(--sans); font-size: 12.5px; color: var(--cream-sft);
+  margin: 10px 0 14px; display: flex; flex-direction: column; gap: 4px;
+}
+.grant-meta-line span { display: block; }
+.grant-meta-line strong { color: var(--cream); }
+
+/* ── Artist filter row ───────────────────────────────────────── */
+.artist-filter-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 0 14px; overflow-x: auto;
+  scrollbar-width: none; -ms-overflow-style: none;
+  border-top: 1px solid var(--line-soft);
+  margin-top: 2px;
+}
+.artist-filter-row::-webkit-scrollbar { display: none; }
+.artist-filter-label {
+  font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.22em;
+  text-transform: uppercase; color: var(--cream-dim); white-space: nowrap;
+  flex: 0 0 auto; padding-right: 4px;
+}
+.artist-pill {
+  flex: 0 0 auto;
+  background: transparent; border: 1px solid var(--line);
+  color: var(--cream-dim); font-family: var(--sans); font-size: 12px;
+  padding: 5px 12px; cursor: pointer; white-space: nowrap;
+  transition: border-color .2s, color .2s, background .2s;
+}
+.artist-pill:hover { border-color: rgba(205,191,134,0.4); color: var(--cream); }
+.artist-pill.active {
+  background: rgba(205,191,134,0.12);
+  border-color: var(--gold); color: var(--gold);
+}
+
+/* ── Hidden state for filtering ──────────────────────────────── */
+.grant-card.hidden { display: none; }
+.state-group.hidden { display: none; }
+
+/* ── Nomination pill ─────────────────────────────────────────── */
+.nom-pill {
+  display: inline-block; font-family: var(--mono); font-size: 9px;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  padding: 3px 8px; background: rgba(140, 40, 80, 0.1); color: #8a2a50;
+  border: 1px solid rgba(140, 40, 80, 0.3); margin-left: 8px; vertical-align: middle;
+}
+
+/* ── Footer band ─────────────────────────────────────────────── */
+.about-tracker {
+  background: var(--plum-deep);
+  padding: clamp(48px, 6vw, 72px) var(--pad);
+  border-top: 1px solid var(--line);
+}
+.about-tracker h2 {
+  font-family: var(--serif); font-weight: 300;
+  font-size: clamp(32px, 4vw, 48px); color: var(--cream);
+  margin-bottom: 20px;
+}
+.about-tracker h2 em { font-style: italic; color: var(--gold); }
+.about-tracker p {
+  font-family: var(--serif); font-size: 17px; line-height: 1.65;
+  color: var(--cream-sft); max-width: 640px; margin: 0 0 16px;
+}
+
+/* ── Responsive ──────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .grants-hero, .stats-bar, .filter-zone, .grants-section, .about-tracker {
+    padding-left: var(--pad-m); padding-right: var(--pad-m);
+  }
+  .grants-grid { grid-template-columns: 1fr; }
+  .stat-item { padding: 0 16px; }
+  .filter-group + .filter-group { margin-left: 8px; padding-left: 8px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ── Header ─────────────────────────────────────────────────────── -->
+<header class="site-header">
+  <a href="index.html" class="brand">
+    <img class="mark" src="img/logo-k.png" alt="" aria-hidden="true">
+    <span class="word">KUDZU<span class="arts">arts</span></span>
+  </a>
+  <nav class="nav" aria-label="Primary">
+    <a href="artists.html">Artists</a>
+    <a href="exhibitions.html">Exhibitions</a>
+    <a href="gallery.html">Virtual Gallery</a>
+    <a href="printshop.html">Printshop</a>
+    <a href="events.html">Events</a>
+    <a href="grants.html" aria-current="page">Grants</a>
+    <a href="contact.html">Contact</a>
+  </nav>
+  <a href="https://instagram.com/kudzu.arts" target="_blank" rel="noopener" class="btn btn-olive nav-cta">Follow on Instagram</a>
+  <button class="nav-toggle" type="button" aria-expanded="false">Menu</button>
+</header>
+
+<!-- ── Hero ───────────────────────────────────────────────────────── -->
+<div class="grants-hero">
+  <div class="vine-climb right"></div>
+  <div class="wrap">
+    <p class="kicker">Grant Tracker</p>
+    <h1>Money for the <em>work.</em></h1>
+    <p class="sub">A monthly-updated digest of arts grants and fellowships available to Kudzu artists — organized by state, medium, and award size, with roster matches for each opportunity.</p>
+    <div class="update-bar">
+      <span class="pulse"></span>
+      <span>Last updated: <strong id="last-updated">July 2026</strong></span>
+      <span style="margin-left:12px; color: var(--line)">|</span>
+      <span style="margin-left:12px;">Covering Tennessee · California · National</span>
+    </div>
+  </div>
+</div>
+
+<!-- ── Stats bar ──────────────────────────────────────────────────── -->
+<div class="stats-bar">
+  <div class="stat-item">
+    <div class="stat-num">20</div>
+    <div class="stat-label">Active grants tracked</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-num">$600K+</div>
+    <div class="stat-label">Total available funding</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-num">16</div>
+    <div class="stat-label">Roster artists matched</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-num">3</div>
+    <div class="stat-label">Regions covered</div>
+  </div>
+</div>
+
+<!-- ── Filter bar ─────────────────────────────────────────────────── -->
+<div class="filter-zone">
+  <div class="wrap">
+    <div class="filter-row">
+      <div class="filter-group">
+        <button class="filter-btn active" data-filter="all">All <span class="filter-count">20</span></button>
+        <button class="filter-btn" data-filter="tn">Tennessee <span class="filter-count">5</span></button>
+        <button class="filter-btn" data-filter="ca">California <span class="filter-count">6</span></button>
+        <button class="filter-btn" data-filter="national">National <span class="filter-count">9</span></button>
+      </div>
+      <div class="filter-group">
+        <button class="filter-btn" data-filter="painting">Painting</button>
+        <button class="filter-btn" data-filter="ceramics">Ceramics / Glass</button>
+        <button class="filter-btn" data-filter="mural">Mural / Public</button>
+        <button class="filter-btn" data-filter="open-soon">Opens Soon</button>
+      </div>
+    </div>
+    <div class="artist-filter-row">
+      <span class="artist-filter-label">By artist →</span>
+      <button class="artist-pill" data-artist="alan-chin">Alan Chin</button>
+      <button class="artist-pill" data-artist="ben-quinn">Ben Quinn</button>
+      <button class="artist-pill" data-artist="brandon-donahue-shipp">Brandon Donahue-Shipp</button>
+      <button class="artist-pill" data-artist="daniel-herr">Daniel Herr</button>
+      <button class="artist-pill" data-artist="ellie-caudill">Ellie Caudill</button>
+      <button class="artist-pill" data-artist="evan-christof-seeling">Evan Christof Seeling</button>
+      <button class="artist-pill" data-artist="hans-wendel">Hans Wendel</button>
+      <button class="artist-pill" data-artist="ian-patrick-cato">Ian Patrick Cato</button>
+      <button class="artist-pill" data-artist="isis-cahuas">Isis Cahuas</button>
+      <button class="artist-pill" data-artist="jennie-lawless">Jennie Lawless</button>
+      <button class="artist-pill" data-artist="katya-labowe-stoll">Katya Labowe-Stoll</button>
+      <button class="artist-pill" data-artist="marta-lee">Marta Lee</button>
+      <button class="artist-pill" data-artist="michael-haight">Michael Haight</button>
+      <button class="artist-pill" data-artist="mike-chattem">Mike Chattem</button>
+      <button class="artist-pill" data-artist="talia-ceravolo">Talia Ceravolo</button>
+      <button class="artist-pill" data-artist="wyatt-mills">Wyatt Mills</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Grants ─────────────────────────────────────────────────────── -->
+<div class="grants-section">
+  <div class="wrap">
+
+    <!-- Tennessee ──────────────────────────────────────── -->
+    <div class="state-group" data-state="tn" id="group-tn">
+      <div class="state-heading">
+        <h2>Ten<em>nessee</em></h2>
+        <span class="state-badge badge-tn">TN</span>
+      </div>
+      <div class="grants-grid">
+
+        <!-- TN 1: Current Art Fund -->
+        <div class="grant-card" data-state="tn" data-mediums="painting,ceramics,mural,sculpture" data-status="open" data-artists="brandon-donahue-shipp,ellie-caudill,ian-patrick-cato">
+          <div class="grant-card-top">
+            <div>
+              <p class="grant-funder">Tri-Star Arts</p>
+              <h3 class="grant-name">Current Art Fund</h3>
+            </div>
+            <span class="amount-badge amt-md">$7,500</span>
+          </div>
+          <div class="grant-card-body">
+            <p class="grant-purpose">Money to make a specific new work — you propose a project, and this grant covers the materials, production, and studio costs needed to complete it. For work that needs funding to exist.</p>
+            <div class="grant-row">
+              <div class="grant-field">
+                <label>Deadline</label>
+                <span class="deadline-open">Aug 31, 2026 — Open Now</span>
+              </div>
+              <div class="grant-field">
+                <label>Awards</label>
+                <span>8 grants ($60K total)</span>
+              </div>
+            </div>
+            <div class="tag-row">
+              <span class="tag medium">All visual media</span>
+              <span class="tag medium">2D · 3D · 4D</span>
+              <span class="tag location">TN Resident required</span>
+            </div>
+            <ul class="grant-bullets">
+              <li>Open to Tennessee-based artists and collectives working in any visual medium — 2D, 3D, 4D, painting, ceramics, sculpture, video, mixed media</li>
+              <li>Funds a specific new project or body of work — covers materials, production costs, and studio expenses</li>
+              <li>No career-stage restriction; early-career and established artists both eligible</li>
+              <li>Money goes toward creating the proposed work, not general living expenses</li>
+            </ul>
+            <div class="grant-meta-line">
+              <span><strong>Payment:</strong> $7,500 unrestricted — 8 awards ($60K total pool)</span>
+              <span><strong>Deadline:</strong> August 31, 2026 — open now</span>
+              <span><strong>Application fee:</strong> Free</span>
+            </div>
+            <a href="https://tristararts.org/current-art-fund" target="_blank" rel="noopener" class="btn btn-ghost" style="font-size:12px; padding:10px 18px;">Grant description →</a>
+            <a href="https://tristararts.org/current-art-fund" target="_blank" rel="noopener" class="btn btn-primary" style="font-size:12px; padding:10px 18px;">Apply →</a>
+          </div>
+          <div class="grant-card-footer">
+            <p class="match-label">Best matches from our roster</p>
+            <div class="artist-matches">
+              <a href="artist-brandon-donahue-shipp.html" class="artist-chip">Brandon Donahue-Shipp <span class="role">Mixed Media · NSH</span></a>
+              <a href="artist-ellie-caudill.html" class="artist-chip">Ellie Caudill <span class="role">Murals · NSH</span></a>
+              <a href="artist-ian-patrick-cato.html" class="artist-chip">Ian Patrick Cato <span class="role">Painting · TN roots</span></a>
+            </div>
+          </div>
+        </div>
+
+        <!-- TN 2: Individual Artist Fellowship -->
+        <div class="grant-card" data-state="tn" data-mediums="painting,ceramics,mural,sculpture" data-status="annual" data-artists="brandon-donahue-shipp,ellie-caudill">
+          <div class="grant-card-top">
+            <div>
+              <p class="grant-funder">Tennessee Arts Commission</p>
+              <h3 class="grant-name">Individual Artist Fellowship</h3>
+            </div>
+            <span class="amount-badge amt-sm">$5,000</span>
+          </div>
+          <div class="grant-card-body">
+            <p class="grant-purpose">A career honor, not a project grant — the state of Tennessee selects artists whose body of work demonstrates exceptional talent. The money is yours to use however your practice demands, with no reporting or restrictions.</p>
+            <div class="grant-row">
+              <div class="grant-field">
+                <label>Next Deadline</label>
+                <span class="deadline-rolling">~January 2027 (annual)</span>
+              </div>
+              <div class="grant-field">
+                <label>Residency</label>
+                <span>3 years in TN required</span>
+              </div>
+            </div>
+            <div class="tag-row">
+              <span class="tag medium">All disciplines</span>
+              <span class="tag location">TN resident 3+ years</span>
+            </div>
+            <ul class="grant-bullets">
+              <li>Must have lived and worked in Tennessee for 3+ consecutive years — no exceptions</li>
+              <li>All disciplines eligible; selection is based entirely on artistic excellence via work samples (no project proposal needed)</li>
+              <li>Money is unrestricted — artist decides how it's used</li>
+              <li>Aimed at professional practicing artists of exceptional talent, not students or hobbyists</li>
+            </ul>
+            <div class="grant-meta-line">
+              <span><strong>Payment:</strong> $5,000 unrestricted</span>
+              <span><strong>Deadline:</strong> ~January 27, 2027 (annual — late January)</span>
+              <span><strong>Application fee:</strong> Free</span>
+            </div>
+            <a href="https://tnartscommission.org/grants/individual/" target="_blank" rel="noopener" class="btn btn-ghost" style="font-size:12px; padding:10px 18px;">Grant description →</a>
+            <a href="https://tnartscommission.org/grants/individual/" target="_blank" rel="noopener" class="btn btn-primary" style="font-size:12px; padding:10px 18px;">Apply →</a>
+          </div>
+          <div class="grant-card-footer">
+            <p class="match-label">Best matches from our roster</p>
+            <div class="artist-matches">
+              <a href="artist-brandon-donahue-shipp.html" class="artist-chip">Brandon Donahue-Shipp <span class="role">Mixed Media · NSH</span></a>
+              <a href="artist-ellie-caudill.html" class="artist-chip">Ellie Caudill <span class="role">Murals · NSH</span></a>
+            </div>
+            <div class="note-box">Must have lived in Tennessee for the past three consecutive years. Nashville-based artists on the roster are primary candidates.</div>
+          </div>
+        </div>
+
+        <!-- TN 3: Metro Arts Thrive -->
+        <div class="grant-card" data-state="tn" data-mediums="mural,painting,sculpture" data-status="annual" data-artists="ellie-caudill,brandon-donahue-shipp">
+          <div class="grant-card-top">
+            <div>
+              <p class="grant-funder">Metro Arts Nashville</p>
+              <h3 class="grant-name">Thrive Project Grants</h3>
+            </div>
+            <span class="amount-badge amt-md">Varies</span>
+          </div>
+          <div class="grant-card-body">
+            <p class="grant-purpose">Funding to put art in a specific Nashville neighborhood — murals on buildings, installations in public spaces, community workshops, or placemaking projects. The art must live somewhere people can encounter it, and residents should be involved in making it.</p>
+            <div class="grant-row">
+              <div class="grant-field">
+                <label>Cycle</label>
+                <span class="deadline-rolling">Annual (check metroartsnashville.gov)</span>
+              </div>
+              <div class="grant-field">
+                <label>Pool</label>
+                <span>$3.2M+ across 86 grants</span>
+              </div>
+            </div>
+            <div class="tag-row">
+              <span class="tag medium">Community art</span>
+              <span class="tag medium">Murals</span>
+              <span class="tag medium">Public installation</span>
+              <span class="tag location">Davidson County</span>
+            </div>
+            <ul class="grant-bullets">
+              <li>Must take place in Davidson County (Nashville) and actively engage residents throughout the project</li>
+              <li>Funds community-facing work: murals, public installations, workshops, performances, placemaking</li>
+              <li>Money goes toward direct project costs — artists are paid for their labor, not just materials</li>
+              <li>Must promote cultural equity and demonstrate clear impact on a neighborhood or community</li>
+              <li>Individual artists, collectives, and nonprofits with a lead artist all eligible</li>
+            </ul>
+            <div class="grant-meta-line">
+              <span><strong>Payment:</strong> Varies — part of a $3.2M+ pool across 86 Thrive grants annually</span>
+              <span><strong>Deadline:</strong> Annual — contact arts.grants@nashville.gov for current cycle dates</span>
+              <span><strong>Application fee:</strong> Free</span>
+            </div>
+            <a href="https://www.metroartsnashville.gov/thrive" target="_blank" rel="noopener" class="btn btn-ghost" style="font-size:12px; padding:10px 18px;">Grant description →</a>
+            <a href="https://www.nashville.gov/departments/arts/services/apply-arts-grant-funding" target="_blank" rel="noopener" class="btn btn-primary" style="font-size:12px; padding:10px 18px;">Apply →</a>
+          </div>
+          <div class="grant-card-footer">
+            <p class="match-label">Best matches from our roster</p>
+            <div class="artist-matches">
+              <a href="artist-ellie-caudill.html" class="artist-chip">Ellie Caudill <span class="role">Murals · NSH</span></a>
+              <a href="artist-brandon-donahue-shipp.html" class="artist-chip">Brandon Donahue-Shipp <span class="role">Mixed Media · NSH</span></a>
+            </div>
+          </div>
+        </div>
+
+        <!-- TN 4: ARTSmemphis ARTSassist -->
+        <div class="grant-card" data-state="tn" data-mediums="painting,ceramics,sculpture,mural" data-status="annual" data-artists="brandon-donahue-shipp,ellie-caudill,ian-patrick-cato">
+          <div class="grant-card-top">
+            <div>
+              <p class="grant-funder">ARTSmemphis</p>
+              <h3 class="grant-name">ARTSassist Grant</h3>
+            </div>
+            <span class="amount-badge amt-md">$1,000 – $10,000</span>
+          </div>
+          <div class="grant-card-body">
+            <p class="grant-purpose">Unrestricted recognition for serious visual, dance, and film artists in Memphis — the money is yours to put toward your practice however you need. No project required; this is an investment in the artist, not a specific output.</p>
+            <div class="grant-row">
+              <div class="grant-field">
+                <label>Next Cycle</label>
+                <span class="deadline-rolling">Dates announced Summer 2026</span>
+              </div>
+              <div class="grant-field">
+                <label>Range</label>
+                <span>$1,000 – $10,000 unrestricted</span>
+              </div>
+            </div>
+            <div class="tag-row">
+              <span class="tag medium">Visual art</span>
+              <span class="tag medium">Dance</span>
+              <span class="tag medium">Film</span>
+              <span class="tag location">Shelby County, TN — 3 years</span>
+            </div>
+            <ul class="grant-bullets">
+              <li>Must be a US citizen or permanent resident, 21+, and a Shelby County (Memphis) resident for at least 3 consecutive years</li>
+              <li>Supports visual art (all media), dance, and film directors; music handled separately through Music Export Memphis</li>
+              <li>Must be a professional artist for at least 3 years — not students or hobbyists</li>
+              <li>Not available to artists who received ARTSassist, ArtsAccelerator, or Emmett Award in the past 5 years</li>
+              <li>Money is unrestricted — artist decides how it's spent</li>
+            </ul>
+            <div class="grant-meta-line">
+              <span><strong>Payment:</strong> $1,000–$10,000 unrestricted</span>
+              <span><strong>Deadline:</strong> Cycle dates announced Summer 2026 — watch artsmemphis.org</span>
+              <span><strong>Application fee:</strong> Free</span>
+            </div>
+            <a href="https://www.artsmemphis.org/arts-assist" target="_blank" rel="noopener" class="btn btn-ghost" style="font-size:12px; padding:10px 18px;">Grant description →</a>
+            <a href="https://www.artsmemphis.org/arts-assist" target="_blank" rel="noopener" class="btn btn-primary" style="font-size:12px; padding:10px 18px;">Apply →</a>
+          </div>
+          <div class="grant-card-footer">
+            <p class="match-label">Best matches from our roster</p>
+            <div class="artist-matches">
+              <a href="artist-brandon-donahue-shipp.html" class="artist-chip">Brandon Donahue-Shipp <span class="role">Mixed Media · TN</span></a>
+              <a href="artist-ellie-caudill.html" class="artist-chip">Ellie Caudill <span class="role">Murals · NSH</span></a>
+              <a href="artist-ian-patrick-cato.html" class="artist-chip">Ian Patrick Cato <span class="role">Painting · TN roots</span></a>
+            </div>
+            <div class="note-box">Requires Shelby County (Memphis) residency — Nashville-based artists are ineligible unless they relocate. Worth tracking for any future Memphis roster additions or artists with Memphis ties.</div>
+          </div>
+        </div>
+
+        <!-- TN 5: Artists Work Grant -->
+        <div class="grant-card" data-state="tn" data-mediums="painting,ceramics,mural,sculpture" data-status="annual" data-artists="brandon-donahue-shipp,ellie-caudill">
+          <div class="grant-card-top">
+            <div>
+              <p class="grant-funder">Tennessee Arts Commission</p>
+              <h3 class="grant-name">Artists Work Grant</h3>
+            </div>
+            <span class="amount-badge amt-sm">Up to $3,000</span>
+          </div>
+          <div class="grant-card-body">
+            <p class="grant-purpose">Paying for the things a specific project needs — materials, supplies, equipment rental. You name the work you want to make and make the case that this money is what enables it to happen. Not for living expenses or work already done.</p>
+            <div class="grant-row">
+              <div class="grant-field">
+                <label>Cycle</label>
+                <span class="deadline-rolling">Annual — watch for 2027</span>
+              </div>
+              <div class="grant-field">
+                <label>Focus</label>
+                <span>Project-based work expenses</span>
+              </div>
+            </div>
+            <div class="tag-row">
+              <span class="tag medium">All disciplines</span>
+              <span class="tag location">TN Resident</span>
+            </div>
+            <ul class="grant-bullets">
+              <li>Covers specific project expenses: materials, supplies, equipment rental, and production costs</li>
+              <li>Must propose a defined new body of work — not general operating costs or completed projects</li>
+              <li>Requires a clear case for why the grant enables work that wouldn't otherwise happen</li>
+              <li>Tennessee resident required; all disciplines eligible</li>
+            </ul>
+            <div class="grant-meta-line">
+              <span><strong>Payment:</strong> Up to $3,000 project-based</span>
+              <span><strong>Deadline:</strong> Annual — watch tnartscommission.org for 2027 dates</span>
+              <span><strong>Application fee:</strong> Free</span>
+            </div>
+            <a href="https://tnartscommission.org/art-grants/" target="_blank" rel="noopener" class="btn btn-ghost" style="font-size:12px; padding:10px 18px;">Grant description →</a>
+            <a href="https://tnartscommission.org/art-grants/" target="_blank" rel="noopener" class="btn btn-primary" style="font-size:12px; padding:10px 18px;">Apply →</a>
+          </div>
+          <div class="grant-card-footer">
+            <p class="match-label">Best matches from our roster</p>
+            <div class="artist-matches">
+              <a href="artist-brandon-donahue-shipp.html" class="artist-chip">Brandon Donahue-Shipp <span class="role">Mixed Media · NSH</span></a>
+              <a href="artist-ellie-caudill.html" class="artist-chip">Ellie Caudill <span class="role">Murals · NSH</span></a>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /grants-grid TN -->
+    </div><!-- /state-group TN -->
+
+    <!-- California ─────────────────────────────────────── -->
+    <div class="state-group" data-state="ca" id="group-ca">
+      <div class="state-heading">
+        <h2>Cali<em>fornia</em></h2>
+        <span class="state-badge badge-ca">CA</span>
+      </div>
+      <div class="grants-grid">
+
+        <!-- CA 1: CAC Individual Artist Fellowship -->
+        <div class="grant-card" data-state="ca" data-mediums="painting,ceramics,sculpture,mural" data-status="annual" data-artists="ian-patrick-cato,michael-haight,alan-chin,katya-labowe-stoll,talia-ceravolo,ben-quinn,wyatt-mills,jennie-lawless,mike-chattem,hans-wendel">
+          <div class="grant-card-top">
+            <div>
+              <p class="grant-funder">California Arts Council</p>
+              <h3 class="grant-name">Individual Artists Fellowship</h3>
+            </div>
+            <span class="amount-badge amt-xl">$5K – $50K</span>
+          </div>
+          <div class="grant-card-body">
+            <p class="grant-purpose">California's statewide artist honor — the state recognizes working artists at three career stages and gives them unrestricted money. No project required; the award is based entirely on the strength of existing work. Artists apply through their regional organization.</p>
+            <div class="grant-row">
+              <div class="grant-field">
+                <label>Deadline Range</label>
+                <span class="deadline-rolling">2026 cycle closed — watch spring 2027</span>
+              </div>
+              <div class="grant-field">
+                <label>Tiers</label>
+                <span>Emerging · Established · Legacy</span>
+              </div>
+            </div>
+            <div class="tag-row">
+              <span class="tag medium">All disciplines</span>
+              <span class="tag location">CA Resident</span>
+            </div>
+            <ul class="grant-bullets">
+              <li><strong style="color:var(--cream-sft);">Emerging ($5K):</strong> Early-career CA artists showing strong artistic promise and growth</li>
+              <li><strong style="color:var(--cream-sft);">Established ($10K):</strong> Mid-career artists with a significant exhibition history and clear artistic identity</li>
+              <li><strong style="color:var(--cream-sft);">Legacy ($50K):</strong> Artists with long careers and major contributions to California's cultural landscape</li>
+              <li>All disciplines and all 58 CA counties — applied through a regional organization for your area</li>
+              <li>Money is unrestricted — used however the artist needs</li>
+            </ul>
+            <div class="grant-meta-line">
+              <span><strong>Payment:</strong> $5,000 (Emerging) · $10,000 (Established) · $50,000 (Legacy)</span>
+              <span><strong>Deadline:</strong> 2026 cycle regional deadlines closed (Apr–Jun 2026). Next cycle expected spring 2027 — watch arts.ca.gov</span>
+              <span><strong>Application fee:</strong> Free</span>
+            </div>
+            <a href="https://arts.ca.gov/grant_program/individual-artists-fellowship/" target="_blank" rel="noopener" class="btn btn-ghost" style="font-size:12px; padding:10px 18px;">Grant description →</a>
+            <a href="https://arts.ca.gov/grant_program/individual-artists-fellowship/" target="_blank" rel="noopener" class="btn btn-primary" style="font-size:12px; padding:10px 18px;">Apply →</a>
+          </div>
+          <div class="grant-card-footer">
+            <p class="match-label">Best matches from our roster</p>
+            <div class="artist-matches">
+              <a href="artist-ian-patrick-cato.html" class="artist-chip">Ian Patrick Cato <span class="role">Painting · LA</span></a>
+              <a href="artist-michael-haight.html" class="artist-chip">Michael Haight <span class="role">Painting · LA</span></a>
+              <a href="artist-alan-chin.html" class="artist-chip">Alan Chin <span class="role">Ceramics · LA</span></a>
+              <a href="artist-katya-labowe-stoll.html" class="artist-chip">Katya Labowe-Stoll <span class="role">Painting · LA</span></a>
+              <a href="artist-talia-ceravolo.html" class="artist-chip">Talia Ceravolo <span class="role">Painting · LA</span></a>
+              <a href="artist-ben-quinn.html" class="artist-chip">Ben Quinn <span class="role">Painting · LA</span></a>
+              <a href="artist-wyatt-mills.html" class="artist-chip">Wyatt Mills <span class="role">Painting · LA</span></a>
+            </div>
+          </div>
+        </div>
+
+        <!-- CA 2: LACE Lightning Fund -->
+        <div class="grant-card" data-state="ca" data-mediums="painting,sculpture,mural" data-status="open-soon" data-artists="ian-patrick-cato,jennie-lawless,michael-haight,mike-chattem,wyatt-mills">
+          <div class="grant-card-top">
+            <div>
+              <p class="grant-funder">LACE (Los Angeles Contemporary Exhibitions)</p>
+              <h3 class="grant-name">Lightning Fund Artist Grants</h3>
+            </div>
+            <span class="amount-badge amt-sm">$6,000</span>
+          </div>
+          <div class="grant-card-body">
+            <p class="grant-purpose">Funding a specific new project — you describe what you want to make, and LACE pays for it. Painting, sculpture, installation, photography. The work doesn't exist yet; this grant is what makes it possible.</p>
+            <div class="grant-row">
+              <div class="grant-field">
+                <label>Opens</label>
+                <span class="deadline-soon">Aug 12, 2026 — deadline Oct 6, 2026</span>
+              </div>
+              <div class="grant-field">
+                <label>Awards</label>
+                <span>10 project grants</span>
+              </div>
+            </div>
+            <div class="tag-row">
+              <span class="tag medium">All visual arts</span>
+              <span class="tag medium">Painting</span>
+              <span class="tag medium">Sculpture</span>
+              <span class="tag location">LA County resident</span>
+            </div>
+            <ul class="grant-bullets">
+              <li>Must be an LA County resident, 18+, and not currently enrolled in any college or university program</li>
+              <li>Funds a specific new project — painting, sculpture, installation, photography, and traditional media all welcome</li>
+              <li>Money goes toward materials, production, and direct project costs for the proposed work</li>
+              <li>No career-stage restriction — open to artists at any point in their practice</li>
+            </ul>
+            <div class="grant-meta-line">
+              <span><strong>Payment:</strong> $6,000 per project — 10 awards</span>
+              <span><strong>Deadline:</strong> Applications open August 12, 2026 — deadline October 6, 2026</span>
+              <span><strong>Application fee:</strong> Free</span>
+            </div>
+            <a href="https://welcometolace.org/lightning-fund/" target="_blank" rel="noopener" class="btn btn-ghost" style="font-size:12px; padding:10px 18px;">Grant description →</a>
+            <a href="https://welcometolace.org/lightning-fund/" target="_blank" rel="noopener" class="btn btn-primary" style="font-size:12px; padding:10px 18px;">Apply →</a>
+          </div>
+          <div class="grant-card-footer">
+            <p class="match-label">Best matches from our roster</p>
+            <div class="artist-matches">
+              <a href="artist-ian-patrick-cato.html" class="artist-chip">Ian Patrick Cato <span class="role">Painting · LA</span></a>
+              <a href="artist-jennie-lawless.html" class="artist-chip">Jennie Lawless <span class="role">Painting · LA</span></a>
+              <a href="artist-michael-haight.html" class="artist-chip">Michael Haight <span class="role">Painting · LA</span></a>
+              <a href="artist-mike-chattem.html" class="artist-chip">Mike Chattem <span class="role">Painting · LA</span></a>
+              <a href="artist-wyatt-mills.html" class="artist-chip">Wyatt Mills <span class="role">Painting · LA</span></a>
+            </div>
+          </div>
+        </div>
+
+        <!-- CA 3: Artadia LA Awards -->
+        <div class="grant-card" data-state="ca" data-mediums="painting,ceramics,sculpture,mural" data-status="closed" data-artists="michael-haight,ian-patrick-cato,alan-chin,wyatt-mills,hans-wendel">
+          <div class="grant-card-top">
+            <div>
+              <p class="grant-funder">Artadia</p>
+              <h3 class="grant-name">Los Angeles Awards</h3>
+            </div>
+            <span class="amount-badge amt-lg">$15K – $25K</span>
+          </div>
+          <div class="grant-card-body">
+            <p class="grant-purpose">Unrestricted recognition for outstanding visual artists in LA — Artadia reviews your body of work and gives you money with no project requirements and no reporting. The award is for who you are as an artist, not what you're planning to make next.</p>
+            <div class="grant-row">
+              <div class="grant-field">
+                <label>Next Cycle</label>
+                <span class="deadline-rolling">~February 2027 (watch for open call)</span>
+              </div>
+              <div class="grant-field">
+                <label>Awards</label>
+                <span>3 per cycle (unrestricted)</span>
+              </div>
+            </div>
+            <div class="tag-row">
+              <span class="tag medium">All visual media</span>
+              <span class="tag location">LA County — 2+ years</span>
+            </div>
+            <ul class="grant-bullets">
+              <li>Must live and work in LA County — minimum 2 consecutive years of residency required</li>
+              <li>All visual media considered: painting, sculpture, ceramics, photography, installation, interdisciplinary</li>
+              <li>Reviewed through a two-tier jury — first round selects nominees, second independent panel picks recipients</li>
+              <li>Money is fully unrestricted — no reporting on how it's spent, no project requirements</li>
+              <li>No career-stage restriction; artists at all levels have received the award</li>
+            </ul>
+            <div class="grant-meta-line">
+              <span><strong>Payment:</strong> $15,000–$25,000 unrestricted — 3 awards per cycle</span>
+              <span><strong>Deadline:</strong> 2026 cycle closed — next application window expected February 2027</span>
+              <span><strong>Application fee:</strong> Free</span>
+            </div>
+            <a href="https://artadia.org/award-city/los-angeles/" target="_blank" rel="noopener" class="btn btn-ghost" style="font-size:12px; padding:10px 18px;">Grant description →</a>
+            <a href="https://artadia.org/award-city/los-angeles/" target="_blank" rel="noopener" class="btn btn-primary" style="font-size:12px; padding:10px 18px;">Apply →</a>
+          </div>
+          <div class="grant-card-footer">
+            <p class="match-label">Best matches from our roster</p>
+            <div class="artist-matches">
+              <a href="artist-michael-haight.html" class="artist-chip">Michael Haight <span class="role">Painting · LA</span></a>
+              <a href="artist-ian-patrick-cato.html" class="artist-chip">Ian Patrick Cato <span class="role">Painting · LA</span></a>
+              <a href="artist-alan-chin.html" class="artist-chip">Alan Chin <span class="role">Ceramics · LA</span></a>
+              <a href="artist-wyatt-mills.html" class="artist-chip">Wyatt Mills <span class="role">Painting · LA</span></a>
+              <a href="artist-hans-wendel.html" class="artist-chip">Hans Wendel <span class="role">Interdisciplinary · LA</span></a>
+            </div>
+          </div>
+        </div>
+
+        <!-- CA 4: DCA Cultural Grants -->
+        <div class="grant-card" data-state="ca" data-mediums="painting,sculpture,mural" data-status="annual" data-artists="hans-wendel,katya-labowe-stoll,talia-ceravolo,jennie-lawless">
+          <div class="grant-card-top">
+            <div>
+              <p class="grant-funder">City of Los Angeles — Dept. of Cultural Affairs</p>
+              <h3 class="grant-name">Cultural Grants Program</h3>
+            </div>
+            <span class="amount-badge amt-md">Varies</span>
+          </div>
+          <div class="grant-card-body">
+            <p class="grant-purpose">Funding for a project that will be presented in a publicly accessible space in the City of LA — a gallery, community center, outdoor wall, plaza, or public venue. The art needs a specific place it's going, and that place needs to be in the city.</p>
+            <div class="grant-row">
+              <div class="grant-field">
+                <label>Cycle</label>
+                <span class="deadline-rolling">Annual — 2026–27 cycle open</span>
+              </div>
+              <div class="grant-field">
+                <label>Disciplines</label>
+                <span>Visual Arts · Design · Media Arts</span>
+              </div>
+            </div>
+            <div class="tag-row">
+              <span class="tag medium">Design / Visual arts</span>
+              <span class="tag medium">Media arts</span>
+              <span class="tag location">LA-based</span>
+            </div>
+            <ul class="grant-bullets">
+              <li>Funds public-facing cultural projects in visual arts, design, media arts, or literary arts based in LA</li>
+              <li>Project must be presented publicly in the City of LA and demonstrate clear community benefit</li>
+              <li>Money goes toward direct project costs — artist fees, production, materials, and presentation expenses</li>
+              <li>Individual artists and nonprofits with a lead artist both eligible; must be LA-based</li>
+              <li>Emphasis on job creation for LA artists and high artistic quality</li>
+            </ul>
+            <div class="grant-meta-line">
+              <span><strong>Payment:</strong> Varies by project scope</span>
+              <span><strong>Deadline:</strong> 2026–27 cycle currently open — check culture.lacity.gov for exact date</span>
+              <span><strong>Application fee:</strong> Free</span>
+            </div>
+            <a href="https://culture.lacity.gov/grants" target="_blank" rel="noopener" class="btn btn-ghost" style="font-size:12px; padding:10px 18px;">Grant description →</a>
+            <a href="https://culture.lacity.gov/grants/cultural-grant-program-org" target="_blank" rel="noopener" class="btn btn-primary" style="font-size:12px; padding:10px 18px;">Apply →</a>
+          </div>
+          <div class="grant-card-footer">
+            <p class="match-label">Best matches from our roster</p>
+            <div class="artist-matches">
+              <a href="artist-hans-wendel.html" class="artist-chip">Hans Wendel <span class="role">Interdisciplinary · LA</span></a>
+              <a href="artist-katya-labowe-stoll.html" class="artist-chip">Katya Labowe-Stoll <span class="role">Painting · LA</span></a>
+              <a href="artist-talia-ceravolo.html" class="artist-chip">Talia Ceravolo <span class="role">Painting · LA</span></a>
+              <a href="artist-jennie-lawless.html" class="artist-chip">Jennie Lawless <span class="role">Painting · LA</span></a>
+            </div>
+          </div>
+        </div>
+
+        <!-- CA 5: Southern Exposure AltEx -->
+        <div class="grant-card" data-state="ca" data-mediums="painting,sculpture,mural" data-status="open" data-artists="isis-cahuas,marta-lee">
+          <div class="grant-card-top">
+            <div>
+              <p class="grant-funder">Southern Exposure (SoEx)</p>
+              <h3 class="grant-name">Alternative Exposure (AltEx) Grant</h3>
+            </div>
+            <span class="amount-badge amt-sm">$5,000</span>
+          </div>
+          <div class="grant-card-body">
+            <p class="grant-purpose">Funding artist-led programming that's open to the public and supports more than one artist — a shared studio event, an artist-organized exhibition, a public project rooted in the SF Bay Area community. Money is for the work of doing it, not just materials.</p>
+            <div class="grant-row">
+              <div class="grant-field">
+                <label>Deadline</label>
+                <span class="deadline-open">Aug 10, 2026 — Open Now</span>
+              </div>
+              <div class="grant-field">
+                <label>Award</label>
+                <span>$5,000 per grant</span>
+              </div>
+            </div>
+            <div class="tag-row">
+              <span class="tag medium">Visual arts</span>
+              <span class="tag medium">Artist-led</span>
+              <span class="tag medium">Public programming</span>
+              <span class="tag location">SF Bay Area</span>
+            </div>
+            <ul class="grant-bullets">
+              <li>For independent, self-organized artist groups and small collectives based in the San Francisco Bay Area</li>
+              <li>Project must be open to the public and support the work of more than one artist — not a solo presentation</li>
+              <li>Funds development and presentation of artist-led projects: exhibitions, public programs, salons, residencies</li>
+              <li>Supports organizations without access to traditional institutional funding — independent, grassroots work</li>
+            </ul>
+            <div class="grant-meta-line">
+              <span><strong>Payment:</strong> $5,000 per grant</span>
+              <span><strong>Deadline:</strong> August 10, 2026, 11:59 PM — open now</span>
+              <span><strong>Application fee:</strong> Free</span>
+            </div>
+            <a href="https://soex.org/alternative-exposure" target="_blank" rel="noopener" class="btn btn-ghost" style="font-size:12px; padding:10px 18px;">Grant description →</a>
+            <a href="https://soex.org/alternative-exposure" target="_blank" rel="noopener" class="btn btn-primary" style="font-size:12px; padding:10px 18px;">Apply →</a>
+          </div>
+          <div class="grant-card-footer">
+            <p class="match-label">Roster notes</p>
+            <div class="artist-matches">
+              <a href="artist-isis-cahuas.html" class="artist-chip">Isis Cahuas <span class="role">Ceramics · Bay Area ties</span></a>
+            </div>
+            <div class="note-box">Requires San Francisco Bay Area base — primarily relevant for any artist-led collaborations involving Bay Area-connected Kudzu artists. Strong match if Kudzu expands its SF presence. Deadline is August 10 — act quickly.</div>
+          </div>
+        </div>
+
+        <!-- CA 6: CCF Fellowship for Visual Artists -->
+        <div class="grant-card" data-state="ca" data-mediums="painting,sculpture" data-status="annual" data-artists="ian-patrick-cato,katya-labowe-stoll,talia-ceravolo,jennie-lawless,michael-haight,alan-chin,ben-quinn">
+          <div class="grant-card-top">
+            <div>
+              <p class="grant-funder">California Community Foundation</p>
+              <h3 class="grant-name">Fellowship for Visual Artists</h3>
+            </div>
+            <span class="amount-badge amt-lg">$40,000</span>
+          </div>
+          <div class="grant-card-body">
+            <p class="grant-purpose">Unrestricted $40,000 to a mid-career LA County visual artist — one of the largest single-artist awards in California. No project proposal or reporting required. The CCF Fellowship is specifically designed to give mid-career artists the runway to take risks, change direction, or simply make more work without financial pressure.</p>
+            <div class="grant-row">
+              <div class="grant-field">
+                <label>Deadline</label>
+                <span>~March 1 (annual)</span>
+              </div>
+              <div class="grant-field">
+                <label>Grant type</label>
+                <span>Unrestricted fellowship</span>
+              </div>
+            </div>
+            <div class="tag-row">
+              <span class="tag medium">Painting · Sculpture · Photography · Installation · Mixed media</span>
+              <span class="tag location">LA County (5+ years)</span>
+            </div>
+            <ul class="grant-bullets">
+              <li>Open to mid-career artists with a primary practice in painting, drawing, photography, printmaking, sculpture, installation, experimental film/video, or interdisciplinary work</li>
+              <li>Must reside full-time in LA County for at least 5 years — strongest for Kudzu's established LA artists</li>
+              <li>Selected by a panel of art professionals on artistic merit and commitment to LA County</li>
+              <li>Fully unrestricted — no project report, no deliverables</li>
+            </ul>
+            <div class="grant-meta-line">
+              <span><strong>Payment:</strong> $40,000 unrestricted</span>
+              <span><strong>Deadline:</strong> ~March 1, 2027 (annual)</span>
+              <span><strong>Application fee:</strong> Free</span>
+            </div>
+            <a href="https://www.calfund.org/grants/fellowship-for-visual-artists/" target="_blank" rel="noopener" class="btn btn-ghost" style="font-size:12px; padding:10px 18px;">Grant description →</a>
+            <a href="https://calfund.smapply.org/" target="_blank" rel="noopener" class="btn btn-primary" style="font-size:12px; padding:10px 18px;">Apply →</a>
+          </div>
+          <div class="grant-card-footer">
+            <p class="match-label">Best matches from our roster</p>
+            <div class="artist-matches">
+              <a href="artist-ian-patrick-cato.html" class="artist-chip">Ian Patrick Cato <span class="role">Painting · LA 5+ yrs</span></a>
+              <a href="artist-katya-labowe-stoll.html" class="artist-chip">Katya Labowe-Stoll <span class="role">Painting · LA 5+ yrs</span></a>
+              <a href="artist-talia-ceravolo.html" class="artist-chip">Talia Ceravolo <span class="role">Painting · LA 5+ yrs</span></a>
+              <a href="artist-michael-haight.html" class="artist-chip">Michael Haight <span class="role">Painting · LA 5+ yrs</span></a>
+              <a href="artist-alan-chin.html" class="artist-chip">Alan Chin <span class="role">Painting · LA 5+ yrs</span></a>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /grants-grid CA -->
+    </div><!-- /state-group CA -->
+
+    <!-- National ────────────────────────────────────────── -->
+    <div class="state-group" data-state="national" id="group-national">
+      <div class="state-heading">
+        <h2><em>National</em> Opportunities</h2>
+        <span class="state-badge badge-nat">US</span>
+      </div>
+      <div class="grants-grid">
+
+        <!-- NAT 1: Creative Capital -->
+        <div class="grant-card" data-state="national" data-mediums="painting,ceramics,sculpture,mural" data-status="annual" data-artists="michael-haight,ian-patrick-cato,brandon-donahue-shipp,hans-wendel,marta-lee">
+          <div class="grant-card-top">
+            <div>
+              <p class="grant-funder">Creative Capital Foundation</p>
+              <h3 class="grant-name">Creative Capital Award</h3>
+            </div>
+            <span class="amount-badge amt-xl">Up to $50,000</span>
+          </div>
+          <div class="grant-card-body">
+            <p class="grant-purpose">Enabling a bold new project that doesn't exist yet — the kind of work that requires significant resources, time, or risk to make. You pitch what you want to create, Creative Capital funds the making of it. The stronger and more ambitious the idea, the better the application.</p>
+            <div class="grant-row">
+              <div class="grant-field">
+                <label>Open Call</label>
+                <span class="deadline-rolling">Annual — watch for 2027</span>
+              </div>
+              <div class="grant-field">
+                <label>Grant type</label>
+                <span>Unrestricted project grant</span>
+              </div>
+            </div>
+            <div class="tag-row">
+              <span class="tag medium">Visual arts</span>
+              <span class="tag medium">Performing arts</span>
+              <span class="tag medium">Film</span>
+              <span class="tag medium">Literature</span>
+              <span class="tag location">US artists</span>
+            </div>
+            <ul class="grant-bullets">
+              <li>Funds a specific new, not-yet-completed project — Visual Arts, Performing Arts, Film, or Literature</li>
+              <li>Money goes directly toward creating the proposed work: production, materials, research, time</li>
+              <li>Strong conceptual framing is essential — jury evaluates the idea and the artist's vision, not just past work</li>
+              <li>4,500+ national applicants per cycle — highly competitive; best suited for artists with a clear, ambitious project</li>
+              <li>No career-stage restriction; US artists only</li>
+            </ul>
+            <div class="grant-meta-line">
+              <span><strong>Payment:</strong> Up to $50,000 unrestricted project grant</span>
+              <span><strong>Deadline:</strong> 2026 deadline was April 2 — watch creative-capital.org for 2027 open call</span>
+              <span><strong>Application fee:</strong> Free</span>
+            </div>
+            <a href="https://creative-capital.org/creative-capital-award/" target="_blank" rel="noopener" class="btn btn-ghost" style="font-size:12px; padding:10px 18px;">Grant description →</a>
+            <a href="https://creative-capital.org/creative-capital-award/award-application/" target="_blank" rel="noopener" class="btn btn-primary" style="font-size:12px; padding:10px 18px;">Apply →</a>
+          </div>
+          <div class="grant-card-footer">
+            <p class="match-label">Best matches from our roster</p>
+            <div class="artist-matches">
+              <a href="artist-michael-haight.html" class="artist-chip">Michael Haight <span class="role">Painting · LA</span></a>
+              <a href="artist-ian-patrick-cato.html" class="artist-chip">Ian Patrick Cato <span class="role">Painting · LA</span></a>
+              <a href="artist-brandon-donahue-shipp.html" class="artist-chip">Brandon Donahue-Shipp <span class="role">Mixed Media · NSH</span></a>
+              <a href="artist-hans-wendel.html" class="artist-chip">Hans Wendel <span class="role">Interdisciplinary · LA</span></a>
+              <a href="artist-marta-lee.html" class="artist-chip">Marta Lee <span class="role">Painting · NY</span></a>
+            </div>
+          </div>
+        </div>
+
+        <!-- NAT 1b: Creative Capital State of the Art Prize -->
+        <div class="grant-card" data-state="national" data-mediums="painting,ceramics,sculpture,mural" data-status="annual" data-artists="michael-haight,ian-patrick-cato,brandon-donahue-shipp,hans-wendel,marta-lee,ellie-caudill,wyatt-mills,katya-labowe-stoll,talia-ceravolo,jennie-lawless,ben-quinn,alan-chin">
+          <div class="grant-card-top">
+            <div>
+              <p class="grant-funder">Creative Capital Foundation</p>
+              <h3 class="grant-name">State of the Art Prize</h3>
+            </div>
+            <span class="amount-badge amt-md">$10,000</span>
+          </div>
+          <div class="grant-card-body">
+            <p class="grant-purpose">Same project grant as the Creative Capital Award above — one application enters you for both prizes automatically. The difference: instead of competing against thousands of artists nationally, you only compete against other artists in your state. Kudzu artists in TN, CA, and NY each have their own state pool.</p>
+            <div class="grant-row">
+              <div class="grant-field">
+                <label>Open Call</label>
+                <span class="deadline-rolling">Annual — watch for 2027</span>
+              </div>
+              <div class="grant-field">
+                <label>Awards</label>
+                <span>53 artists — one per state + DC/territories</span>
+              </div>
+            </div>
+            <div class="tag-row">
+              <span class="tag medium">All disciplines</span>
+              <span class="tag location">US artists — 1 per state</span>
+            </div>
+            <ul class="grant-bullets">
+              <li>One award per US state — Kudzu artists in TN, CA, and NY each compete only within their own state pool</li>
+              <li>Same application as the Creative Capital Award — one submission is considered for both prizes</li>
+              <li>All disciplines eligible: painting, ceramics, glass, murals, interdisciplinary, performance</li>
+              <li>Money is unrestricted — no project reporting required</li>
+              <li>New prize launched in 2026; significantly less competition per artist than the national pool</li>
+            </ul>
+            <div class="grant-meta-line">
+              <span><strong>Payment:</strong> $10,000 unrestricted — 53 awards (one per state + DC/territories)</span>
+              <span><strong>Deadline:</strong> 2026 deadline was April 2 — watch creative-capital.org for 2027 open call</span>
+              <span><strong>Application fee:</strong> Free</span>
+            </div>
+            <a href="https://creative-capital.org/creative-capital-award/" target="_blank" rel="noopener" class="btn btn-ghost" style="font-size:12px; padding:10px 18px;">Grant description →</a>
+            <a href="https://creative-capital.org/creative-capital-award/award-application/" target="_blank" rel="noopener" class="btn btn-primary" style="font-size:12px; padding:10px 18px;">Apply →</a>
+          </div>
+          <div class="grant-card-footer">
+            <p class="match-label">Best matches from our roster</p>
+            <div class="artist-matches">
+              <a href="artist-brandon-donahue-shipp.html" class="artist-chip">Brandon Donahue-Shipp <span class="role">Mixed Media · TN</span></a>
+              <a href="artist-ellie-caudill.html" class="artist-chip">Ellie Caudill <span class="role">Murals · TN</span></a>
+              <a href="artist-ian-patrick-cato.html" class="artist-chip">Ian Patrick Cato <span class="role">Painting · CA</span></a>
+              <a href="artist-michael-haight.html" class="artist-chip">Michael Haight <span class="role">Painting · CA</span></a>
+              <a href="artist-marta-lee.html" class="artist-chip">Marta Lee <span class="role">Painting · NY</span></a>
+              <a href="artist-daniel-herr.html" class="artist-chip">Daniel Herr <span class="role">Painting · NY</span></a>
+            </div>
+          </div>
+        </div>
+
+        <!-- NAT 2: Harpo Foundation -->
+        <div class="grant-card" data-state="national" data-mediums="painting,ceramics,sculpture,mural" data-status="annual" data-artists="ian-patrick-cato,jennie-lawless,ellie-caudill,katya-labowe-stoll,marta-lee,talia-ceravolo">
+          <div class="grant-card-top">
+            <div>
+              <p class="grant-funder">Harpo Foundation</p>
+              <h3 class="grant-name">Grants for Visual Artists</h3>
+            </div>
+            <span class="amount-badge amt-md">Up to $10,000</span>
+          </div>
+          <div class="grant-card-body">
+            <p class="grant-purpose">Recognizing artists whose quality of work hasn't yet matched their public profile — the Harpo Foundation specifically looks for under-the-radar talent and gives them unrestricted money to keep working. No project required; no reporting on how the money is spent.</p>
+            <div class="grant-row">
+              <div class="grant-field">
+                <label>Deadline</label>
+                <span class="deadline-rolling">~April 2027 (annual April)</span>
+              </div>
+              <div class="grant-field">
+                <label>Grant type</label>
+                <span>Unrestricted</span>
+              </div>
+            </div>
+            <div class="tag-row">
+              <span class="tag medium">All visual arts</span>
+              <span class="tag location">US artists</span>
+            </div>
+            <ul class="grant-bullets">
+              <li>Open to US visual artists at any career stage — painting, sculpture, ceramics, photography, installation all eligible</li>
+              <li>Prioritizes artists whose work quality exceeds their public recognition — underrecognized talent is a core criterion</li>
+              <li>Money is fully unrestricted — no project proposal required, no reporting on use</li>
+              <li>Jury reviews existing body of work, not a project pitch; strong documentation matters</li>
+            </ul>
+            <div class="grant-meta-line">
+              <span><strong>Payment:</strong> Up to $10,000 unrestricted</span>
+              <span><strong>Deadline:</strong> ~April 27, 2027 (annual — late April each year)</span>
+              <span><strong>Application fee:</strong> <span style="color:#8a2a50; font-weight:600;">$15</span> — fee waiver available; email mwest@harpofoundation.org before submitting</span>
+            </div>
+            <a href="https://www.harpofoundation.org/grants/grants-for-visual-artists/" target="_blank" rel="noopener" class="btn btn-ghost" style="font-size:12px; padding:10px 18px;">Grant description →</a>
+            <a href="https://www.harpofoundation.org/grants/grants-for-visual-artists/" target="_blank" rel="noopener" class="btn btn-primary" style="font-size:12px; padding:10px 18px;">Apply →</a>
+          </div>
+          <div class="grant-card-footer">
+            <p class="match-label">Best matches from our roster</p>
+            <div class="artist-matches">
+              <a href="artist-ian-patrick-cato.html" class="artist-chip">Ian Patrick Cato <span class="role">Painting · LA</span></a>
+              <a href="artist-jennie-lawless.html" class="artist-chip">Jennie Lawless <span class="role">Painting · LA</span></a>
+              <a href="artist-ellie-caudill.html" class="artist-chip">Ellie Caudill <span class="role">Murals · NSH</span></a>
+              <a href="artist-katya-labowe-stoll.html" class="artist-chip">Katya Labowe-Stoll <span class="role">Painting · LA</span></a>
+              <a href="artist-marta-lee.html" class="artist-chip">Marta Lee <span class="role">Painting · NY</span></a>
+              <a href="artist-talia-ceravolo.html" class="artist-chip">Talia Ceravolo <span class="role">Painting · LA</span></a>
+            </div>
+          </div>
+        </div>
+
+        <!-- NAT 3: Spector Craft Prize -->
+        <div class="grant-card" data-state="national" data-mediums="ceramics" data-status="annual" data-artists="evan-christof-seeling,alan-chin,isis-cahuas">
+          <div class="grant-card-top">
+            <div>
+              <p class="grant-funder">Spector Foundation</p>
+              <h3 class="grant-name">Spector Craft Prize for Emerging Artists</h3>
+            </div>
+            <span class="amount-badge amt-md">$10,000</span>
+          </div>
+          <div class="grant-card-body">
+            <p class="grant-purpose">Advancing a young craft artist's studio practice — the $10,000 goes toward your work in ceramics, glass, textiles, metalwork, or related disciplines. Winners also travel to Crystal Bridges Museum in Bentonville, AR for the Spector Craft Summit and join a national professional network of craft artists and collectors.</p>
+            <div class="grant-row">
+              <div class="grant-field">
+                <label>Deadline</label>
+                <span class="deadline-rolling">~March 2027 (annual March)</span>
+              </div>
+              <div class="grant-field">
+                <label>Eligibility</label>
+                <span>Early-career (≤7 years studio)</span>
+              </div>
+            </div>
+            <div class="tag-row">
+              <span class="tag medium">Ceramics</span>
+              <span class="tag medium">Glass</span>
+              <span class="tag medium">Textiles</span>
+              <span class="tag medium">Metalwork</span>
+              <span class="tag medium">Paper arts</span>
+              <span class="tag location">US artists</span>
+            </div>
+            <ul class="grant-bullets">
+              <li>Early-career craft artists only — must be 21+ with 7 or fewer years of active studio practice</li>
+              <li>Disciplines: ceramics, glass, textiles, woodworking, metalwork, basketry, paper arts — no painting or drawing</li>
+              <li>Money goes toward studio practice; winners also receive travel to and attendance at the Spector Craft Summit at Crystal Bridges Museum (Bentonville, AR)</li>
+              <li>Includes mentorship and professional network development alongside the cash award</li>
+              <li>Five winners selected nationally — applications open each November</li>
+            </ul>
+            <div class="grant-meta-line">
+              <span><strong>Payment:</strong> $10,000 + summit attendance + mentorship — 5 awards nationally</span>
+              <span><strong>Deadline:</strong> ~March 1, 2027 (annual — applications open November 2026)</span>
+              <span><strong>Application fee:</strong> Free</span>
+            </div>
+            <a href="https://spectorcraftprize.org/" target="_blank" rel="noopener" class="btn btn-ghost" style="font-size:12px; padding:10px 18px;">Grant description →</a>
+            <a href="https://spectorcraftprize.org/registration" target="_blank" rel="noopener" class="btn btn-primary" style="font-size:12px; padding:10px 18px;">Apply →</a>
+          </div>
+          <div class="grant-card-footer">
+            <p class="match-label">Best matches from our roster</p>
+            <div class="artist-matches">
+              <a href="artist-evan-christof-seeling.html" class="artist-chip">Evan Christof Seeling <span class="role">Glass</span></a>
+              <a href="artist-alan-chin.html" class="artist-chip">Alan Chin <span class="role">Ceramics · LA</span></a>
+              <a href="artist-isis-cahuas.html" class="artist-chip">Isis Cahuas <span class="role">Ceramics</span></a>
+            </div>
+          </div>
+        </div>
+
+        <!-- NAT 3b: South Arts Southern Prize -->
+        <div class="grant-card" data-state="national" data-mediums="painting,ceramics,sculpture,mural" data-status="open-soon" data-artists="brandon-donahue-shipp,ellie-caudill,ian-patrick-cato,michael-haight,wyatt-mills,katya-labowe-stoll,talia-ceravolo,jennie-lawless">
+          <div class="grant-card-top">
+            <div>
+              <p class="grant-funder">South Arts</p>
+              <h3 class="grant-name">Southern Prize & State Fellowships — Visual Arts</h3>
+            </div>
+            <span class="amount-badge amt-xl">$5K – $25K</span>
+          </div>
+          <div class="grant-card-body">
+            <p class="grant-purpose">A career prize for the best visual artists in the South — selected by a national jury from work that reflects the region's artistic identity. The $5,000 state fellowship goes to one artist per Southern state; the top two compete for the $25K Southern Prize and a two-week residency at The Hambidge Center in Georgia.</p>
+            <div class="grant-row">
+              <div class="grant-field">
+                <label>Opens</label>
+                <span class="deadline-soon">Oct 1, 2026 — mark your calendar</span>
+              </div>
+              <div class="grant-field">
+                <label>Awards</label>
+                <span>$5K (state) + $25K Southern Prize</span>
+              </div>
+            </div>
+            <div class="tag-row">
+              <span class="tag medium">All visual arts</span>
+              <span class="tag location">9-state South Arts region</span>
+            </div>
+            <ul class="grant-bullets">
+              <li>Must be a legal resident of one of the 9 South Arts states: AL, FL, GA, KY, LA, MS, NC, SC, or TN — continuous 2-year residency required</li>
+              <li>One state fellowship ($5,000) awarded per state; state fellowship winners then compete for the $25,000 Southern Prize and a $10,000 runner-up prize</li>
+              <li>Southern Prize recipients receive a two-week residency at The Hambidge Center in Rabun Gap, GA</li>
+              <li>Jury evaluates artistic excellence and work that reflects and represents the region's artistic expression</li>
+              <li>All visual arts disciplines eligible: painting, ceramics, photography, sculpture, mixed media, installation</li>
+            </ul>
+            <div class="grant-meta-line">
+              <span><strong>Payment:</strong> $5,000 state fellowship · $10,000 runner-up · $25,000 Southern Prize + Hambidge residency</span>
+              <span><strong>Deadline:</strong> Applications open October 1, 2026 via southarts.org</span>
+              <span><strong>Application fee:</strong> <span style="color:#8a2a50; font-weight:600;">$25</span> — fee waiver available; email southernprize@southarts.org</span>
+            </div>
+            <a href="https://www.southarts.org/grants-opportunities/southern-prize-and-state-fellowships-visual-arts" target="_blank" rel="noopener" class="btn btn-ghost" style="font-size:12px; padding:10px 18px;">Grant description →</a>
+            <a href="https://www.southarts.org/southern-prize-state-fellowships" target="_blank" rel="noopener" class="btn btn-primary" style="font-size:12px; padding:10px 18px;">Apply →</a>
+          </div>
+          <div class="grant-card-footer">
+            <p class="match-label">Best matches from our roster</p>
+            <div class="artist-matches">
+              <a href="artist-brandon-donahue-shipp.html" class="artist-chip">Brandon Donahue-Shipp <span class="role">Mixed Media · TN</span></a>
+              <a href="artist-ellie-caudill.html" class="artist-chip">Ellie Caudill <span class="role">Murals · TN</span></a>
+              <a href="artist-ian-patrick-cato.html" class="artist-chip">Ian Patrick Cato <span class="role">Painting · TN roots</span></a>
+            </div>
+            <div class="note-box">Tennessee is in the South Arts 9-state region. Applications open Oct 1, 2026 — prep work samples and documentation now so TN-based artists are ready.</div>
+          </div>
+        </div>
+
+        <!-- NAT 3c: South Arts Artist Creative Practice -->
+        <div class="grant-card" data-state="national" data-mediums="painting,ceramics,sculpture,mural" data-status="annual" data-artists="brandon-donahue-shipp,ellie-caudill,ian-patrick-cato,michael-haight,wyatt-mills,jennie-lawless,marta-lee,alan-chin">
+          <div class="grant-card-top">
+            <div>
+              <p class="grant-funder">South Arts</p>
+              <h3 class="grant-name">Artist Creative Practice Grant</h3>
+            </div>
+            <span class="amount-badge amt-sm">Up to $3,000</span>
+          </div>
+          <div class="grant-card-body">
+            <p class="grant-purpose">Paying for a specific career-enhancing opportunity that you otherwise couldn't afford — a workshop, residency, conference, mentorship, masterclass, or equipment purchase that directly advances your practice. The money covers up to 2/3 of the cost; the artist covers the rest.</p>
+            <div class="grant-row">
+              <div class="grant-field">
+                <label>Cycle</label>
+                <span class="deadline-rolling">Rolling — next window TBD</span>
+              </div>
+              <div class="grant-field">
+                <label>Awards</label>
+                <span>Up to 15 grants per cycle</span>
+              </div>
+            </div>
+            <div class="tag-row">
+              <span class="tag medium">Career development</span>
+              <span class="tag medium">All disciplines</span>
+              <span class="tag location">9-state South Arts region</span>
+            </div>
+            <ul class="grant-bullets">
+              <li>Covers up to 2/3 of the total opportunity cost — $500 minimum award, $3,000 maximum; artist must cover the remaining 1/3</li>
+              <li>Eligible expenses: residencies, workshops, conferences, masterclasses, mentorships, professional development programs</li>
+              <li>Must be a resident of the South Arts 9-state region: AL, FL, GA, KY, LA, MS, NC, SC, or TN</li>
+              <li>Competitive — up to 15 grants awarded per cycle; strong narrative on career impact required</li>
+              <li>Opportunity must take place during the designated grant period — plan ahead</li>
+            </ul>
+            <div class="grant-meta-line">
+              <span><strong>Payment:</strong> $500–$3,000 (up to 2/3 of cost) — 15 awards per cycle</span>
+              <span><strong>Deadline:</strong> Rolling cycle — watch southarts.org for next window</span>
+              <span><strong>Application fee:</strong> Free</span>
+            </div>
+            <a href="https://www.southarts.org/grants-opportunities/artist-creative-practice" target="_blank" rel="noopener" class="btn btn-ghost" style="font-size:12px; padding:10px 18px;">Grant description →</a>
+            <a href="https://www.southarts.org/grants-opportunities/artist-creative-practice" target="_blank" rel="noopener" class="btn btn-primary" style="font-size:12px; padding:10px 18px;">Apply →</a>
+          </div>
+          <div class="grant-card-footer">
+            <p class="match-label">Best matches from our roster</p>
+            <div class="artist-matches">
+              <a href="artist-brandon-donahue-shipp.html" class="artist-chip">Brandon Donahue-Shipp <span class="role">Mixed Media · TN</span></a>
+              <a href="artist-ellie-caudill.html" class="artist-chip">Ellie Caudill <span class="role">Murals · TN</span></a>
+              <a href="artist-ian-patrick-cato.html" class="artist-chip">Ian Patrick Cato <span class="role">Painting · TN roots</span></a>
+            </div>
+            <div class="note-box">Quick turn on specific career opportunities — if a TN-based artist has a residency or workshop in their sights, this covers most of the cost. Pair with the Southern Prize application for a strong South Arts presence.</div>
+          </div>
+        </div>
+
+        <!-- NAT 4: Rema Hort Mann -->
+        <div class="grant-card" data-state="national" data-mediums="painting,sculpture" data-status="nomination" data-artists="marta-lee,daniel-herr">
+          <div class="grant-card-top">
+            <div>
+              <p class="grant-funder">Rema Hort Mann Foundation</p>
+              <h3 class="grant-name">Emerging Artist Grant <span class="nom-pill">Nomination Only</span></h3>
+            </div>
+            <span class="amount-badge amt-md">$10,000</span>
+          </div>
+          <div class="grant-card-body">
+            <p class="grant-purpose">Unrestricted support for an emerging NYC-area artist — but there's no application. A curator, critic, or arts professional in the Foundation's network has to nominate the artist. The money is for the artist's practice with no restrictions. For Kudzu to access this, we need to build relationships with NYC curators who participate in RHMF nominations.</p>
+            <div class="grant-row">
+              <div class="grant-field">
+                <label>Process</label>
+                <span class="deadline-rolling">Curator/critic nomination — no direct apply</span>
+              </div>
+              <div class="grant-field">
+                <label>Geographic focus</label>
+                <span>New York City area (primary)</span>
+              </div>
+            </div>
+            <div class="tag-row">
+              <span class="tag medium">Contemporary visual arts</span>
+              <span class="tag location">NYC-area (primary)</span>
+            </div>
+            <ul class="grant-bullets">
+              <li>No open application — artists are nominated by curators, critics, and professors in the Foundation's network</li>
+              <li>Focused on early-career visual artists in the greater NYC metro area; work must demonstrate critical rigor</li>
+              <li>Money is unrestricted — used at the artist's discretion</li>
+              <li>Selection is two-stage: nominators propose candidates, then an independent committee picks the 8 recipients</li>
+              <li>To pursue: Kudzu needs to cultivate relationships with NYC curators who participate in the RHMF nomination process on behalf of our NY-based artists</li>
+            </ul>
+            <div class="grant-meta-line">
+              <span><strong>Payment:</strong> $10,000 unrestricted — 8 awards annually</span>
+              <span><strong>How to pursue:</strong> Nomination only — artists cannot apply directly</span>
+              <span><strong>Application fee:</strong> N/A — nomination only, no open application</span>
+            </div>
+            <a href="https://www.remahortmannfoundation.org/" target="_blank" rel="noopener" class="btn btn-ghost" style="font-size:12px; padding:10px 18px;">Foundation website →</a>
+          </div>
+          <div class="grant-card-footer">
+            <p class="match-label">Roster connections</p>
+            <div class="artist-matches">
+              <a href="artist-marta-lee.html" class="artist-chip">Marta Lee <span class="role">2024 Grantee · NY</span></a>
+              <a href="artist-daniel-herr.html" class="artist-chip">Daniel Herr <span class="role">Painting · BK — advocate</span></a>
+            </div>
+            <div class="note-box">Kudzu should cultivate relationships with NYC curators and critics who participate in RHMF nominations — this is our path to advocacy for Daniel Herr and future NY-based roster additions.</div>
+          </div>
+        </div>
+
+        <!-- NAT 5: Pollock-Krasner Foundation -->
+        <div class="grant-card" data-state="national" data-mediums="painting,sculpture" data-status="rolling" data-artists="ian-patrick-cato,katya-labowe-stoll,talia-ceravolo,jennie-lawless,michael-haight,marta-lee,daniel-herr,wyatt-mills,alan-chin,ben-quinn">
+          <div class="grant-card-top">
+            <div>
+              <p class="grant-funder">Pollock-Krasner Foundation</p>
+              <h3 class="grant-name">Grant for Visual Artists</h3>
+            </div>
+            <span class="amount-badge amt-xl">Up to $50,000</span>
+          </div>
+          <div class="grant-card-body">
+            <p class="grant-purpose">The largest rolling-deadline grant available to individual painters, sculptors, and works-on-paper artists in the world — up to $50,000 with no project requirement. The Foundation specifically combines merit and financial need: it looks for artists doing serious, committed work who lack the resources to sustain it. No fiscal sponsor required. Applications accepted year-round and reviewed on a rolling basis.</p>
+            <div class="grant-row">
+              <div class="grant-field">
+                <label>Deadline</label>
+                <span class="deadline-rolling">Rolling — apply any time</span>
+              </div>
+              <div class="grant-field">
+                <label>Grant type</label>
+                <span>Unrestricted</span>
+              </div>
+            </div>
+            <div class="tag-row">
+              <span class="tag medium">Painting · Sculpture · Works on Paper</span>
+              <span class="tag location">International (US artists)</span>
+            </div>
+            <ul class="grant-bullets">
+              <li>Open to professional painters, sculptors, and printmakers/works-on-paper artists at any career stage</li>
+              <li>Criteria: merit of the work + demonstrated financial need — both are evaluated; strong exhibition record helps</li>
+              <li>No project proposal — Foundation reviews 10 images of recent work (past 10 years) plus a resume and artist statement</li>
+              <li>Amounts range up to $50,000 depending on need and scope of practice</li>
+              <li>Review process takes 9–12 months — apply as early as possible</li>
+              <li>No 501(c)(3) required; grants go directly to individual artists internationally</li>
+            </ul>
+            <div class="grant-meta-line">
+              <span><strong>Payment:</strong> Up to $50,000 unrestricted</span>
+              <span><strong>Deadline:</strong> Rolling — no deadline, reviewed continuously</span>
+              <span><strong>Application fee:</strong> Free</span>
+            </div>
+            <a href="https://www.pkf.org/grants/grant-for-artists/" target="_blank" rel="noopener" class="btn btn-ghost" style="font-size:12px; padding:10px 18px;">Grant description →</a>
+            <a href="https://www.pkf.org/apply/how-to-apply/" target="_blank" rel="noopener" class="btn btn-primary" style="font-size:12px; padding:10px 18px;">Apply →</a>
+          </div>
+          <div class="grant-card-footer">
+            <p class="match-label">Best matches from our roster</p>
+            <div class="artist-matches">
+              <a href="artist-ian-patrick-cato.html" class="artist-chip">Ian Patrick Cato <span class="role">Painting · LA</span></a>
+              <a href="artist-katya-labowe-stoll.html" class="artist-chip">Katya Labowe-Stoll <span class="role">Painting · LA</span></a>
+              <a href="artist-talia-ceravolo.html" class="artist-chip">Talia Ceravolo <span class="role">Painting · LA</span></a>
+              <a href="artist-marta-lee.html" class="artist-chip">Marta Lee <span class="role">Painting · NY</span></a>
+              <a href="artist-daniel-herr.html" class="artist-chip">Daniel Herr <span class="role">Painting · BK</span></a>
+              <a href="artist-wyatt-mills.html" class="artist-chip">Wyatt Mills <span class="role">Painting · LA</span></a>
+              <a href="artist-michael-haight.html" class="artist-chip">Michael Haight <span class="role">Painting · LA</span></a>
+            </div>
+          </div>
+        </div>
+
+        <!-- NAT 6: Adolph & Esther Gottlieb Foundation -->
+        <div class="grant-card" data-state="national" data-mediums="painting,sculpture" data-status="annual" data-artists="ian-patrick-cato,katya-labowe-stoll,talia-ceravolo,marta-lee,michael-haight,wyatt-mills,evan-christof-seeling">
+          <div class="grant-card-top">
+            <div>
+              <p class="grant-funder">Adolph &amp; Esther Gottlieb Foundation</p>
+              <h3 class="grant-name">Individual Support Grant</h3>
+            </div>
+            <span class="amount-badge amt-md">$25,000</span>
+          </div>
+          <div class="grant-card-body">
+            <p class="grant-purpose">$25,000 for painters, sculptors, and printmakers who have been working at a mature level for at least 20 years and face financial hardship. This is one of the few major grants that explicitly rewards longevity of practice — it's designed for serious mid- to late-career artists who have dedicated their lives to the work but haven't broken through commercially. No project required; funds go toward sustaining the artist's practice.</p>
+            <div class="grant-row">
+              <div class="grant-field">
+                <label>Deadline</label>
+                <span>~January (annual — opens October)</span>
+              </div>
+              <div class="grant-field">
+                <label>Grant type</label>
+                <span>Unrestricted</span>
+              </div>
+            </div>
+            <div class="tag-row">
+              <span class="tag medium">Painting · Sculpture · Printmaking</span>
+              <span class="tag location">International (US artists)</span>
+            </div>
+            <ul class="grant-bullets">
+              <li>Eligibility: painters, sculptors, and printmakers only — must have been working at a mature, professional level for at least 20 years</li>
+              <li>Financial need is a primary criterion alongside artistic merit</li>
+              <li>20 grants awarded annually from a pool of ~850 international applications</li>
+              <li>2027 cycle opens October 2026 — plan ahead; prepare a strong body-of-work documentation now</li>
+              <li>No fiscal sponsor required; goes directly to the individual artist</li>
+            </ul>
+            <div class="grant-meta-line">
+              <span><strong>Payment:</strong> $25,000 unrestricted — 20 awards per cycle</span>
+              <span><strong>Deadline:</strong> ~January 2027 (cycle opens October 2026)</span>
+              <span><strong>Application fee:</strong> Free</span>
+            </div>
+            <a href="https://www.gottliebfoundation.org/individual-support-grant-1" target="_blank" rel="noopener" class="btn btn-ghost" style="font-size:12px; padding:10px 18px;">Grant description →</a>
+            <a href="https://www.gottliebfoundation.org/grants" target="_blank" rel="noopener" class="btn btn-primary" style="font-size:12px; padding:10px 18px;">Apply →</a>
+          </div>
+          <div class="grant-card-footer">
+            <p class="match-label">Best matches from our roster</p>
+            <div class="artist-matches">
+              <a href="artist-ian-patrick-cato.html" class="artist-chip">Ian Patrick Cato <span class="role">Painting · LA</span></a>
+              <a href="artist-katya-labowe-stoll.html" class="artist-chip">Katya Labowe-Stoll <span class="role">Painting · LA</span></a>
+              <a href="artist-talia-ceravolo.html" class="artist-chip">Talia Ceravolo <span class="role">Painting · LA</span></a>
+              <a href="artist-marta-lee.html" class="artist-chip">Marta Lee <span class="role">Painting · NY</span></a>
+              <a href="artist-michael-haight.html" class="artist-chip">Michael Haight <span class="role">Painting · LA</span></a>
+              <a href="artist-evan-christof-seeling.html" class="artist-chip">Evan Christof Seeling <span class="role">Glass · Rochester</span></a>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /grants-grid National -->
+    </div><!-- /state-group National -->
+
+  </div><!-- /wrap -->
+</div><!-- /grants-section -->
+
+<!-- ── About this tracker ──────────────────────────────────────────── -->
+<div class="about-tracker">
+  <div class="wrap" style="max-width: 820px;">
+    <p class="eyebrow" style="margin-bottom:20px;">How this works</p>
+    <h2>Updated every <em>month.</em></h2>
+    <p>This page is refreshed on the first of each month by an automated search across Tennessee Arts Commission, California Arts Council, and major national foundations — plus city programs in Nashville and Los Angeles. Deadlines and amounts are verified against primary sources wherever possible.</p>
+    <p>Artist matches are drawn from the current Kudzu roster and consider: location (TN-residency requirements, LA County requirements), medium, career stage, and past grant history. As the roster grows, so will the match logic.</p>
+    <p style="color:var(--cream-dim); font-size:15px; font-family:var(--serif);">
+      <em>Future expansion: Texas, Florida, Georgia, and national coverage are planned for 2027.</em>
+    </p>
+    <div style="display:flex; gap:12px; margin-top:28px; flex-wrap:wrap;">
+      <a href="artists.html" class="btn btn-primary">View the roster →</a>
+      <a href="contact.html" class="btn btn-ghost">Report a grant we missed</a>
+    </div>
+  </div>
+</div>
+
+<!-- ── Footer ─────────────────────────────────────────────────────── -->
+<footer class="site-footer">
+  <div class="vine-corner br"></div>
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <a href="index.html" class="brand">
+        <img class="mark" src="img/logo-k.png" alt="" aria-hidden="true">
+        <span class="word">KUDZU<span class="arts">arts</span></span>
+      </a>
+      <p class="blurb"><em>A southern art practice rooted in southern cities across the country, climbing everywhere it can.</em></p>
+    </div>
+    <div class="footer-col"><h4>Cities</h4><p>Nashville</p><p>Los Angeles</p><p>Austin</p><p>Miami</p><p>Savannah</p></div>
+    <div class="footer-col"><h4>Explore</h4>
+      <a href="artists.html">Artists</a>
+      <a href="exhibitions.html">Exhibitions</a>
+      <a href="gallery.html">Virtual Gallery</a>
+      <a href="grants.html">Grant Tracker</a>
+      <a href="events.html">Events</a>
+    </div>
+    <div class="footer-col"><h4>Connect</h4>
+      <a href="https://instagram.com/kudzu.arts" target="_blank" rel="noopener">Instagram</a>
+      <a href="contact.html">Newsletter</a>
+      <a href="mailto:info@kudzuarts.com">info@kudzuarts.com</a>
+    </div>
+  </div>
+  <div class="footer-bot">
+    <span>© Kudzu Arts MMXXVI</span>
+    <span>kudzuarts.com · Nashville · Los Angeles · Austin · Miami · Savannah</span>
+  </div>
+</footer>
+
+<script>
+// ── Filter logic ─────────────────────────────────────────────────────
+const filterBtns = document.querySelectorAll('.filter-btn');
+const artistPills = document.querySelectorAll('.artist-pill');
+const cards = document.querySelectorAll('.grant-card');
+const groups = document.querySelectorAll('.state-group');
+
+let activeFilter = 'all';
+let activeArtist = null;
+
+filterBtns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    activeFilter = btn.dataset.filter;
+    activeArtist = null;
+    filterBtns.forEach(b => b.classList.remove('active'));
+    artistPills.forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    applyFilter();
+  });
+});
+
+artistPills.forEach(pill => {
+  pill.addEventListener('click', () => {
+    const slug = pill.dataset.artist;
+    if (activeArtist === slug) {
+      // toggle off
+      activeArtist = null;
+      pill.classList.remove('active');
+    } else {
+      activeArtist = slug;
+      artistPills.forEach(p => p.classList.remove('active'));
+      filterBtns.forEach(b => b.classList.remove('active'));
+      document.querySelector('.filter-btn[data-filter="all"]').classList.add('active');
+      activeFilter = 'all';
+      pill.classList.add('active');
+    }
+    applyFilter();
+  });
+});
+
+function applyFilter() {
+  const f = activeFilter;
+  const a = activeArtist;
+
+  cards.forEach(card => {
+    const state = card.dataset.state;
+    const mediums = (card.dataset.mediums || '').split(',');
+    const status = card.dataset.status;
+    const artists = (card.dataset.artists || '').split(',');
+
+    // Artist filter takes priority when set
+    if (a) {
+      card.classList.toggle('hidden', !artists.includes(a));
+    } else {
+      let show = false;
+      if (f === 'all') show = true;
+      else if (f === 'tn' && state === 'tn') show = true;
+      else if (f === 'ca' && state === 'ca') show = true;
+      else if (f === 'national' && state === 'national') show = true;
+      else if (f === 'painting' && mediums.includes('painting')) show = true;
+      else if (f === 'ceramics' && (mediums.includes('ceramics') || mediums.includes('glass'))) show = true;
+      else if (f === 'mural' && mediums.includes('mural')) show = true;
+      else if (f === 'open-soon' && (status === 'open' || status === 'open-soon')) show = true;
+      card.classList.toggle('hidden', !show);
+    }
+  });
+
+  // Hide state groups if all cards inside are hidden
+  groups.forEach(group => {
+    const visibleCards = group.querySelectorAll('.grant-card:not(.hidden)');
+    group.classList.toggle('hidden', visibleCards.length === 0);
+  });
+}
+
+// ── Reveal on scroll ────────────────────────────────────────────────
+const reveals = document.querySelectorAll('.reveal');
+if ('IntersectionObserver' in window) {
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
+  }, { threshold: 0.07 });
+  reveals.forEach(el => io.observe(el));
+} else {
+  reveals.forEach(el => el.classList.add('in'));
+}
+
+// ── Mobile nav toggle ───────────────────────────────────────────────
+const navToggle = document.querySelector('.nav-toggle');
+const nav = document.querySelector('.nav');
+if (navToggle && nav) {
+  navToggle.addEventListener('click', () => {
+    const open = navToggle.getAttribute('aria-expanded') === 'true';
+    navToggle.setAttribute('aria-expanded', String(!open));
+    nav.style.display = open ? '' : 'flex';
+  });
+}
+</script>
+</body>
+</html>
