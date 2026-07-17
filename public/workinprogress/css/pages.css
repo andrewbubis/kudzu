@@ -210,3 +210,62 @@
   .piece:hover .pimg { transform: scale(1.12); }
   .price-table th, .price-table td { padding: 12px 10px; font-size: 13px; }
 }
+
+/* ── Pannable gallery wall (gal3d) ───────────────────────────── */
+.gal3d {
+  position: relative;
+  overflow: hidden;
+  border-radius: 6px;
+  aspect-ratio: 21 / 9;
+  background:
+    linear-gradient(rgba(33,28,42,0.06), rgba(33,28,42,0) 18%),
+    linear-gradient(#efe9da 0%, #e9e2d0 76%, #cfc7b2 76%, #c3bba6 100%);
+  perspective: 1200px;
+  cursor: ew-resize;
+}
+.gal-room {
+  position: absolute;
+  top: 0; bottom: 0; left: 0;
+  width: 190%;
+  display: flex;
+  align-items: center;
+  gap: 3.2%;
+  padding: 0 4% 7%;
+  will-change: transform;
+}
+.wframe {
+  position: relative;
+  flex: 0 0 auto;
+  display: block;
+  background: #fff;
+  box-shadow: 0 24px 44px rgba(33,28,42,0.30), 0 3px 9px rgba(33,28,42,0.18);
+  transition: transform .35s cubic-bezier(.2,.7,.2,1), box-shadow .35s;
+}
+.wframe img { display: block; width: 100%; height: auto; }
+.wframe:hover { transform: translateY(-7px) scale(1.03); box-shadow: 0 32px 54px rgba(33,28,42,0.36), 0 4px 12px rgba(33,28,42,0.22); z-index: 6; }
+.frame-black  { border: 6px solid #1c1826; }
+.frame-walnut { border: 7px solid #5a4632; }
+.frame-oak    { border: 7px solid #b99b6b; }
+.frame-gold   { border: 6px solid #b08d3e; }
+.frame-mat    { border: 5px solid #241f2e; }
+.frame-mat .wmat { display: block; background: #f6f0e1; padding: 9%; }
+.frame-none   { border: none; box-shadow: 0 24px 44px rgba(33,28,42,0.26); background: transparent; }
+.gal-cue {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  font-family: var(--sans);
+  font-size: 30px;
+  line-height: 1;
+  color: rgba(33,28,42,0.4);
+  pointer-events: none;
+  z-index: 8;
+  animation: cuepulse 2.6s ease-in-out infinite;
+}
+.gal-cue.left { left: 12px; }
+.gal-cue.right { right: 12px; }
+@keyframes cuepulse { 0%,100% { opacity: .35; } 50% { opacity: .85; } }
+@media (max-width: 620px) {
+  .gal3d { aspect-ratio: 4 / 3; }
+  .gal-room { width: 300%; gap: 4%; padding-bottom: 9%; }
+}
