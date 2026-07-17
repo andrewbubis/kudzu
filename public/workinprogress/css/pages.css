@@ -269,3 +269,27 @@
   .gal3d { aspect-ratio: 4 / 3; }
   .gal-room { width: 300%; gap: 4%; padding-bottom: 9%; }
 }
+
+/* ── Gallery inquiry form (dark band) ────────────────────────── */
+.gal-inquire { margin: 26px auto 0; max-width: 520px; display: flex; flex-direction: column; gap: 20px; text-align: left; }
+.gal-inquire .field label { display: block; font-family: var(--sans); font-size: 11px; font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold-br); margin-bottom: 10px; }
+.gal-inquire .field input,
+.gal-inquire .field textarea {
+  width: 100%; box-sizing: border-box;
+  background: rgba(241,234,217,0.06);
+  border: 1px solid rgba(241,234,217,0.22);
+  border-radius: 4px;
+  padding: 13px 15px;
+  font-family: var(--serif); font-size: 16px;
+  color: var(--cream);
+  outline: none;
+  transition: border-color .25s, background .25s;
+}
+.gal-inquire .field input::placeholder,
+.gal-inquire .field textarea::placeholder { color: rgba(241,234,217,0.45); font-style: italic; }
+.gal-inquire .field input:focus,
+.gal-inquire .field textarea:focus { border-color: var(--gold-br); background: rgba(241,234,217,0.1); }
+.gal-inquire textarea { resize: vertical; min-height: 110px; }
+.gal-inquire button[type="submit"] { align-self: center; margin-top: 4px; }
+.gal-inquire .form-msg { display: none; font-family: var(--sans); font-size: 13px; letter-spacing: 0.04em; padding: 13px 16px; border: 1px solid var(--gold-br); border-radius: 4px; background: rgba(212,175,85,0.1); color: var(--cream); text-align: center; }
+.gal-inquire .form-msg.show { display: block; }

@@ -95,14 +95,11 @@
     </div>
 
     <form class="form" novalidate
-          data-endpoint=""
+          data-endpoint="https://api.web3forms.com/submit"
           aria-label="Inquiry form">
-      <!--
-        SETUP:
-        To wire up real submissions, set data-endpoint above to your
-        backend URL (e.g. /api/contact, or a Formspree URL).
-        Without an endpoint set, the form simulates a successful submit.
-      -->
+      <input type="hidden" name="access_key" value="273c38ff-3f87-48c6-8c7d-5aa1dff2126e">
+      <input type="hidden" name="subject" value="Kudzu Arts — Contact form">
+      <input type="checkbox" name="botcheck" style="display:none;" tabindex="-1" autocomplete="off">
       <div class="field">
         <label for="f-name">Your name</label>
         <input type="text" id="f-name" name="name" required placeholder="How should we address you?">

@@ -51,7 +51,10 @@
       <div class="contact-block"><div class="h">Artist submissions</div><p><a href="mailto:info@kudzuarts.com">info@kudzuarts.com</a></p></div>
       <div class="contact-block"><div class="h">Our cities</div><p>Nashville · Los Angeles · Austin<br>Miami · Savannah</p></div>
     </div>
-    <form class="form" novalidate data-endpoint="" data-mailto="info@kudzuarts.com" aria-label="Contact form">
+    <form class="form" novalidate data-endpoint="https://api.web3forms.com/submit" data-mailto="info@kudzuarts.com" aria-label="Contact form">
+      <input type="hidden" name="access_key" value="273c38ff-3f87-48c6-8c7d-5aa1dff2126e">
+      <input type="hidden" name="subject" value="Kudzu Arts — Contact form">
+      <input type="checkbox" name="botcheck" style="display:none;" tabindex="-1" autocomplete="off">
       <div class="field"><label for="f-name">Your name</label><input id="f-name" name="name" type="text" required placeholder="How should we address you?"></div>
       <div class="field"><label for="f-email">Email</label><input id="f-email" name="email" type="email" required placeholder="name@domain.com"></div>
       <div class="field"><label for="f-topic">Regarding</label>
