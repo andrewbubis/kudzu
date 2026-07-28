@@ -281,7 +281,7 @@ section { position: relative; padding-block: clamp(72px, 9vw, 128px); }
 
 /* ── Print Shop ───────────────────────────────────────────────── */
 .printshop { background: var(--paper-2); overflow: hidden; padding-block: clamp(36px, 4vw, 56px); }
-.print-grid { display: grid; grid-template-columns: 1fr 1.05fr; gap: clamp(36px, 5vw, 72px); align-items: center; }
+.print-grid { display: grid; grid-template-columns: 1fr 1.05fr; gap: clamp(36px, 5vw, 72px); align-items: start; }
 .print-graphic { position: relative; }
 .print-graphic img { width: 100%; }
 .print-graphic .blob { position: absolute; inset: -8% -6%; background: radial-gradient(closest-side, rgba(138,143,67,0.16), transparent); z-index: -1; }
@@ -314,7 +314,7 @@ section { position: relative; padding-block: clamp(72px, 9vw, 128px); }
 .clothesline .hang .ed { position: absolute; bottom: 4px; left: 0; right: 0; text-align: center; font-family: var(--sans); font-size: 9px; font-weight: 600; letter-spacing: 0.1em; color: var(--ink-mute); }
 
 /* Looping clothesline marquee (all available prints) */
-.clothesline.loop { overflow: hidden; padding-top: 24px; }
+.clothesline.loop { overflow: hidden; padding-top: 12px; }
 .clothesline.loop .cord { top: 11px; }
 .clothesline.loop .hangs { width: max-content; flex-wrap: nowrap; justify-content: flex-start; animation: clothesline-scroll 72s linear infinite; }
 .clothesline.loop .hangs:hover { animation-play-state: paused; }

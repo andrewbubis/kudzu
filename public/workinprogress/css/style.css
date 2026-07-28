@@ -21,7 +21,7 @@
   --olive-bg:  #8a8f43;  /* olive accent BACKGROUND (bright) */
   --gold-bg:   #8a8f43;  /* olive-green accent BACKGROUND */
   --on-accent: #241f2c;  /* text on gold / olive backgrounds */
-  --header-bg: rgba(251, 250, 247, 0.85);
+  --header-bg: rgba(244, 242, 236, 0.94);
   --line:      rgba(36, 31, 44, 0.18);
   --line-soft: rgba(36, 31, 44, 0.10);
 
@@ -360,11 +360,11 @@ section > .wrap { position: relative; z-index: 1; }
 .event-row .rsvp:hover { background: var(--olive-bg); color: var(--on-accent); border-color: var(--olive-bg); }
 
 /* ── Page head (interior) ─────────────────────────────────────── */
-.page-head { padding: clamp(64px,9vw,108px) var(--pad) clamp(48px,6vw,72px); overflow: hidden; }
+.page-head { padding: clamp(48px,7vw,92px) var(--pad) clamp(28px,4vw,44px); overflow: hidden; background: #f4f2ec; }
 .page-head .wrap { max-width: var(--maxw); margin-inline: auto; padding-inline: 0; }
 .page-head h1 {
   font-family: var(--serif); font-weight: 400;
-  font-size: clamp(52px, 8vw, 88px); line-height: 1.0; letter-spacing: 0; color: var(--cream); margin-top: 22px;
+  font-size: clamp(46px,7vw,92px); line-height: 1.02; letter-spacing: -0.005em; color: var(--cream); margin-top: 18px;
 }
 .page-head h1 .ital { color: var(--gold); font-style: italic; }
 .page-head .lede { margin-top: 28px; max-width: 600px; }
