@@ -92,7 +92,7 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--serif); font-weight: 400; }
 
 .lede {
   font-family: var(--serif);
-  font-size: clamp(18px, 1.8vw, 22px);
+  font-size: clamp(16px, 1.5vw, 19px);
   line-height: 1.55;
   color: var(--ink-soft);
 }
@@ -133,8 +133,8 @@ section { position: relative; padding-block: clamp(72px, 9vw, 128px); }
   border-bottom: 1px solid var(--line);
 }
 .brand { display: inline-flex; align-items: center; gap: 12px; text-decoration: none; flex: 0 0 auto; }
-.brand .mark { height: 40px; width: auto; }
-.brand .word { font-family: var(--serif); font-size: 23px; color: var(--ink); letter-spacing: 0.01em; line-height: 1; }
+.brand .mark { height: 30px; width: auto; }
+.brand .word { font-family: var(--serif); font-size: 19px; color: var(--ink); letter-spacing: 0.01em; line-height: 1; }
 .brand .word b { font-weight: 500; }
 .brand .word .arts { font-family: var(--sans); font-size: 11px; font-weight: 600; letter-spacing: 0.28em; text-transform: lowercase; color: var(--olive); margin-left: 6px; }
 .nav { display: flex; gap: 26px; align-items: center; }
@@ -169,24 +169,24 @@ section { position: relative; padding-block: clamp(72px, 9vw, 128px); }
 .sprig.gold { background-image: url("../img/vine-hand-sprig-gold.png"); }
 
 /* ── Hero ─────────────────────────────────────────────────────── */
-.hero { padding-block: clamp(36px, 5vw, 60px); overflow: hidden; }
+.hero { padding-block: clamp(24px, 3.5vw, 44px); overflow: hidden; }
 .hero .vine-edge { opacity: 0.7; }
 .hero-inner { max-width: 1040px; margin-inline: auto; text-align: center; position: relative; z-index: 2; }
 .hero-painted { width: min(82%, 560px); margin: 22px auto clamp(20px, 3vw, 30px); }
-.hero-lockup { display: flex; align-items: center; justify-content: center; gap: clamp(8px, 1.4vw, 18px); margin: clamp(14px,2vw,24px) auto clamp(18px, 3vw, 28px); }
-.hero-k { height: clamp(92px, 14vw, 158px); width: auto; flex: 0 0 auto; }
-.hero-word { font-family: var(--serif); font-weight: 500; font-size: clamp(44px, 7.5vw, 92px); color: var(--ink); line-height: 0.86; letter-spacing: 0.005em; display: inline-flex; align-items: flex-start; gap: 0.14em; }
-.hero-word .hero-arts { font-family: var(--sans); font-weight: 600; font-size: clamp(13px, 1.9vw, 21px); letter-spacing: 0.24em; text-transform: lowercase; color: var(--olive); margin-top: 0.5em; }
-@media (max-width: 560px) { .hero-lockup { gap: 8px; } }
-.hero h1 { font-family: var(--serif); font-weight: 400; font-size: clamp(34px, 5.2vw, 68px); line-height: 1.02; letter-spacing: -0.005em; color: var(--ink); }
+.hero-lockup { display: flex; align-items: center; justify-content: center; gap: clamp(6px, 1vw, 14px); margin: clamp(10px,1.5vw,18px) auto clamp(12px, 2vw, 20px); }
+.hero-k { height: clamp(68px, 10vw, 118px); width: auto; flex: 0 0 auto; }
+.hero-word { font-family: var(--serif); font-weight: 500; font-size: clamp(34px, 5.5vw, 70px); color: var(--ink); line-height: 0.86; letter-spacing: 0.005em; display: inline-flex; align-items: flex-start; gap: 0.14em; }
+.hero-word .hero-arts { font-family: var(--sans); font-weight: 600; font-size: clamp(10px, 1.4vw, 16px); letter-spacing: 0.24em; text-transform: lowercase; color: var(--olive); margin-top: 0.5em; }
+@media (max-width: 560px) { .hero-lockup { gap: 6px; } }
+.hero h1 { font-family: var(--serif); font-weight: 400; font-size: clamp(26px, 3.8vw, 50px); line-height: 1.05; letter-spacing: -0.005em; color: var(--ink); }
 .hero h1 .ital { font-style: italic; color: var(--olive); }
 .hero h1 .clay { color: var(--clay); font-style: italic; }
-.hero .lede { margin: clamp(22px,3vw,30px) auto 0; max-width: 600px; }
-.hero-cta { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; margin-top: clamp(28px,4vw,40px); }
+.hero .lede { margin: clamp(14px,2vw,20px) auto 0; max-width: 560px; font-size: clamp(15px, 1.4vw, 17px); }
+.hero-cta { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; margin-top: clamp(20px,3vw,30px); }
 
 /* ── Marquee ──────────────────────────────────────────────────── */
 .marquee { background: var(--ink); color: var(--paper); overflow: hidden; padding: 16px 0; border-block: 2px solid var(--ink); }
-.marquee-track { display: inline-flex; gap: 40px; white-space: nowrap; animation: scroll-x 34s linear infinite; will-change: transform; }
+.marquee-track { display: inline-flex; gap: 40px; white-space: nowrap; animation: scroll-x 70s linear infinite; will-change: transform; }
 .marquee-track span { font-family: var(--serif); font-style: italic; font-size: 22px; display: inline-flex; gap: 40px; align-items: center; }
 .marquee-track .star { color: var(--olive-br); font-style: normal; }
 @keyframes scroll-x { to { transform: translateX(-50%); } }
@@ -316,7 +316,7 @@ section { position: relative; padding-block: clamp(72px, 9vw, 128px); }
 /* Looping clothesline marquee (all available prints) */
 .clothesline.loop { overflow: hidden; padding-top: 24px; }
 .clothesline.loop .cord { top: 11px; }
-.clothesline.loop .hangs { width: max-content; flex-wrap: nowrap; justify-content: flex-start; animation: clothesline-scroll 36s linear infinite; }
+.clothesline.loop .hangs { width: max-content; flex-wrap: nowrap; justify-content: flex-start; animation: clothesline-scroll 72s linear infinite; }
 .clothesline.loop .hangs:hover { animation-play-state: paused; }
 .clothesline.loop .hang { flex: 0 0 auto; width: clamp(110px, 16vw, 150px); max-width: none; }
 @keyframes clothesline-scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }

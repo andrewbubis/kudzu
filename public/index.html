@@ -7,10 +7,11 @@
 <meta name="description" content="Kudzu Arts is an art consultancy advocating for Southern artists — advisory, curation, design, and cultural strategy. Based in Nashville and Los Angeles. New site launching soon.">
 <meta name="theme-color" content="#ece5d3">
 
+<link rel="icon" href="img/logo-k.png" type="image/png">
 <link rel="icon" href="img/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&family=Albert+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&family=EB+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=Albert+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 
 <meta property="og:title" content="Kudzu Arts — Art Consultancy in Nashville & Los Angeles">
 <meta property="og:description" content="Kudzu Arts is an art consultancy advocating for Southern artists — advisory, curation, design, and cultural strategy. Based in Nashville and Los Angeles. New site launching soon.">
@@ -162,9 +163,38 @@
     justify-self: center;
   }
   .logo-wrap img {
-    width: 100%;
     height: auto;
     display: block;
+  }
+  .hero-lockup {
+    display: flex;
+    align-items: center;
+    gap: clamp(10px, 2vw, 22px);
+  }
+  .hero-lockup img {
+    height: clamp(80px, 14vw, 180px);
+    width: auto;
+    flex: 0 0 auto;
+  }
+  .hero-word {
+    font-family: "EB Garamond", Georgia, serif;
+    font-weight: 500;
+    font-size: clamp(40px, 7vw, 96px);
+    color: var(--ink);
+    line-height: 0.88;
+    letter-spacing: 0.005em;
+    display: inline-flex;
+    align-items: flex-start;
+    gap: 0.1em;
+  }
+  .hero-arts {
+    font-style: italic;
+    font-weight: 400;
+    font-size: clamp(12px, 1.8vw, 22px);
+    letter-spacing: 0.22em;
+    text-transform: lowercase;
+    color: var(--olive);
+    margin-top: 0.45em;
   }
 
   .message { max-width: 580px; }
@@ -442,7 +472,10 @@
   <!-- Middle: logo + message side-by-side ────────────────── -->
   <main class="middle">
     <div class="logo-wrap">
-      <img src="img/logo-k.png" alt="Kudzu Arts — painted K wrapped in kudzu vines">
+      <div class="hero-lockup">
+        <img src="img/logo-k.png" alt="Kudzu Arts — painted K wrapped in kudzu vines">
+        <span class="hero-word">KUDZU<span class="hero-arts">arts</span></span>
+      </div>
     </div>
 
     <div class="message">
