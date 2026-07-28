@@ -48,25 +48,68 @@
   }
 
   // ── Virtual gallery ───────────────────────────────────────────────
+  // The wall is a real photograph. Pieces are sized against each other
+  // using the dimensions the artist entered, and hung at gallery eye
+  // level — centres at 57in, the museum standard — so a small drawing
+  // reads small next to a big canvas.
+
+  var WALL_HEIGHT_IN = 108;   // assume a 9ft wall in the photograph
+  var EYE_LEVEL_IN = 57;      // centre height galleries actually hang to
+
+  // Accepts "24 x 36 in", "60 × 90 cm", "24x36", "24 by 36 inches".
+  // Returns inches, or null if it can't tell.
+  function parseDimensions(text) {
+    if (!text) return null;
+    var m = String(text).match(/(\d+(?:\.\d+)?)\s*(?:x|×|by)\s*(\d+(?:\.\d+)?)/i);
+    if (!m) return null;
+
+    var h = parseFloat(m[1]), w = parseFloat(m[2]);
+    if (!isFinite(h) || !isFinite(w) || h <= 0 || w <= 0) return null;
+
+    // Centimetres unless it says inches. Bare numbers over 200 are
+    // almost certainly cm — nobody hangs a 17ft canvas.
+    var isCm = /cm|centim/i.test(text) || (!/in|"|inch/i.test(text) && Math.max(h, w) > 200);
+    if (isCm) { h /= 2.54; w /= 2.54; }
+
+    return { h: h, w: w };
+  }
+
   function renderGallery(works) {
     var wall = document.getElementById('galRoom');
     var grid = document.querySelector('.pieces');
     if (!wall && !grid) return;
 
-    // The hanging wall — widths vary a little so it reads as a real hang
-    // rather than a spreadsheet.
     if (wall) {
-      wall.innerHTML = '';
-      var frames = ['frame-black', 'frame-walnut', 'frame-oak', 'frame-gold', 'frame-none'];
-      works.slice(0, 9).forEach(function (w, i) {
-        var a = document.createElement('a');
-        a.href = 'artist.html?a=' + encodeURIComponent(w.artistSlug);
-        a.className = 'wframe ' + frames[i % frames.length];
-        a.style.width = (8 + (i % 4) * 1.8).toFixed(1) + '%';
-        a.innerHTML = '<img src="' + esc(w.image) + '" alt="' +
-                      esc(w.title + ' by ' + w.artist) + '" loading="lazy">';
-        wall.appendChild(a);
-      });
+      // Only work we can size belongs on the wall — anything without
+      // usable dimensions would be a guess, and guesses look wrong.
+      var hangable = works.map(function (w) {
+        return { w: w, size: parseDimensions(w.dimensions) };
+      }).filter(function (x) { return x.size; });
+
+      if (hangable.length) {
+        wall.innerHTML = '';
+        wall.classList.add('photo-wall');
+
+        hangable.slice(0, 8).forEach(function (x) {
+          var a = document.createElement('a');
+          a.href = 'artist.html?a=' + encodeURIComponent(x.w.artistSlug);
+          a.className = 'hung';
+
+          // Height as a share of the wall; centre pinned to eye level.
+          var hPct = (x.size.h / WALL_HEIGHT_IN) * 100;
+          var centreFromTop = ((WALL_HEIGHT_IN - EYE_LEVEL_IN) / WALL_HEIGHT_IN) * 100;
+
+          a.style.height = hPct.toFixed(2) + '%';
+          a.style.top = (centreFromTop - hPct / 2).toFixed(2) + '%';
+          a.style.aspectRatio = (x.size.w / x.size.h).toFixed(4);
+
+          a.innerHTML =
+            '<img src="' + esc(x.w.image) + '" alt="' +
+            esc(x.w.title + ' by ' + x.w.artist) + '" loading="lazy">' +
+            '<span class="plaque">' + esc(x.w.title) + '<br>' + esc(x.w.artist) + '</span>';
+          wall.appendChild(a);
+        });
+      }
     }
 
     if (grid) {
@@ -108,7 +151,8 @@
   }
 
   // ── Print shop ────────────────────────────────────────────────────
-  function renderPrints(works) {
+  // Not currently called. Kept for when prints become self-serve.
+  function renderPrints(works) {   // eslint-disable-line no-unused-vars
     var grid = document.querySelector('.prints-grid');
     if (!grid) return;
 
@@ -138,7 +182,8 @@
       var works = d.works || [];
       if (!works.length) return;   // nothing uploaded yet — keep the placeholders
       renderGallery(works);
-      renderPrints(works);
+      // Prints are chosen deliberately, not everything an artist uploads —
+      // so the print shop stays hand-curated for now.
       // Re-run the reveal-on-scroll animation over the new cards.
       if (window.kudzuReveal) window.kudzuReveal();
     })

@@ -278,11 +278,30 @@
     if (!title) return;
     var year = prompt('Year?') || null;
     var medium = prompt('Medium? (e.g. Painting, Sculpture, Mixed Media)') || null;
+
+    // Dimensions drive how the piece hangs in the virtual gallery — a
+    // small drawing should look small beside a big canvas — so this one
+    // is required rather than optional.
+    var dimensions = null;
+    while (!dimensions) {
+      dimensions = (prompt(
+        'Dimensions? Height x width, with units.\n\n' +
+        'e.g.  24 x 36 in     or     60 x 90 cm'
+      ) || '').trim();
+      if (!dimensions) {
+        if (!confirm('Dimensions are needed to hang this in the gallery. Try again?')) return;
+      } else if (!/\d+\s*(\.\d+)?\s*[x×]\s*\d+/i.test(dimensions)) {
+        alert('Please use height x width, like  24 x 36 in');
+        dimensions = null;
+      }
+    }
+
     var price = prompt('Price in dollars? Leave blank if not for sale.');
     var priceCents = price ? Math.round(parseFloat(price) * 100) : null;
 
     var work = {
       id: 'tmp-' + Date.now(), title: title, year: year, medium: medium,
+      dimensions: dimensions,
       priceCents: priceCents, currency: 'usd', status: 'draft',
       image: URL.createObjectURL(f)
     };
@@ -293,6 +312,7 @@
       fd.append('title', title);
       if (year) fd.append('year', year);
       if (medium) fd.append('medium', medium);
+      if (dimensions) fd.append('dimensions', dimensions);
       if (priceCents != null) fd.append('priceCents', priceCents);
       try {
         var saved = await fetch('/api/works', { method: 'POST', body: fd, credentials: 'same-origin' })

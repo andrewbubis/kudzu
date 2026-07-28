@@ -299,3 +299,76 @@
 .gal-inquire button[type="submit"] { align-self: center; margin-top: 4px; }
 .gal-inquire .form-msg { display: none; font-family: var(--sans); font-size: 13px; letter-spacing: 0.04em; padding: 13px 16px; border: 1px solid var(--gold-br); border-radius: 4px; background: rgba(212,175,85,0.1); color: var(--cream); text-align: center; }
 .gal-inquire .form-msg.show { display: block; }
+
+/* ── Photographed gallery wall ─────────────────────────────────────────
+   The wall is a real photograph at img/gallery-wall.jpg. Pieces are
+   positioned as a percentage of wall height, using the dimensions the
+   artist entered, and hung with their centres at 57in — the height
+   galleries actually hang to. A 12in drawing sits small beside a 60in
+   canvas, which is the whole point.
+
+   Until the photograph exists the room falls back to a flat wall colour,
+   so the page is never broken — just plainer.
+   ──────────────────────────────────────────────────────────────────── */
+.gal-room.photo-wall {
+  position: relative;
+  aspect-ratio: 21 / 9;
+  background: var(--paper-3) url("../img/gallery-wall.jpg") center/cover no-repeat;
+  overflow: hidden;
+}
+
+.gal-room.photo-wall .hung {
+  position: absolute;
+  display: block;
+  text-decoration: none;
+  /* Shadow sits under and slightly below, the way a hung frame casts. */
+  box-shadow: 0 10px 22px rgba(0,0,0,0.28), 0 2px 5px rgba(0,0,0,0.20);
+  transition: transform .35s ease, box-shadow .35s ease;
+  transform-origin: center center;
+}
+.gal-room.photo-wall .hung img {
+  display: block; width: 100%; height: 100%; object-fit: fill;
+}
+.gal-room.photo-wall .hung:hover,
+.gal-room.photo-wall .hung:focus-visible {
+  transform: scale(1.04);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.36), 0 3px 8px rgba(0,0,0,0.24);
+  z-index: 5;
+  outline: none;
+}
+
+/* Spread the pieces along the wall. Nth-child keeps the spacing even
+   without needing to know how many there are. */
+.gal-room.photo-wall .hung:nth-child(1) { left: 6%; }
+.gal-room.photo-wall .hung:nth-child(2) { left: 19%; }
+.gal-room.photo-wall .hung:nth-child(3) { left: 32%; }
+.gal-room.photo-wall .hung:nth-child(4) { left: 45%; }
+.gal-room.photo-wall .hung:nth-child(5) { left: 58%; }
+.gal-room.photo-wall .hung:nth-child(6) { left: 71%; }
+.gal-room.photo-wall .hung:nth-child(7) { left: 84%; }
+.gal-room.photo-wall .hung:nth-child(8) { left: 92%; }
+
+/* Wall label, the way a gallery captions a piece. */
+.gal-room.photo-wall .plaque {
+  position: absolute; left: 0; top: calc(100% + 9px);
+  font-family: var(--sans); font-size: 9px; line-height: 1.4;
+  color: rgba(33,28,42,0.62); white-space: nowrap;
+  opacity: 0; transition: opacity .25s;
+}
+.gal-room.photo-wall .hung:hover .plaque,
+.gal-room.photo-wall .hung:focus-visible .plaque { opacity: 1; }
+
+@media (max-width: 780px) {
+  .gal-room.photo-wall { aspect-ratio: 3 / 2; }
+  .gal-room.photo-wall .hung:nth-child(n+5) { display: none; }
+  .gal-room.photo-wall .hung:nth-child(1) { left: 8%; }
+  .gal-room.photo-wall .hung:nth-child(2) { left: 30%; }
+  .gal-room.photo-wall .hung:nth-child(3) { left: 52%; }
+  .gal-room.photo-wall .hung:nth-child(4) { left: 74%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gal-room.photo-wall .hung,
+  .gal-room.photo-wall .plaque { transition: none; }
+  .gal-room.photo-wall .hung:hover { transform: none; }
+}
