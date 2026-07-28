@@ -267,6 +267,9 @@ router.patch('/works/:id', auth.requireArtist, async (req, res) => {
     if (String(err.message).includes('publish_limit_reached')) {
       return res.status(409).json({ error: 'publish_limit_reached' });
     }
+    if (String(err.message).includes('stripe_not_connected')) {
+      return res.status(409).json({ error: 'stripe_not_connected' });
+    }
     console.error('work update failed:', err.message);
     res.status(500).json({ error: 'server_error' });
   }

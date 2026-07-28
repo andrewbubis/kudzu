@@ -82,6 +82,74 @@
     $('cvText').value = me.cv || '';
   }
 
+  // Nothing publishes until the artist can actually be paid.
+  function canSell() { return !!(state.me && state.me.stripeConnected); }
+
+  // ── Stripe Connect ────────────────────────────────────────────────
+  // Having an account id isn't the same as being ready to take money —
+  // Stripe may still want ID or bank details. Ask, don't assume.
+  async function refreshConnect() {
+    var btn = $('connectBtn'), note = $('connectNote'), dash = $('stripeDash');
+    if (!btn) return;
+
+    if (!state.live) { btn.disabled = true; btn.textContent = 'Connect Stripe'; return; }
+
+    try {
+      var s = await api('/connect/status');
+      state.me.stripeConnected = !!s.connected;
+
+      if (s.connected) {
+        btn.hidden = true;
+        if (note) { note.hidden = false; note.textContent = 'Connected — payouts go straight to your bank.'; }
+        if (dash) dash.hidden = false;
+      } else if (s.reason === 'incomplete') {
+        btn.hidden = false;
+        btn.textContent = 'Finish connecting Stripe';
+        if (note) {
+          note.hidden = false;
+          note.textContent = s.needs && s.needs.length
+            ? 'Stripe still needs a few details from you.'
+            : 'Stripe is still reviewing your details.';
+        }
+        if (dash) dash.hidden = false;
+      } else if (s.reason === 'payments_unavailable') {
+        btn.disabled = true;
+        if (note) { note.hidden = false; note.textContent = 'Payments aren\u2019t switched on yet.'; }
+      } else {
+        btn.hidden = false;
+        btn.textContent = 'Connect Stripe';
+      }
+      renderTodo();
+      renderWorks();
+    } catch (e) { /* leave the button as it is */ }
+  }
+
+  if ($('connectBtn')) {
+    $('connectBtn').addEventListener('click', async function () {
+      var btn = this;
+      btn.disabled = true; btn.textContent = 'Opening Stripe\u2026';
+      try {
+        var r = await api('/connect/start', { method: 'POST' });
+        location.href = r.url;   // Stripe's own hosted onboarding
+      } catch (e) {
+        alert('Could not open Stripe. Try again in a moment.');
+        btn.disabled = false; btn.textContent = 'Connect Stripe';
+      }
+    });
+  }
+
+  if ($('stripeDashLink')) {
+    $('stripeDashLink').addEventListener('click', async function (e) {
+      e.preventDefault();
+      try {
+        var r = await api('/connect/dashboard', { method: 'POST' });
+        window.open(r.url, '_blank', 'noopener');
+      } catch (err) {
+        alert('Could not open your Stripe dashboard.');
+      }
+    });
+  }
+
   function renderTodo() {
     var me = state.me;
     var done = {
@@ -139,6 +207,9 @@
     grid.appendChild(add);
 
     $('workEmpty').hidden = live.length > 0;
+
+    var warn = $('sellWarn');
+    if (warn) warn.hidden = canSell() || live.length === 0;
 
     var sg = $('soldGrid');
     sg.innerHTML = '';
@@ -321,5 +392,11 @@
       console.info('Kudzu: backend not reachable — running in demo mode.');
     }
     render();
+    refreshConnect();
+
+    // Coming back from Stripe's onboarding — re-check and tidy the URL.
+    if (/[?&]connected=1/.test(location.search)) {
+      history.replaceState({}, '', location.pathname);
+    }
   })();
 })();

@@ -9,6 +9,7 @@
 
 const express = require('express');
 const db = require('./db');
+const auth = require('./auth');
 const lumaprints = require('./lumaprints');
 
 const router = express.Router();
@@ -66,6 +67,100 @@ router.post('/subscribe', async (req, res) => {
   }
 });
 
+// ── Stripe Connect: artist payouts ───────────────────────────────────
+// Each artist gets their own Stripe account. Buyers pay them directly;
+// Kudzu's commission is skimmed as an application fee in transit. Kudzu
+// never holds artist funds, which keeps this out of money-transmitter
+// territory and means a Kudzu outage can't strand anyone's money.
+//
+// Onboarding is Stripe's own hosted flow — bank details and ID never
+// touch this server.
+
+// Start (or resume) onboarding. Returns a URL to send the artist to.
+router.post('/connect/start', auth.requireArtist, async (req, res) => {
+  if (!stripe) return res.status(503).json({ error: 'payments_unavailable' });
+
+  try {
+    let acct = req.artist.stripe_account;
+
+    if (!acct) {
+      const created = await stripe.accounts.create({
+        type: 'express',
+        email: req.artist.email,
+        business_profile: {
+          name: req.artist.name,
+          product_description: 'Original artwork and prints sold through Kudzu Arts'
+        },
+        capabilities: {
+          transfers: { requested: true },
+          card_payments: { requested: true }
+        },
+        metadata: { kudzu_artist_id: String(req.artist.id) }
+      });
+      acct = created.id;
+
+      // Saved immediately. If the artist abandons onboarding halfway,
+      // returning later resumes the same account rather than orphaning
+      // it and starting again.
+      await db.query(
+        'UPDATE artists SET stripe_account = $1, updated_at = now() WHERE id = $2',
+        [acct, req.artist.id]);
+    }
+
+    const site = baseUrl(req);
+    const link = await stripe.accountLinks.create({
+      account: acct,
+      type: 'account_onboarding',
+      refresh_url: `${site}/api/connect/start`,
+      return_url: `${site}/workinprogress/profile.html?connected=1`
+    });
+
+    res.json({ url: link.url });
+  } catch (err) {
+    console.error('connect start failed:', err.message);
+    res.status(500).json({ error: 'connect_failed' });
+  }
+});
+
+// Is the account actually ready to receive money? Having an account id
+// is not the same as having finished onboarding — Stripe may still be
+// waiting on ID or bank details.
+router.get('/connect/status', auth.requireArtist, async (req, res) => {
+  if (!stripe) return res.json({ connected: false, reason: 'payments_unavailable' });
+  if (!req.artist.stripe_account) return res.json({ connected: false, reason: 'not_started' });
+
+  try {
+    const acct = await stripe.accounts.retrieve(req.artist.stripe_account);
+    const ready = !!(acct.charges_enabled && acct.payouts_enabled);
+
+    res.json({
+      connected: ready,
+      reason: ready ? null : 'incomplete',
+      needs: (acct.requirements && acct.requirements.currently_due) || [],
+      chargesEnabled: !!acct.charges_enabled,
+      payoutsEnabled: !!acct.payouts_enabled
+    });
+  } catch (err) {
+    console.error('connect status failed:', err.message);
+    res.status(500).json({ error: 'status_failed' });
+  }
+});
+
+// A link into Stripe's own dashboard, so artists can see their sales,
+// change bank details, and download tax documents themselves.
+router.post('/connect/dashboard', auth.requireArtist, async (req, res) => {
+  if (!stripe || !req.artist.stripe_account) {
+    return res.status(409).json({ error: 'not_connected' });
+  }
+  try {
+    const link = await stripe.accounts.createLoginLink(req.artist.stripe_account);
+    res.json({ url: link.url });
+  } catch (err) {
+    console.error('dashboard link failed:', err.message);
+    res.status(500).json({ error: 'dashboard_failed' });
+  }
+});
+
 // ── Checkout ─────────────────────────────────────────────────────────
 // Buying an original. Price and title come from the database, never from
 // the browser — otherwise anyone could set their own price.
@@ -85,18 +180,24 @@ router.post('/checkout/work/:id', async (req, res) => {
     if (work.status !== 'published') return res.status(404).json({ error: 'not_for_sale' });
     if (!work.for_sale || !work.price_cents) return res.status(409).json({ error: 'not_for_sale' });
 
+    // Kudzu never holds an artist's money. Without a connected Stripe
+    // account there is nowhere for the payout to land, so the sale is
+    // refused rather than taken. Belt and braces: the database also
+    // refuses to publish a priced work under these conditions.
+    if (!work.stripe_account) {
+      return res.status(409).json({ error: 'artist_payout_not_set_up' });
+    }
+
     const site = baseUrl(req);
 
-    // If the artist has connected Stripe, the money goes to them and
-    // Kudzu takes a commission. If not, it lands in the Kudzu account
-    // and gets paid on manually.
-    const commissionPct = Number(process.env.KUDZU_COMMISSION_PCT || 30);
-    const transfer = work.stripe_account
-      ? {
-          transfer_data: { destination: work.stripe_account },
-          application_fee_amount: Math.round(work.price_cents * commissionPct / 100)
-        }
-      : {};
+    // The buyer's money goes straight to the artist's own Stripe account.
+    // Kudzu's commission is taken as an application fee on the way past —
+    // it never sits in a Kudzu balance waiting to be forwarded.
+    const commissionPct = Number(process.env.KUDZU_COMMISSION_PCT || 25);
+    const transfer = {
+      transfer_data: { destination: work.stripe_account },
+      application_fee_amount: Math.round(work.price_cents * commissionPct / 100)
+    };
 
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
@@ -156,6 +257,29 @@ function webhookHandler(req, res) {
     fulfil(event.data.object).catch((err) => {
       console.error('fulfilment failed for session', event.data.object.id, err.message);
     });
+  }
+
+  // An artist finished — or lost — their Stripe onboarding.
+  if (event.type === 'account.updated') {
+    syncConnectState(event.data.object).catch((err) => {
+      console.error('connect sync failed:', err.message);
+    });
+  }
+}
+
+// Stripe considers an account usable only when it can both take charges
+// and pay out. Anything less and we clear it, which the database trigger
+// then uses to pull that artist's work back to draft.
+async function syncConnectState(account) {
+  if (!db.isReady()) return;
+  const ready = !!(account.charges_enabled && account.payouts_enabled);
+  if (ready) return;
+
+  const { rowCount } = await db.query(
+    `UPDATE artists SET stripe_account = NULL, updated_at = now()
+      WHERE stripe_account = $1`, [account.id]);
+  if (rowCount) {
+    console.log('connect account no longer usable, unpublished work for', account.id);
   }
 }
 

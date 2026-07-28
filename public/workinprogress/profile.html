@@ -31,6 +31,7 @@
     <ul>
       <li><a href="profile.html">me</a></li>
       <li id="adminInvite" hidden><a href="invites.html">send link</a></li>
+      <li id="stripeDash" hidden><a href="#" id="stripeDashLink">payouts</a></li>
       <li><a href="sales.html">sales</a></li>
       <li><a href="inquiries.html">inquiries</a></li>
       <li><a href="settings.html">settings</a></li>
@@ -62,7 +63,11 @@
     <button class="x" type="button" id="todoClose" aria-label="Dismiss">×</button>
     <h2>start selling your work</h2>
     <ul>
-      <li data-step="stripe">to list and sell work on Kudzu you need to connect your bank account through Stripe <span class="tick"></span></li>
+      <li data-step="stripe">to list and sell work on Kudzu you need to connect your bank account through Stripe <span class="tick"></span>
+        <button class="acct-btn" type="button" id="connectBtn"
+                style="display:block;margin-top:9px;">Connect Stripe</button>
+        <span id="connectNote" hidden style="display:block;margin-top:7px;color:#555;"></span>
+      </li>
       <li data-step="profile">add a profile photo so collectors can put a face to the work <span class="tick"></span></li>
       <li data-step="bio">fill in your bio and c.v. so collectors know your practice and background <span class="tick"></span></li>
     </ul>
@@ -90,6 +95,9 @@
     </div>
   </div>
 
+  <p class="acct-empty" id="sellWarn" hidden style="color:#b3261e;font-style:normal;padding:0 0 14px;">
+    Connect Stripe before your work can go live. Upload and draft freely until then — nothing publishes until you can be paid.
+  </p>
   <div class="acct-grid" id="workGrid" role="tabpanel"></div>
   <p class="acct-empty" id="workEmpty">Nothing here yet. Upload your first piece to get started.</p>
 

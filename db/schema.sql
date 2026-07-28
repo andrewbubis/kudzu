@@ -64,12 +64,24 @@ CREATE TABLE IF NOT EXISTS artworks (
 CREATE INDEX IF NOT EXISTS artworks_artist_idx
   ON artworks (artist_id, status, position);
 
--- Hard cap: 6 PUBLISHED works per artist. Drafts are unlimited.
--- Enforced in the database so a bug in the app can't get around it.
+-- Two rules, enforced here rather than in the app so no bug can slip past:
+--
+--   1. At most 6 PUBLISHED works per artist. Drafts are unlimited.
+--   2. Nothing gets published at all until the artist has connected
+--      their own Stripe account. Priced or not — if they can't be paid,
+--      their work doesn't go up. Drafts are always allowed, so they can
+--      build out a profile before connecting.
 CREATE OR REPLACE FUNCTION enforce_publish_limit() RETURNS trigger AS $$
-DECLARE n int;
+DECLARE
+  n         int;
+  payout_to text;
 BEGIN
   IF NEW.status = 'published' THEN
+    SELECT stripe_account INTO payout_to FROM artists WHERE id = NEW.artist_id;
+    IF payout_to IS NULL OR payout_to = '' THEN
+      RAISE EXCEPTION 'stripe_not_connected';
+    END IF;
+
     SELECT count(*) INTO n
       FROM artworks
      WHERE artist_id = NEW.artist_id
@@ -82,6 +94,27 @@ BEGIN
   NEW.updated_at := now();
   RETURN NEW;
 END $$ LANGUAGE plpgsql;
+
+-- If an artist disconnects Stripe, everything they have published comes
+-- straight back down to draft.
+CREATE OR REPLACE FUNCTION unpublish_on_stripe_removal() RETURNS trigger AS $$
+BEGIN
+  IF (OLD.stripe_account IS NOT NULL AND OLD.stripe_account <> '')
+     AND (NEW.stripe_account IS NULL OR NEW.stripe_account = '') THEN
+    UPDATE artworks
+       SET status = 'draft', updated_at = now()
+     WHERE artist_id = NEW.id AND status = 'published';
+    UPDATE books
+       SET status = 'draft', updated_at = now()
+     WHERE artist_id = NEW.id AND status = 'published';
+  END IF;
+  RETURN NEW;
+END $$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS artists_stripe_removed ON artists;
+CREATE TRIGGER artists_stripe_removed
+  AFTER UPDATE OF stripe_account ON artists
+  FOR EACH ROW EXECUTE FUNCTION unpublish_on_stripe_removal();
 
 DROP TRIGGER IF EXISTS artworks_publish_limit ON artworks;
 CREATE TRIGGER artworks_publish_limit
