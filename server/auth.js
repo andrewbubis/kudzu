@@ -161,10 +161,16 @@ async function redeemInvite({ token, name, email, password, identity }) {
     if (dupe[0]) throw Object.assign(new Error('exists'), { code: 'EMAIL_TAKEN' });
 
     const slug = await uniqueSlug(client, slugify(name));
+
+    // The very first account on an empty install becomes the admin —
+    // otherwise nobody could ever issue invites.
+    const { rows: countRows } = await client.query('SELECT count(*)::int AS n FROM artists');
+    const isFirst = countRows[0].n === 0;
+
     const { rows: ar } = await client.query(
-      `INSERT INTO artists (email, password_hash, name, slug)
-       VALUES ($1,$2,$3,$4) RETURNING *`,
-      [addr, password ? hashPassword(password) : '', name, slug]
+      `INSERT INTO artists (email, password_hash, name, slug, is_admin)
+       VALUES ($1,$2,$3,$4,$5) RETURNING *`,
+      [addr, password ? hashPassword(password) : '', name, slug, isFirst]
     );
     const artist = ar[0];
 

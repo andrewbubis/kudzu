@@ -81,6 +81,43 @@ app.use((err, _req, res, _next) => {
   res.status(500).json({ error: 'server_error' });
 });
 
+// ── First-run bootstrap ──────────────────────────────────────────────
+// When the artists table is empty there is no way in — no account exists
+// to create an invite. So on an empty database the server mints one
+// admin invite and prints it to the deploy logs. Whoever can read the
+// logs already controls the deployment, so this grants nothing new.
+//
+// It runs only while the table is empty. Once the first account exists
+// it never fires again, and the invite is single-use like any other.
+async function bootstrapFirstAdmin() {
+  if (!db.isReady()) return;
+  try {
+    const { rows } = await db.query('SELECT count(*)::int AS n FROM artists');
+    if (rows[0].n > 0) return;
+
+    const inv = await auth.createInvite({
+      note: 'First admin', createdBy: null, days: 2
+    });
+    await db.query(
+      `UPDATE invites SET note = 'First admin (grants admin rights)' WHERE id = $1`,
+      [inv.id]
+    );
+
+    const base = process.env.PUBLIC_BASE_URL || 'http://localhost:' + PORT;
+    console.log('');
+    console.log('  ┌─────────────────────────────────────────────────────');
+    console.log('  │  No accounts yet. Open this link to create the first');
+    console.log('  │  admin. It works once and expires in 48 hours.');
+    console.log('  │');
+    console.log(`  │  ${base}/workinprogress/signup.html?invite=${inv.token}`);
+    console.log('  └─────────────────────────────────────────────────────');
+    console.log('');
+  } catch (err) {
+    console.error('bootstrap failed:', err.message);
+  }
+}
+
+
 // ── Boot ─────────────────────────────────────────────────────────────
 (async function start() {
   try {
@@ -89,6 +126,8 @@ app.use((err, _req, res, _next) => {
     // A database problem should not take the public site down.
     console.error('database setup failed — accounts disabled:', err.message);
   }
+
+  await bootstrapFirstAdmin();
 
   setInterval(() => db.sweep(), 60 * 60 * 1000).unref();
 
