@@ -95,7 +95,7 @@
 .opt-note { font-family:var(--sans); font-size:12px; color:var(--ink-mute); margin-top:10px; }
 
 /* ── Interior page head ───────────────────────────────────────── */
-.page-head { padding-block: clamp(48px,7vw,92px) clamp(28px,4vw,44px); overflow: hidden; }
+.page-head { padding-block: clamp(48px,7vw,92px) clamp(28px,4vw,44px); overflow: hidden; background: var(--paper-2); }
 .page-head .wrap { max-width: 980px; }
 .page-head h1 { font-family: var(--serif); font-weight: 400; font-size: clamp(46px,7vw,92px); line-height: 1.02; letter-spacing: -0.005em; color: var(--ink); margin: 18px 0 0; }
 .page-head h1 .ital { font-style: italic; color: var(--olive); }

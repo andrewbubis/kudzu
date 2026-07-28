@@ -316,7 +316,7 @@ section { position: relative; padding-block: clamp(72px, 9vw, 128px); }
 /* Looping clothesline marquee (all available prints) */
 .clothesline.loop { overflow: hidden; padding-top: 12px; }
 .clothesline.loop .cord { top: 11px; }
-.clothesline.loop .hangs { width: max-content; flex-wrap: nowrap; justify-content: flex-start; animation: clothesline-scroll 72s linear infinite; }
+.clothesline.loop .hangs { width: max-content; flex-wrap: nowrap; justify-content: flex-start; animation: clothesline-scroll 150s linear infinite; }
 .clothesline.loop .hangs:hover { animation-play-state: paused; }
 .clothesline.loop .hang { flex: 0 0 auto; width: clamp(110px, 16vw, 150px); max-width: none; }
 @keyframes clothesline-scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
