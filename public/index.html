@@ -145,6 +145,22 @@
   }
   .ig-link svg { display: block; }
 
+  .login-link {
+    display: inline-flex;
+    align-items: center;
+    padding: 10px 18px;
+    color: var(--paper);
+    background: var(--ink);
+    text-decoration: none;
+    font-family: var(--sans);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    transition: background .2s;
+  }
+  .login-link:hover { background: var(--olive-deep); }
+
   /* ── Middle: logo + message ───────────────────────────── */
   .middle {
     flex: 1;
@@ -454,6 +470,7 @@
       KUDZU<span class="arts">arts</span>
     </a>
 
+    <div style="display:flex; align-items:center; gap:12px;">
     <a class="ig-link"
        href="https://instagram.com/kudzu.arts"
        target="_blank"
@@ -466,6 +483,8 @@
       </svg>
       <span>Follow on Instagram</span>
     </a>
+    <a class="login-link" href="workinprogress/login.html">Artist Login</a>
+    </div>
   </header>
 
   <!-- Middle: logo + message side-by-side ────────────────── -->
