@@ -128,7 +128,7 @@ section { position: relative; padding-block: clamp(72px, 9vw, 128px); }
   position: sticky; top: 0; z-index: 80;
   display: flex; align-items: center; justify-content: space-between;
   gap: 24px; padding: 14px var(--pad);
-  background: rgba(251, 250, 247, 0.82);
+  background: rgba(244, 242, 236, 0.94);
   backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--line);
 }
@@ -148,8 +148,8 @@ section { position: relative; padding-block: clamp(72px, 9vw, 128px); }
 .ig-top { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; flex: 0 0 auto; color: var(--ink); border: 2px solid var(--ink); transition: background .2s, color .2s, transform .2s; }
 .ig-top:hover { background: var(--clay); border-color: var(--clay); color: var(--paper); transform: translateY(-2px); }
 .ig-top svg { display: block; }
-.footer-ig { display: inline-flex; align-items: center; justify-content: center; width: max-content; margin: 26px auto 0; color: var(--cream-soft); transition: color .2s, transform .2s; }
-.footer-ig:hover { color: var(--gold-br); transform: translateY(-2px); }
+.footer-ig { display: inline-flex; align-items: center; justify-content: center; width: max-content; margin: 26px auto 0; color: var(--ink-mute); transition: color .2s, transform .2s; }
+.footer-ig:hover { color: var(--clay); transform: translateY(-2px); }
 .footer-ig svg { display: block; }
 .nav-toggle { display: none; background: transparent; border: 2px solid var(--ink); color: var(--ink); padding: 9px 15px; font-size: 12px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; }
 
@@ -334,14 +334,14 @@ section { position: relative; padding-block: clamp(72px, 9vw, 128px); }
 .visit .btn-line:hover { background: var(--cream); color: var(--plum-deep); }
 
 /* ── Footer ───────────────────────────────────────────────────── */
-.site-footer { background: var(--ink); color: var(--cream); padding: 64px var(--pad) 30px; position: relative; overflow: hidden; }
+.site-footer { background: var(--paper-2); color: var(--ink); padding: 64px var(--pad) 30px; position: relative; overflow: hidden; }
 .footer-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1.2fr; gap: 40px; max-width: var(--maxw); margin: 0 auto 48px; position: relative; z-index: 1; }
 .footer-brand .mark { height: 44px; margin-bottom: 16px; }
-.footer-brand .blurb { font-family: var(--serif); font-size: 15px; font-style: italic; line-height: 1.55; color: var(--cream-soft); max-width: 300px; }
-.footer-col h4 { font-family: var(--sans); font-size: 11px; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: var(--gold-br); margin-bottom: 15px; }
-.footer-col a, .footer-col p { display: block; font-family: var(--sans); font-size: 13.5px; color: var(--cream); text-decoration: none; margin: 0 0 9px; transition: color .15s; }
-.footer-col a:hover { color: var(--gold-br); }
-.footer-bot { max-width: var(--maxw); margin: 0 auto; border-top: 1px solid var(--line-cream); padding-top: 22px; display: flex; justify-content: space-between; gap: 14px; flex-wrap: wrap; font-family: var(--sans); font-size: 11px; letter-spacing: 0.08em; color: var(--cream-soft); position: relative; z-index: 1; }
+.footer-brand .blurb { font-family: var(--serif); font-size: 15px; font-style: italic; line-height: 1.55; color: var(--ink-soft); max-width: 300px; }
+.footer-col h4 { font-family: var(--sans); font-size: 11px; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: var(--clay); margin-bottom: 15px; }
+.footer-col a, .footer-col p { display: block; font-family: var(--sans); font-size: 13.5px; color: var(--ink); text-decoration: none; margin: 0 0 9px; transition: color .15s; }
+.footer-col a:hover { color: var(--clay); }
+.footer-bot { max-width: var(--maxw); margin: 0 auto; border-top: 1px solid var(--line); padding-top: 22px; display: flex; justify-content: space-between; gap: 14px; flex-wrap: wrap; font-family: var(--sans); font-size: 11px; letter-spacing: 0.08em; color: var(--ink-mute); position: relative; z-index: 1; }
 
 /* ── Reveal ───────────────────────────────────────────────────── */
 .reveal { opacity: 0; transform: translateY(24px); transition: opacity .8s ease, transform .8s ease; }
