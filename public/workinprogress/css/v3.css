@@ -280,7 +280,7 @@ section { position: relative; padding-block: clamp(72px, 9vw, 128px); }
 .exclusive { display: inline-flex; align-items: center; gap: 10px; font-family: var(--sans); font-size: 11px; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: var(--gold-br); border: 1px solid var(--line-cream); padding: 8px 16px; border-radius: 100px; }
 
 /* ── Print Shop ───────────────────────────────────────────────── */
-.printshop { background: var(--paper-2); overflow: hidden; }
+.printshop { background: var(--paper-2); overflow: hidden; padding-block: clamp(36px, 4vw, 56px); }
 .print-grid { display: grid; grid-template-columns: 1fr 1.05fr; gap: clamp(36px, 5vw, 72px); align-items: center; }
 .print-graphic { position: relative; }
 .print-graphic img { width: 100%; }
