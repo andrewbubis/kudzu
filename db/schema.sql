@@ -180,6 +180,25 @@ CREATE TABLE IF NOT EXISTS invites (
 CREATE INDEX IF NOT EXISTS invites_open_idx
   ON invites (expires_at) WHERE used_at IS NULL;
 
+-- ── Enquiries ────────────────────────────────────────────────────────
+-- A collector asking about a piece. Goes to the artist it's about, and
+-- is visible to admins so Kudzu can follow up if the artist doesn't.
+CREATE TABLE IF NOT EXISTS inquiries (
+  id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  artist_id   uuid NOT NULL REFERENCES artists(id) ON DELETE CASCADE,
+  artwork_id  uuid REFERENCES artworks(id) ON DELETE SET NULL,
+
+  name        text NOT NULL,
+  email       text NOT NULL,
+  message     text NOT NULL,
+
+  read_at     timestamptz,
+  created_at  timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS inquiries_artist_idx
+  ON inquiries (artist_id, created_at DESC);
+
 -- ── Sessions ─────────────────────────────────────────────────────────
 -- Server-side sessions. The cookie holds a random id and nothing else,
 -- so it carries no information and can be revoked instantly.

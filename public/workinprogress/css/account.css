@@ -186,3 +186,16 @@
   .acct-grid { grid-template-columns: 1fr; }
   .acct-tabs { gap: 16px; overflow-x: auto; }
 }
+
+/* ── Enquiries ─────────────────────────────────────────────────────── */
+.inq {
+  border: 1px solid var(--a-line); background: #fff;
+  padding: 15px 17px; margin-bottom: 12px;
+}
+.inq.unread { border-left: 3px solid var(--a-link); }
+.inq-top { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.inq-top .who { font-weight: 500; }
+.inq-top .when { color: var(--a-mute); font-size: 12px; white-space: nowrap; }
+.inq .about { color: var(--a-soft); margin: 5px 0 0; font-size: 12.5px; }
+.inq .msg { margin: 11px 0 0; white-space: pre-line; line-height: 1.6; }
+.inq .reply { display: inline-block; margin-top: 12px; }

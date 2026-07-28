@@ -353,6 +353,83 @@ router.delete('/books/:id', auth.requireArtist, async (req, res) => {
   }
 });
 
+// ── Enquiries ────────────────────────────────────────────────────────
+// Public: a collector asks an artist about a piece.
+router.post('/inquiries', async (req, res) => {
+  const b = req.body || {};
+  const name = String(b.name || '').trim().slice(0, 120);
+  const email = String(b.email || '').trim().toLowerCase().slice(0, 200);
+  const message = String(b.message || '').trim().slice(0, 4000);
+
+  if (!name || !message) return res.status(400).json({ error: 'missing_fields' });
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+    return res.status(400).json({ error: 'bad_email' });
+  }
+
+  try {
+    // Resolve the artist from their slug so the browser can't post an
+    // enquiry into someone else's inbox by guessing ids.
+    const { rows: ar } = await db.query(
+      'SELECT id FROM artists WHERE slug = $1 AND published = true',
+      [String(b.artistSlug || '')]);
+    if (!ar[0]) return res.status(404).json({ error: 'artist_not_found' });
+
+    // Same for the artwork — it must belong to that artist.
+    let artworkId = null;
+    if (b.workId) {
+      const { rows: wr } = await db.query(
+        'SELECT id FROM artworks WHERE id = $1 AND artist_id = $2',
+        [b.workId, ar[0].id]);
+      if (wr[0]) artworkId = wr[0].id;
+    }
+
+    await db.query(
+      `INSERT INTO inquiries (artist_id, artwork_id, name, email, message)
+       VALUES ($1,$2,$3,$4,$5)`,
+      [ar[0].id, artworkId, name, email, message]);
+
+    res.status(201).json({ ok: true });
+  } catch (err) {
+    console.error('inquiry failed:', err.message);
+    res.status(500).json({ error: 'server_error' });
+  }
+});
+
+// The artist's own inbox.
+router.get('/inquiries', auth.requireArtist, async (req, res) => {
+  try {
+    const { rows } = await db.query(
+      `SELECT i.*, w.title AS work_title, w.image_path AS work_image
+         FROM inquiries i
+    LEFT JOIN artworks w ON w.id = i.artwork_id
+        WHERE i.artist_id = $1
+     ORDER BY i.created_at DESC
+        LIMIT 200`, [req.artist.id]);
+
+    res.json({
+      inquiries: rows.map((r) => ({
+        id: r.id, name: r.name, email: r.email, message: r.message,
+        workTitle: r.work_title, workImage: r.work_image,
+        readAt: r.read_at, createdAt: r.created_at
+      }))
+    });
+  } catch (err) {
+    console.error('inquiry list failed:', err.message);
+    res.status(500).json({ error: 'server_error' });
+  }
+});
+
+router.post('/inquiries/:id/read', auth.requireArtist, async (req, res) => {
+  try {
+    await db.query(
+      'UPDATE inquiries SET read_at = now() WHERE id = $1 AND artist_id = $2',
+      [req.params.id, req.artist.id]);
+    res.status(204).end();
+  } catch (err) {
+    res.status(500).json({ error: 'server_error' });
+  }
+});
+
 // ── Invites (admin only) ─────────────────────────────────────────────
 router.get('/invites', auth.requireArtist, auth.requireAdmin, async (_req, res) => {
   try {

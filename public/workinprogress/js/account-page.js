@@ -107,6 +107,42 @@
       if ($('soldNote')) $('soldNote').hidden = !me.stripeConnected;
     }
 
+    // Enquiries
+    if ($('inqList')) {
+      try {
+        var iq = await api('/inquiries');
+        var rows = iq.inquiries || [];
+        $('inqEmpty').hidden = rows.length > 0;
+
+        rows.forEach(function (r) {
+          var el = document.createElement('article');
+          el.className = 'inq' + (r.readAt ? '' : ' unread');
+          el.innerHTML =
+            '<div class="inq-top">' +
+              '<span class="who">' + esc(r.name) + '</span>' +
+              '<span class="when">' + new Date(r.createdAt).toLocaleDateString('en-US',
+                  { month: 'short', day: 'numeric' }) + '</span>' +
+            '</div>' +
+            (r.workTitle ? '<p class="about">about <em>' + esc(r.workTitle) + '</em></p>' : '') +
+            '<p class="msg">' + esc(r.message) + '</p>' +
+            '<a class="reply" href="mailto:' + esc(r.email) +
+              '?subject=' + encodeURIComponent('Re: your enquiry — Kudzu Arts') + '">' +
+              esc(r.email) + '</a>';
+
+          // Opening a reply marks it read.
+          el.querySelector('.reply').addEventListener('click', function () {
+            el.classList.remove('unread');
+            api('/inquiries/' + r.id + '/read', { method: 'POST' }).catch(function () {});
+          });
+
+          $('inqList').appendChild(el);
+        });
+      } catch (e) {
+        $('inqEmpty').hidden = false;
+        $('inqEmpty').textContent = 'Could not load your enquiries.';
+      }
+    }
+
     // Settings
     if ($('sName')) {
       // Swap the plain inputs for proper pickers before filling them in.

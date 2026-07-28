@@ -65,6 +65,24 @@
       </div>
     </div>
     <p class="ap-bio" id="apBio"></p>
+
+    <section class="ap-enquire" id="apEnquire" hidden>
+      <h2>Enquire about this artist's work</h2>
+      <p class="note" id="apEnqNote" hidden></p>
+      <form id="apEnqForm" novalidate>
+        <label for="eqName">your name</label>
+        <input id="eqName" type="text" autocomplete="name" required>
+
+        <label for="eqEmail">email</label>
+        <input id="eqEmail" type="email" autocomplete="email" required>
+
+        <label for="eqMsg">message</label>
+        <textarea id="eqMsg" rows="4" required
+          placeholder="A piece you're drawn to, a commission, a question about availability."></textarea>
+
+        <button class="btn btn-clay" type="submit" id="eqSend">Send</button>
+      </form>
+    </section>
   </div>
 </section>
 
@@ -148,6 +166,37 @@
     return el;
   }
 
+  var enqForm = $('apEnqForm');
+  if (enqForm) {
+    enqForm.addEventListener('submit', async function (e) {
+      e.preventDefault();
+      var btn = $('eqSend'), note = $('apEnqNote');
+      note.hidden = true;
+      btn.disabled = true; btn.textContent = 'Sending\u2026';
+      try {
+        var res = await fetch('/api/inquiries', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            artistSlug: slug,
+            name: $('eqName').value.trim(),
+            email: $('eqEmail').value.trim(),
+            message: $('eqMsg').value.trim()
+          })
+        });
+        if (!res.ok) throw new Error(res.status);
+        enqForm.hidden = true;
+        note.hidden = false;
+        note.textContent = 'Sent. The artist will be in touch.';
+      } catch (err) {
+        note.hidden = false;
+        note.style.color = '#b3261e';
+        note.textContent = 'Could not send that. Try again in a moment.';
+        btn.disabled = false; btn.textContent = 'Send';
+      }
+    });
+  }
+
   (async function load() {
     if (!slug) { location.href = 'artists.html'; return; }
     try {
@@ -172,10 +221,15 @@
         l.textContent = 'Website';
         $('apLinks').appendChild(l);
       }
-      var c = document.createElement('a');
+      var c = document.createElement('button');
       c.className = 'btn btn-clay';
-      c.href = 'contact.html';
+      c.type = 'button';
       c.textContent = 'Enquire';
+      c.addEventListener('click', function () {
+        var box = $('apEnquire');
+        box.hidden = !box.hidden;
+        if (!box.hidden) box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      });
       $('apLinks').appendChild(c);
 
       if (a.bio) $('apBio').textContent = a.bio;
