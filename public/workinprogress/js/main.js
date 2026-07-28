@@ -27,6 +27,7 @@
   }
 
   function reveal() {
+    window.kudzuReveal = reveal;
     var els = document.querySelectorAll('.reveal');
     var revealAll = function () { els.forEach(function (e) { e.classList.add('in'); }); };
     if (!('IntersectionObserver' in window)) { revealAll(); return; }

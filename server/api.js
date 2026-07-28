@@ -412,6 +412,33 @@ router.get('/artists', async (_req, res) => {
   }
 });
 
+// Everything published, across every artist. Feeds the virtual gallery
+// and the print shop. Sold work is included so the wall doesn't develop
+// gaps as pieces go — it just shows as sold.
+router.get('/works', async (req, res) => {
+  try {
+    const limit = Math.min(parseInt(req.query.limit, 10) || 60, 200);
+    const { rows } = await db.query(
+      `SELECT w.*, a.name AS artist_name, a.slug AS artist_slug
+         FROM artworks w
+         JOIN artists a ON a.id = w.artist_id
+        WHERE w.status IN ('published','sold')
+          AND a.published = true
+     ORDER BY (w.status = 'sold'), w.created_at DESC
+        LIMIT $1`, [limit]);
+
+    res.json({
+      works: rows.map((w) => Object.assign(publicWork(w), {
+        artist: w.artist_name,
+        artistSlug: w.artist_slug
+      }))
+    });
+  } catch (err) {
+    console.error('works listing failed:', err.message);
+    res.status(500).json({ error: 'server_error' });
+  }
+});
+
 router.get('/artists/:slug', async (req, res) => {
   try {
     const { rows } = await db.query(
