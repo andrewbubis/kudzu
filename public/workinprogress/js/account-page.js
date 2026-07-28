@@ -140,12 +140,16 @@
               link: $('sLink').value.trim()
             })
           });
-          note.textContent = 'Saved';
+          // Straight back to the profile so they can see the change land,
+          // rather than a small "Saved" that's easy to miss.
+          btn.textContent = 'Saved ✓';
+          location.href = 'profile.html';
+          return;
         } catch (e) {
           note.textContent = 'Could not save — try again.';
-        } finally {
+          note.style.color = '#b3261e';
           btn.disabled = false;
-          setTimeout(function () { note.textContent = ''; }, 2200);
+          setTimeout(function () { note.textContent = ''; }, 3200);
         }
       });
 

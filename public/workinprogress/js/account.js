@@ -82,6 +82,13 @@
     $('cvText').value = me.cv || '';
   }
 
+  // Those placeholder links looked clickable but went nowhere. Send them
+  // to settings, where the fields actually live.
+  ['bornCountry', 'worksCity', 'worksCountry', 'addLink'].forEach(function (id) {
+    var el = $(id);
+    if (el) el.setAttribute('href', 'settings.html');
+  });
+
   // Nothing publishes until the artist can actually be paid.
   function canSell() { return !!(state.me && state.me.stripeConnected); }
 
