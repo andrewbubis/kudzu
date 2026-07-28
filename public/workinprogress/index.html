@@ -137,15 +137,26 @@
 
 <!-- VISIT / MISSION ──────────────────────────────────────────── -->
 <section class="visit" style="padding-block: clamp(44px,5.5vw,72px);">
-  <div class="wrap">
+  <div class="wrap" style="max-width:680px; margin-inline:auto; text-align:center;">
     <div class="sprig gold" aria-hidden="true"></div>
     <p class="eyebrow center bare" style="color:var(--gold-br); justify-content:center;">The gallery is the door</p>
-    <h2>Good art takes root<br>where it’s <span class="ital">wanted.</span></h2>
-    <p class="lede">No tickets, no closing time. The whole gallery lives here — come back often, it keeps growing. Tell us what you’re looking for and we’ll point you to it.</p>
-    <div class="hero-cta">
-      <a href="contact.html" class="btn btn-clay btn-lg">Get in touch</a>
-      <a href="https://instagram.com/kudzu.arts" target="_blank" rel="noopener" class="btn btn-line btn-lg">Follow on Instagram</a>
-    </div>
+    <h2>Good art takes root<br>where it's <span class="ital">wanted.</span></h2>
+    <p class="lede" style="margin-bottom:36px;">Please reach out with any questions or to join our newsletter.</p>
+    <form action="https://formsubmit.co/info@kudzuarts.com" method="POST" style="text-align:left; display:flex; flex-direction:column; gap:16px;">
+      <input type="hidden" name="_subject" value="Kudzu Arts — Website Inquiry">
+      <input type="hidden" name="_captcha" value="false">
+      <input type="hidden" name="_next" value="https://kudzuarts.com/workinprogress/">
+      <textarea name="message" placeholder="Your question or message…" rows="4"
+        style="width:100%; padding:14px 16px; font-family:var(--serif); font-size:16px; color:var(--ink); background:var(--paper); border:1.5px solid var(--line); resize:vertical; outline:none;"></textarea>
+      <input type="email" name="email" placeholder="your@email.com" required
+        style="width:100%; padding:14px 16px; font-family:var(--serif); font-size:16px; color:var(--ink); background:var(--paper); border:1.5px solid var(--line); outline:none;">
+      <label style="display:flex; align-items:center; gap:12px; font-family:var(--sans); font-size:14px; color:var(--ink-soft); cursor:pointer;">
+        <input type="checkbox" name="newsletter" value="yes"
+          style="width:18px; height:18px; flex-shrink:0; accent-color:var(--clay);">
+        Add me to the Kudzu newsletter
+      </label>
+      <button type="submit" class="btn btn-clay btn-lg" style="width:100%; justify-content:center;">Send</button>
+    </form>
   </div>
 </section>
 
