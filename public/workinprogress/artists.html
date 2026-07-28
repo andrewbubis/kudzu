@@ -96,5 +96,47 @@
   <div class="footer-bot"><span>© Kudzu Arts MMXXVI</span><span>kudzuarts.com · Nashville · Los Angeles · Austin · Miami · Savannah</span></div>
 </footer>
 <script src="js/main.js" defer></script>
+<script>
+// Pull published artists out of the database and put them at the front of
+// the grid. The hard-coded tiles stay as a fallback so the page still
+// looks right before anyone has signed up.
+(function () {
+  'use strict';
+  var grid = document.querySelector('.artist-grid');
+  if (!grid) return;
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c];
+    });
+  }
+
+  fetch('/api/artists')
+    .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+    .then(function (d) {
+      var artists = d.artists || [];
+      if (!artists.length) return;
+
+      // Anyone now in the database replaces their placeholder tile.
+      artists.forEach(function (a) {
+        var stale = grid.querySelector('a[href="artist-' + a.slug + '.html"]');
+        if (stale) stale.remove();
+      });
+
+      artists.slice().reverse().forEach(function (a) {
+        var el = document.createElement('a');
+        el.href = 'artist.html?a=' + encodeURIComponent(a.slug);
+        el.className = 'artist-card reveal';
+        var img = a.cover || a.photo;
+        el.innerHTML =
+          (img ? '<span class="art" style="background-image:url(\'' + esc(img) + '\')"></span>'
+               : '<span class="art empty"></span>') +
+          '<span class="name">' + esc(a.name) + '</span>';
+        grid.insertBefore(el, grid.firstChild);
+      });
+    })
+    .catch(function () { /* keep the static grid */ });
+})();
+</script>
 </body>
 </html>

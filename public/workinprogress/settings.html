@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Settings · Kudzu Arts</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#fbfaf7">
+<link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&family=Albert+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/v3.css">
+<link rel="stylesheet" href="css/account.css">
+</head>
+<body>
+
+<header class="site-header">
+  <a href="index.html" class="brand"><img class="mark" src="img/logo-k.png" alt="" aria-hidden="true"><span class="word"><b>KUDZU</b><span class="arts">arts</span></span></a>
+  <nav class="nav" aria-label="Primary">
+    <a href="artists.html">Artists</a>
+    <a href="exhibitions.html">Exhibitions</a>
+    <a href="gallery.html">Virtual Gallery</a>
+    <a href="printshop.html">Print Shop</a>
+    <a href="contact.html">Contact</a>
+  </nav>
+  <div class="acct-menu" data-open="false" id="acctMenu">
+    <button type="button" aria-haspopup="true" aria-expanded="false" id="acctMenuBtn">
+      <span id="acctMenuName">account</span>
+    </button>
+    <ul>
+      <li><a href="profile.html">me</a></li>
+      <li id="adminInvite" hidden><a href="invites.html">send link</a></li>
+      <li id="stripeDash" hidden><a href="#" id="stripeDashLink">payouts</a></li>
+      <li><a href="sales.html">sales</a></li>
+      <li><a href="inquiries.html">inquiries</a></li>
+      <li><a href="settings.html">settings</a></li>
+      <li class="sep"><a href="#" id="logoutLink">log out</a></li>
+    </ul>
+  </div>
+  <button class="nav-toggle" type="button" aria-expanded="false">Menu</button>
+</header>
+
+<main class="acct inv" style="max-width:720px;">
+
+  <h1 style="font-family:var(--serif);font-size:21px;margin:0 0 6px;">settings</h1>
+  <p class="sub" style="color:#888;margin:0 0 26px;">Your details and how you get paid.</p>
+
+  <section class="acct-panel" style="margin-bottom:34px;">
+    <label for="sName">name</label>
+    <input id="sName" type="text" style="width:100%;padding:9px 11px;border:1px solid #e2e2e2;font:inherit;margin-bottom:14px;">
+
+    <label for="sBornYear">born</label>
+    <div style="display:flex;gap:9px;margin-bottom:14px;">
+      <input id="sBornYear" type="number" placeholder="Year" style="width:110px;padding:9px 11px;border:1px solid #e2e2e2;font:inherit;">
+      <input id="sBornCountry" type="text" placeholder="Country" style="flex:1;padding:9px 11px;border:1px solid #e2e2e2;font:inherit;">
+    </div>
+
+    <label for="sWorksCity">works in</label>
+    <div style="display:flex;gap:9px;margin-bottom:14px;">
+      <input id="sWorksCity" type="text" placeholder="City" style="flex:1;padding:9px 11px;border:1px solid #e2e2e2;font:inherit;">
+      <input id="sWorksCountry" type="text" placeholder="Country" style="flex:1;padding:9px 11px;border:1px solid #e2e2e2;font:inherit;">
+    </div>
+
+    <label for="sLink">website</label>
+    <input id="sLink" type="url" placeholder="yoursite.com" style="width:100%;padding:9px 11px;border:1px solid #e2e2e2;font:inherit;margin-bottom:18px;">
+
+    <button class="acct-btn" type="button" id="saveSettings">Save</button>
+    <span id="saveNote" style="margin-left:11px;color:#555;"></span>
+  </section>
+
+  <section class="acct-panel">
+    <h2 style="font-size:13px;color:#888;margin:0 0 10px;">payouts</h2>
+    <p id="payoutState" style="margin:0 0 12px;">Checking\u2026</p>
+    <button class="acct-btn ghost" type="button" id="payoutBtn" hidden>Connect Stripe</button>
+  </section>
+
+</main>
+
+<script src="js/account-page.js" defer></script>
+</body>
+</html>

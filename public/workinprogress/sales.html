@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sales · Kudzu Arts</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#fbfaf7">
+<link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&family=Albert+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/v3.css">
+<link rel="stylesheet" href="css/account.css">
+</head>
+<body>
+
+<header class="site-header">
+  <a href="index.html" class="brand"><img class="mark" src="img/logo-k.png" alt="" aria-hidden="true"><span class="word"><b>KUDZU</b><span class="arts">arts</span></span></a>
+  <nav class="nav" aria-label="Primary">
+    <a href="artists.html">Artists</a>
+    <a href="exhibitions.html">Exhibitions</a>
+    <a href="gallery.html">Virtual Gallery</a>
+    <a href="printshop.html">Print Shop</a>
+    <a href="contact.html">Contact</a>
+  </nav>
+  <div class="acct-menu" data-open="false" id="acctMenu">
+    <button type="button" aria-haspopup="true" aria-expanded="false" id="acctMenuBtn">
+      <span id="acctMenuName">account</span>
+    </button>
+    <ul>
+      <li><a href="profile.html">me</a></li>
+      <li id="adminInvite" hidden><a href="invites.html">send link</a></li>
+      <li id="stripeDash" hidden><a href="#" id="stripeDashLink">payouts</a></li>
+      <li><a href="sales.html">sales</a></li>
+      <li><a href="inquiries.html">inquiries</a></li>
+      <li><a href="settings.html">settings</a></li>
+      <li class="sep"><a href="#" id="logoutLink">log out</a></li>
+    </ul>
+  </div>
+  <button class="nav-toggle" type="button" aria-expanded="false">Menu</button>
+</header>
+
+<main class="acct inv" style="max-width:720px;">
+
+  <h1 style="font-family:var(--serif);font-size:21px;margin:0 0 6px;">sales</h1>
+  <p class="sub" style="color:#888;margin:0 0 26px;">Work sold through Kudzu. Payouts land in your bank via Stripe.</p>
+  <div class="acct-grid" id="soldGrid"></div>
+  <p class="acct-empty" id="soldEmpty" hidden>No sales yet.</p>
+  <p class="acct-empty" id="soldNote" hidden style="font-style:normal;color:#555;">
+    Full payout history, dates and amounts live in your Stripe dashboard —
+    <a href="#" id="dashLink">open it here</a>.
+  </p>
+
+</main>
+
+<script src="js/account-page.js" defer></script>
+</body>
+</html>

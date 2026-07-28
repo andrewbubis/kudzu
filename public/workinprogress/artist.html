@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Artist · Kudzu Arts</title>
+<meta name="theme-color" content="#fbfaf7">
+<link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&family=Albert+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/v3.css">
+<link rel="stylesheet" href="css/pages.css">
+<style>
+  .ap-head { display: grid; grid-template-columns: 190px 1fr; gap: 34px; align-items: start; }
+  .ap-photo { width: 190px; aspect-ratio: 1/1; background: var(--paper-3) center/cover no-repeat; }
+  .ap-head h1 { font-family: var(--serif); font-weight: 300; font-size: clamp(30px,4vw,46px); line-height: 1.05; }
+  .ap-meta { font-family: var(--sans); font-size: 13px; color: var(--ink-soft); margin-top: 12px; }
+  .ap-links { display: flex; gap: 12px; margin-top: 20px; flex-wrap: wrap; }
+  .ap-bio { font-family: var(--serif); font-size: 16px; line-height: 1.65; color: var(--ink-soft);
+            margin-top: 22px; max-width: 620px; white-space: pre-line; }
+  .ap-cv { font-family: var(--sans); font-size: 13px; line-height: 1.9; color: var(--ink-soft);
+           white-space: pre-line; max-width: 620px; }
+  .ap-works { display: grid; grid-template-columns: repeat(3, 1fr); gap: clamp(20px,2.5vw,36px); }
+  .ap-work .fr { background: #fff; padding: 7%; box-shadow: 0 12px 26px rgba(33,28,42,0.10); overflow: hidden; }
+  .ap-work .fr img { display: block; width: 100%; height: auto; transition: transform .45s ease; }
+  .ap-work:hover .fr img { transform: scale(1.04); }
+  .ap-work .t { font-family: var(--serif); font-style: italic; font-size: 17px; margin-top: 13px; }
+  .ap-work .r { display: flex; justify-content: space-between; font-family: var(--sans);
+                font-size: 13px; color: var(--ink-soft); margin-top: 5px; }
+  .ap-work .sold { color: var(--clay); font-weight: 600; }
+  .ap-empty { font-family: var(--serif); font-style: italic; color: var(--ink-mute); padding: 40px 0; }
+  @media (max-width: 860px) { .ap-works { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 620px) { .ap-head { grid-template-columns: 1fr; } .ap-works { grid-template-columns: 1fr; } }
+  @media (prefers-reduced-motion: reduce) {
+    .ap-work .fr img { transition: none; }
+    .ap-work:hover .fr img { transform: none; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <a href="index.html" class="brand"><img class="mark" src="img/logo-k.png" alt="" aria-hidden="true"><span class="word"><b>KUDZU</b><span class="arts">arts</span></span></a>
+  <nav class="nav" aria-label="Primary">
+    <a href="artists.html">Artists</a>
+    <a href="exhibitions.html">Exhibitions</a>
+    <a href="gallery.html">Virtual Gallery</a>
+    <a href="printshop.html">Print Shop</a>
+    <a href="contact.html">Contact</a>
+  </nav>
+  <a href="login.html" class="btn btn-line nav-cta">Artist Login</a>
+  <button class="nav-toggle" type="button" aria-expanded="false">Menu</button>
+</header>
+
+<section class="page-head">
+  <div class="vine-edge right"></div>
+  <div class="wrap">
+    <div class="ap-head">
+      <div class="ap-photo" id="apPhoto"></div>
+      <div>
+        <h1 id="apName">Loading…</h1>
+        <p class="ap-meta" id="apMeta"></p>
+        <div class="ap-links" id="apLinks"></div>
+      </div>
+    </div>
+    <p class="ap-bio" id="apBio"></p>
+  </div>
+</section>
+
+<section style="padding-top:0;">
+  <div class="wrap">
+    <div class="sec-head"><div><span class="num">Work</span><h2>Available <em>now.</em></h2></div></div>
+    <div class="ap-works" id="apWorks"></div>
+    <p class="ap-empty" id="apEmpty" hidden>No work published yet.</p>
+  </div>
+</section>
+
+<section class="tight" id="apCvSection" hidden>
+  <div class="wrap">
+    <div class="sec-head"><div><span class="num">Background</span><h2>C.<em>V.</em></h2></div></div>
+    <p class="ap-cv" id="apCv"></p>
+  </div>
+</section>
+
+<script>
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+  var slug = new URLSearchParams(location.search).get('a') || '';
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c];
+    });
+  }
+
+  function money(cents, currency) {
+    if (cents == null) return '';
+    try {
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency', currency: (currency || 'usd').toUpperCase(),
+        maximumFractionDigits: 0
+      }).format(Math.round(cents) / 100);
+    } catch (e) { return '$' + Math.round(cents / 100).toLocaleString(); }
+  }
+
+  async function buy(work) {
+    try {
+      var res = await fetch('/api/checkout/work/' + work.id, { method: 'POST' });
+      if (!res.ok) {
+        var b = await res.json().catch(function () { return {}; });
+        throw new Error(b.error || 'failed');
+      }
+      var data = await res.json();
+      location.href = data.url;
+    } catch (e) {
+      var msgs = {
+        already_sold: 'This piece has just sold.',
+        not_for_sale: 'This piece isn’t for sale.',
+        artist_payout_not_set_up: 'This artist hasn’t finished setting up payouts yet.',
+        payments_unavailable: 'Purchasing isn’t switched on yet.'
+      };
+      alert(msgs[e.message] || 'Could not start checkout. Try again.');
+    }
+  }
+
+  function workCard(w) {
+    var el = document.createElement('article');
+    el.className = 'ap-work';
+    el.innerHTML =
+      '<div class="fr"><img src="' + esc(w.image) + '" alt="' + esc(w.title) + '" loading="lazy"></div>' +
+      '<div class="t">' + esc(w.title) + '</div>' +
+      '<div class="r"><span>' + esc([w.year, w.medium].filter(Boolean).join(' · ')) + '</span>' +
+      '<span class="' + (w.status === 'sold' ? 'sold' : '') + '">' +
+        (w.status === 'sold' ? 'Sold' : money(w.priceCents, w.currency)) +
+      '</span></div>';
+
+    if (w.status !== 'sold' && w.forSale && w.priceCents) {
+      var b = document.createElement('button');
+      b.className = 'btn btn-clay';
+      b.type = 'button';
+      b.style.marginTop = '12px';
+      b.textContent = 'Acquire — ' + money(w.priceCents, w.currency);
+      b.addEventListener('click', function () { buy(w); });
+      el.appendChild(b);
+    }
+    return el;
+  }
+
+  (async function load() {
+    if (!slug) { location.href = 'artists.html'; return; }
+    try {
+      var res = await fetch('/api/artists/' + encodeURIComponent(slug));
+      if (!res.ok) throw new Error(res.status);
+      var d = await res.json();
+      var a = d.artist;
+
+      document.title = a.name + ' · Kudzu Arts';
+      $('apName').textContent = a.name;
+      if (a.photo) $('apPhoto').style.backgroundImage = 'url("' + a.photo + '")';
+
+      var bits = [];
+      if (a.bornYear) bits.push('b. ' + a.bornYear + (a.bornCountry ? ', ' + a.bornCountry : ''));
+      if (a.worksCity) bits.push('Works in ' + a.worksCity + (a.worksCountry ? ', ' + a.worksCountry : ''));
+      $('apMeta').textContent = bits.join('  ·  ');
+
+      if (a.link) {
+        var l = document.createElement('a');
+        l.className = 'btn btn-line';
+        l.href = a.link; l.target = '_blank'; l.rel = 'noopener';
+        l.textContent = 'Website';
+        $('apLinks').appendChild(l);
+      }
+      var c = document.createElement('a');
+      c.className = 'btn btn-clay';
+      c.href = 'contact.html';
+      c.textContent = 'Enquire';
+      $('apLinks').appendChild(c);
+
+      if (a.bio) $('apBio').textContent = a.bio;
+
+      var grid = $('apWorks');
+      (d.works || []).forEach(function (w) { grid.appendChild(workCard(w)); });
+      $('apEmpty').hidden = (d.works || []).length > 0;
+
+      if (a.cv) { $('apCv').textContent = a.cv; $('apCvSection').hidden = false; }
+    } catch (e) {
+      $('apName').textContent = 'Artist not found';
+      $('apEmpty').hidden = false;
+      $('apEmpty').textContent = 'We couldn’t find that artist.';
+    }
+  })();
+})();
+</script>
+<script src="js/main.js" defer></script>
+</body>
+</html>
