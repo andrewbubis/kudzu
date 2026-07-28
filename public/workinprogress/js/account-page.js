@@ -109,6 +109,15 @@
 
     // Settings
     if ($('sName')) {
+      // Swap the plain inputs for proper pickers before filling them in.
+      if (window.yearSelect) {
+        window.yearSelect($('sBornYear'), { placeholder: 'Year born' });
+      }
+      if (window.countrySelect) {
+        window.countrySelect($('sBornCountry'), { placeholder: 'Country of birth' });
+        window.countrySelect($('sWorksCountry'), { placeholder: 'Country' });
+      }
+
       $('sName').value = me.name || '';
       $('sBornYear').value = me.bornYear || '';
       $('sBornCountry').value = me.bornCountry || '';
