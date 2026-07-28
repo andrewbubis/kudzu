@@ -181,7 +181,7 @@ section { position: relative; padding-block: clamp(72px, 9vw, 128px); }
 .hero h1 { font-family: var(--serif); font-weight: 400; font-size: clamp(26px, 3.8vw, 50px); line-height: 1.05; letter-spacing: -0.005em; color: var(--ink); }
 .hero h1 .ital { font-style: italic; color: var(--olive); }
 .hero h1 .clay { color: var(--clay); font-style: italic; }
-.hero .lede { margin: clamp(14px,2vw,20px) auto 0; max-width: 560px; font-size: clamp(15px, 1.4vw, 17px); }
+.hero .lede { margin: clamp(14px,2vw,20px) auto 0; max-width: 672px; font-size: clamp(15px, 1.4vw, 17px); }
 .hero-cta { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; margin-top: clamp(20px,3vw,30px); }
 
 /* ── Marquee ──────────────────────────────────────────────────── */
