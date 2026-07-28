@@ -5,9 +5,9 @@
    ═══════════════════════════════════════════════════════════════════ */
 
 :root {
-  --paper:      #ece5d3;
-  --paper-2:    #e5ddc8;
-  --paper-3:    #d9cfb6;
+  --paper:      #fbfaf7;
+  --paper-2:    #f4f2ec;
+  --paper-3:    #e9e6de;
   --ink:        #211c2a;
   --ink-soft:   #544c5e;
   --ink-mute:   #8a8072;
@@ -128,7 +128,7 @@ section { position: relative; padding-block: clamp(72px, 9vw, 128px); }
   position: sticky; top: 0; z-index: 80;
   display: flex; align-items: center; justify-content: space-between;
   gap: 24px; padding: 14px var(--pad);
-  background: rgba(236, 229, 211, 0.82);
+  background: rgba(251, 250, 247, 0.82);
   backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--line);
 }
@@ -223,11 +223,23 @@ section { position: relative; padding-block: clamp(72px, 9vw, 128px); }
 
 .wall { display: grid; grid-template-columns: repeat(4, 1fr); gap: clamp(18px, 2.2vw, 30px); }
 .tile { text-decoration: none; color: inherit; display: block; position: relative; }
-.tile .frame { position: relative; overflow: hidden; transition: transform .4s cubic-bezier(.2,.7,.2,1); }
-.tile:nth-child(odd) .frame { transform: rotate(-0.6deg); }
-.tile:nth-child(even) .frame { transform: rotate(0.6deg); }
-.tile:hover .frame { transform: rotate(0deg) translateY(-6px); }
-.tile .frame .art { box-shadow: 0 1px 0 rgba(33,28,42,0.18); }
+.tile .frame { position: relative; overflow: hidden; aspect-ratio: 1 / 1; }
+.tile .frame .art { width: 100%; height: 100%; aspect-ratio: auto; transition: transform .5s ease; }
+.tile:hover .frame .art { transform: scale(1.06); }
+.tile .frame .art.empty { background-color: var(--paper-3); }
+.tile .name {
+  position: absolute; inset: auto 0 0 0; z-index: 2;
+  padding: 14px 16px;
+  font-family: var(--serif); font-size: 17px; line-height: 1.2; color: #fff;
+  background: linear-gradient(to top, rgba(20,17,12,0.78), rgba(20,17,12,0));
+  opacity: 0; transition: opacity .3s ease; pointer-events: none;
+}
+.tile:hover .name, .tile:focus-visible .name { opacity: 1; }
+.tile.slot { cursor: default; }
+@media (prefers-reduced-motion: reduce) {
+  .tile .frame .art, .tile .name { transition: none; }
+  .tile:hover .frame .art { transform: none; }
+}
 .placard { margin-top: 13px; }
 .placard h4 { font-family: var(--serif); font-weight: 500; font-size: 18px; color: var(--ink); line-height: 1.1; }
 .placard .row { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-top: 5px; }

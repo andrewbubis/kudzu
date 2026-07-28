@@ -6,9 +6,9 @@
 
 :root {
   /* ── Light "paper / tan" theme — matches kudzuarts.com (default) ── */
-  --plum:      #ece5d3;  /* page background (tan / paper) */
-  --plum-deep: #ccc6ab;  /* footer / deepest band (khaki) */
-  --plum-alt:  #e0d3b6;  /* cards · alt surfaces · hovers · sand band */
+  --plum:      #fbfaf7;  /* page background (near-white) */
+  --plum-deep: #ebe8e0;  /* footer / deepest band */
+  --plum-alt:  #f2efe8;  /* cards · alt surfaces · hovers · sand band */
   --forest:    #d3dcbc;  /* feature band (soft sage green) */
   --forest-dp: #c5cfa6;  /* service hover */
   --cream:     #241f2c;  /* PRIMARY TEXT (dark plum ink) */
@@ -21,7 +21,7 @@
   --olive-bg:  #8a8f43;  /* olive accent BACKGROUND (bright) */
   --gold-bg:   #8a8f43;  /* olive-green accent BACKGROUND */
   --on-accent: #241f2c;  /* text on gold / olive backgrounds */
-  --header-bg: rgba(236, 229, 211, 0.85);
+  --header-bg: rgba(251, 250, 247, 0.85);
   --line:      rgba(36, 31, 44, 0.18);
   --line-soft: rgba(36, 31, 44, 0.10);
 
@@ -286,18 +286,34 @@ section > .wrap { position: relative; z-index: 1; }
 .link-arrow:hover { color: var(--gold); }
 
 /* ── Artist grid ──────────────────────────────────────────────── */
-.artist-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--line); }
+.artist-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--line); }
 .artist-card {
-  background: var(--plum); padding: 22px; cursor: pointer; transition: background .3s;
-  text-decoration: none; color: inherit; display: block;
+  position: relative; display: block; aspect-ratio: 1 / 1; overflow: hidden;
+  background: var(--plum); cursor: pointer; text-decoration: none; color: inherit;
 }
-.artist-card:hover { background: var(--plum-alt); }
-.artist-card .art { margin-bottom: 16px; }
-.artist-card .row { display: flex; justify-content: space-between; align-items: baseline; }
-.artist-card h3 { font-family: var(--serif); font-weight: 400; font-size: 22px; color: var(--cream); }
-.artist-card .loc { font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em; color: var(--olive-lt); }
-.artist-card .meta { font-family: var(--sans); font-size: 12.5px; color: var(--cream-sft); margin-top: 6px; }
-.artist-card .meta .show { font-style: italic; font-family: var(--serif); }
+.artist-card .art {
+  display: block; position: absolute; inset: 0; width: 100%; height: 100%;
+  aspect-ratio: auto; margin: 0;
+  background-size: cover; background-position: center; background-repeat: no-repeat;
+  transition: transform .5s ease;
+}
+.artist-card:hover .art { transform: scale(1.06); }
+.artist-card .art.empty { background-color: var(--plum-alt); }
+.artist-card .art::before { content: none; }
+
+.artist-card .name {
+  position: absolute; inset: auto 0 0 0; z-index: 2;
+  padding: 14px 16px;
+  font-family: var(--serif); font-size: 17px; line-height: 1.2; color: #fff;
+  background: linear-gradient(to top, rgba(20,17,12,0.78), rgba(20,17,12,0));
+  opacity: 0; transition: opacity .3s ease; pointer-events: none;
+}
+.artist-card:hover .name, .artist-card:focus-visible .name { opacity: 1; }
+.artist-card.slot { cursor: default; }
+@media (prefers-reduced-motion: reduce) {
+  .artist-card .art, .artist-card .name { transition: none; }
+  .artist-card:hover .art { transform: none; }
+}
 
 /* ── Exhibition cards ─────────────────────────────────────────── */
 .show-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 28px; }
@@ -404,8 +420,8 @@ section > .wrap { position: relative; z-index: 1; }
     display: flex; flex-direction: column; position: fixed; inset: 62px 0 0 0;
     background: var(--plum); padding: 36px var(--pad-m); gap: 26px; font-size: 22px; z-index: 70;
   }
-  .hero-grid, .artist-grid, .show-grid, .contact-grid, .footer-grid { grid-template-columns: 1fr; }
-  .artist-grid { grid-template-columns: 1fr 1fr; }
+  .hero-grid, .show-grid, .contact-grid, .footer-grid { grid-template-columns: 1fr; }
+  .artist-grid { grid-template-columns: repeat(3, 1fr); }
   .vine-climb { display: none; }
   .hero-grid { min-height: auto; }
   .show-row { grid-template-columns: 1fr auto; gap: 8px 16px; }
@@ -416,7 +432,7 @@ section > .wrap { position: relative; z-index: 1; }
   .event-row .rsvp { grid-column: 2; justify-self: start; margin-top: 8px; }
 }
 @media (max-width: 560px) {
-  .artist-grid { grid-template-columns: 1fr; }
+  .artist-grid { grid-template-columns: 1fr 1fr; }
   .hero-cta { flex-direction: column; align-items: stretch; }
   .hero-cta .btn { justify-content: center; }
   .footer-grid { gap: 32px; }

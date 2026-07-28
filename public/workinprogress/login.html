@@ -3,16 +3,18 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Artist Login · Kudzu Arts</title>
-<meta name="theme-color" content="#f7f4ed">
+<title>Artist login · Kudzu Arts</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#fbfaf7">
 <link rel="icon" href="img/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&family=Albert+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/v3.css">
-<link rel="stylesheet" href="css/pages.css">
+<link rel="stylesheet" href="css/account.css">
 </head>
 <body>
+
 <header class="site-header">
   <a href="index.html" class="brand"><img class="mark" src="img/logo-k.png" alt="" aria-hidden="true"><span class="word"><b>KUDZU</b><span class="arts">arts</span></span></a>
   <nav class="nav" aria-label="Primary">
@@ -22,53 +24,74 @@
     <a href="printshop.html">Print Shop</a>
     <a href="contact.html">Contact</a>
   </nav>
-  <a href="login.html" class="btn btn-line nav-cta">Artist Login</a>
   <button class="nav-toggle" type="button" aria-expanded="false">Menu</button>
 </header>
 
-<section class="auth-sec">
-  <div class="auth-card">
-    <p class="eyebrow">Artist access</p>
-    <h1>Sign in<em>.</em></h1>
-    <p class="auth-sub">For Kudzu roster artists — manage your profile, works, and details.</p>
-    <form id="login-form" novalidate>
-      <div class="afield"><label for="l-email">Email</label><input id="l-email" type="email" required autocomplete="email" placeholder="you@yourdomain.com"></div>
-      <div class="afield"><label for="l-pass">Password</label><input id="l-pass" type="password" required autocomplete="current-password" placeholder="••••••••"></div>
-      <button type="submit" class="btn btn-clay">Sign in →</button>
-      <div id="login-msg" class="auth-msg" role="status" aria-live="polite"></div>
-    </form>
-    <p class="auth-note">Kudzu accounts are <b>invitation-only</b>. If you're joining the roster, use the personal invite link we sent you — it signs you up and builds your profile. Lost yours? Write <a href="mailto:info@kudzuarts.com">info@kudzuarts.com</a>.<br><br>Gallery admin? <a href="invites.html">Create an invite →</a></p>
-  </div>
-</section>
+<main class="acct">
+  <div class="signin">
+    <h1>artist login</h1>
 
-<footer class="site-footer">
-  <div class="vine-corner br"></div>
-  <div class="footer-grid">
-    <div class="footer-brand"><img class="mark" src="img/logo-k.png" alt="" aria-hidden="true">
-      <p class="blurb">Helping good art take root — a southern art practice, climbing everywhere it can.</p>
+    <div class="oauth">
+      <a href="/api/auth/google">
+        <svg viewBox="0 0 48 48" aria-hidden="true">
+          <path fill="#4285F4" d="M45.1 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h11.8c-.5 2.7-2 5-4.4 6.6v5.5h7.1c4.1-3.8 6.6-9.4 6.6-16.1z"/>
+          <path fill="#34A853" d="M24 46c5.9 0 10.9-2 14.5-5.4l-7.1-5.5c-2 1.3-4.5 2.1-7.4 2.1-5.7 0-10.5-3.8-12.2-9H4.5v5.7C8.1 41.1 15.5 46 24 46z"/>
+          <path fill="#FBBC05" d="M11.8 28.2c-.4-1.3-.7-2.7-.7-4.2s.3-2.9.7-4.2v-5.7H4.5C2.9 17.3 2 20.5 2 24s.9 6.7 2.5 9.9l7.3-5.7z"/>
+          <path fill="#EA4335" d="M24 10.8c3.2 0 6.1 1.1 8.4 3.3l6.3-6.3C34.9 4.2 29.9 2 24 2 15.5 2 8.1 6.9 4.5 14.1l7.3 5.7c1.7-5.2 6.5-9 12.2-9z"/>
+        </svg>
+        Continue with Google
+      </a>
+      <a href="/api/auth/apple">
+        <svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor">
+          <path d="M16.4 12.8c0-2.6 2.1-3.9 2.2-4-1.2-1.8-3.1-2-3.8-2-1.6-.2-3.1.9-3.9.9-.8 0-2.1-.9-3.4-.9-1.7 0-3.3 1-4.2 2.6-1.8 3.1-.5 7.7 1.3 10.2.9 1.2 1.9 2.6 3.2 2.6 1.3-.1 1.8-.8 3.3-.8s2 .8 3.4.8c1.4 0 2.3-1.2 3.1-2.5.98-1.4 1.4-2.8 1.4-2.9-.03-.02-2.6-1-2.6-4zM14 4.6c.7-.9 1.2-2.1 1.1-3.3-1 0-2.3.7-3.1 1.6-.7.8-1.2 2-1.1 3.2 1.2.1 2.4-.6 3.1-1.5z"/>
+        </svg>
+        Continue with Apple
+      </a>
     </div>
-    <div class="footer-col"><h4>Visit</h4><a href="artists.html">Artists</a><a href="exhibitions.html">Exhibitions</a><a href="gallery.html">Virtual Gallery</a><a href="printshop.html">Print Shop</a></div>
-    <div class="footer-col"><h4>Gallery</h4><a href="contact.html">Contact</a><a href="contact.html">Newsletter</a><a href="contact.html">Submit work</a></div>
-    <div class="footer-col"><h4>Connect</h4><a href="https://instagram.com/kudzu.arts" target="_blank" rel="noopener">@kudzu.arts</a><a href="mailto:info@kudzuarts.com">info@kudzuarts.com</a><p>Rooted in Nashville &amp; Los Angeles</p></div>
+
+    <p class="rule">or</p>
+
+    <form id="loginForm" novalidate>
+      <p class="err" id="err" role="alert" hidden></p>
+
+      <label for="email">email</label>
+      <input id="email" name="email" type="email" autocomplete="email" required>
+
+      <label for="password">password</label>
+      <input id="password" name="password" type="password" autocomplete="current-password" required>
+
+      <button class="acct-btn" type="submit" id="submitBtn">Log in</button>
+    </form>
+
+    <p class="note">Kudzu is invite only. If you have an invite link from us, open it to set up your account.</p>
   </div>
-  <div class="footer-bot"><span>© Kudzu Arts MMXXVI</span><span>kudzuarts.com — the gallery is the door</span></div>
-</footer>
-<script src="js/main.js" defer></script>
-<script src="js/auth.js"></script>
+</main>
+
 <script>
-document.getElementById('login-form').addEventListener('submit', function (e) {
+document.getElementById('loginForm').addEventListener('submit', async function (e) {
   e.preventDefault();
-  var f = e.target;
-  if (!f.checkValidity()) { f.reportValidity(); return; }
-  var acc = KudzuAuth.login(document.getElementById('l-email').value, document.getElementById('l-pass').value);
-  var m = document.getElementById('login-msg');
-  if (acc) {
-    m.textContent = 'Welcome back, ' + acc.name.split(' ')[0] + ' — taking you to your profile…';
-    m.classList.add('show');
-    setTimeout(function () { location.href = 'profile.html'; }, 700);
-  } else {
-    m.textContent = 'We don\u2019t recognize that email and password. Accounts are invitation-only — use your invite link, or write info@kudzuarts.com.';
-    m.classList.add('show');
+  var err = document.getElementById('err');
+  var btn = document.getElementById('submitBtn');
+  err.hidden = true;
+  btn.disabled = true; btn.textContent = 'Logging in…';
+  try {
+    var res = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify({
+        email: document.getElementById('email').value.trim(),
+        password: document.getElementById('password').value
+      })
+    });
+    if (!res.ok) throw new Error(res.status === 401 ? 'bad' : 'down');
+    location.href = 'profile.html';
+  } catch (e2) {
+    err.textContent = e2.message === 'bad'
+      ? 'That email and password do not match.'
+      : 'Login is not available yet — the backend is still being built.';
+    err.hidden = false;
+    btn.disabled = false; btn.textContent = 'Log in';
   }
 });
 </script>

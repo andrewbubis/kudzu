@@ -173,9 +173,15 @@
 
 .prints-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: clamp(24px,3vw,40px); }
 .print { text-decoration: none; color: inherit; display: block; }
-.print .pframe { position: relative; overflow: hidden; background: #f6f0e1; padding: 9%; box-shadow: 0 14px 30px rgba(33,28,42,0.18); transition: transform .4s; }
-.print:hover .pframe { transform: translateY(-6px); }
-.print .pframe img { display: block; width: 100%; height: auto; }
+.print .pframe { position: relative; overflow: hidden; background: #fff; padding: 9%; box-shadow: 0 14px 30px rgba(33,28,42,0.10); }
+.print .pframe img { display: block; width: 100%; height: auto; transition: transform .45s ease; }
+.print:hover .pframe img { transform: scale(1.05); }
+@media (prefers-reduced-motion: reduce) {
+  .print .pframe img { transition: none; }
+  .print:hover .pframe img { transform: none; }
+}
+.press-grid.solo { grid-template-columns: 1fr; }
+.press-grid.solo .press-copy { max-width: 760px; }
 .print .pframe .from { position: absolute; bottom: 12px; right: 12px; font-family: var(--sans); font-size: 11px; font-weight: 600; letter-spacing: 0.04em; padding: 6px 11px; background: var(--ink); color: var(--paper); }
 .print .pl { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-top: 14px; }
 .print h3 { font-family: var(--serif); font-weight: 500; font-size: 19px; color: var(--ink); }

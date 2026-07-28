@@ -16,3 +16,6 @@ design-canvas.jsx
 
 # archives
 *.zip
+
+# uploaded artwork (local dev — production uses a Railway volume)
+.uploads/

@@ -1,0 +1,325 @@
+/* ─────────────────────────────────────────────────────────────────────
+   Kudzu — artist account area.
+
+   Talks to the API under /api/*. While the backend is still being built
+   those calls 404, so the page falls back to a local demo state and
+   keeps working — you can click through the whole flow and judge the
+   layout. Nothing here trusts the browser: the six-work limit, file
+   size, and ownership are all re-checked on the server.
+   ───────────────────────────────────────────────────────────────────── */
+(function () {
+  'use strict';
+
+  var MAX_PUBLISHED = 6;
+  var MAX_FILE_MB = 12;
+
+  var state = { me: null, works: [], books: [], live: false };
+
+  // ── API helper ────────────────────────────────────────────────────
+  async function api(path, opts) {
+    var res = await fetch('/api' + path, Object.assign({
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin'
+    }, opts || {}));
+    if (!res.ok) throw Object.assign(new Error('request_failed'), { status: res.status });
+    return res.status === 204 ? null : res.json();
+  }
+
+  // ── Demo fallback ─────────────────────────────────────────────────
+  function demo() {
+    return {
+      me: { name: 'your name', bornYear: null, bornCountry: null,
+            worksCity: null, worksCountry: null, link: null,
+            photo: null, bio: '', cv: '', stripeConnected: false },
+      works: [], books: []
+    };
+  }
+
+  // ── Rendering ─────────────────────────────────────────────────────
+  var $ = function (id) { return document.getElementById(id); };
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c];
+    });
+  }
+
+  function money(cents, currency) {
+    if (cents == null) return '';
+    try {
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency', currency: (currency || 'usd').toUpperCase(),
+        maximumFractionDigits: 0
+      }).format(Math.round(cents) / 100);
+    } catch (e) { return '$' + Math.round(cents / 100).toLocaleString(); }
+  }
+
+  function renderIdentity() {
+    var me = state.me;
+    $('artistName').textContent = me.name || 'your name';
+    $('bornYear').textContent = me.bornYear || '—';
+    $('bornCountry').textContent = me.bornCountry || 'add country';
+    $('worksCity').textContent = me.worksCity || 'add city';
+    $('worksCountry').textContent = me.worksCountry || 'add country';
+    $('acctMenuName').textContent = (me.name || 'account').split(' ')[0].toLowerCase();
+
+    // "send link" only exists for admins (you and Andrew). The server
+    // enforces this too — the menu item is just the convenience.
+    var adminItem = $('adminInvite');
+    if (adminItem) adminItem.hidden = !me.isAdmin;
+
+    var photo = $('photo');
+    if (me.photo) { photo.style.backgroundImage = 'url("' + me.photo + '")'; photo.textContent = ''; }
+    else { photo.style.backgroundImage = ''; photo.textContent = 'add a photo'; }
+
+    var link = $('linkLine');
+    if (me.link) {
+      link.classList.remove('nolink');
+      link.innerHTML = '<a href="' + esc(me.link) + '" target="_blank" rel="noopener">' + esc(me.link) + '</a>';
+    }
+
+    $('bioText').value = me.bio || '';
+    $('cvText').value = me.cv || '';
+  }
+
+  function renderTodo() {
+    var me = state.me;
+    var done = {
+      stripe:  !!me.stripeConnected,
+      profile: !!me.photo,
+      bio:     !!(me.bio && me.bio.trim()) && !!(me.cv && me.cv.trim())
+    };
+    var all = true;
+    document.querySelectorAll('.acct-todo li').forEach(function (li) {
+      var ok = done[li.dataset.step];
+      li.classList.toggle('done', !!ok);
+      li.querySelector('.tick').textContent = ok ? '✓' : '';
+      if (!ok) all = false;
+    });
+    if (all) $('todo').hidden = true;
+  }
+
+  function card(w) {
+    var el = document.createElement(w.status === 'sold' ? 'div' : 'article');
+    el.className = 'work';
+    el.innerHTML =
+      (w.status === 'sold' ? '' :
+        '<button class="kill" type="button" title="Remove this work" aria-label="Remove ' + esc(w.title) + '">×</button>') +
+      '<div class="shot">' + (w.image ? '<img src="' + esc(w.image) + '" alt="' + esc(w.title) + '">' : '') + '</div>' +
+      '<div class="info">' +
+        '<div class="t">' + esc(w.title) + '</div>' +
+        '<div class="r"><span>' + esc(w.year || '') + '</span><span>' + money(w.priceCents, w.currency) + '</span></div>' +
+        '<div class="m">' + esc(w.medium || '') + '</div>' +
+      '</div>';
+
+    var kill = el.querySelector('.kill');
+    if (kill) kill.addEventListener('click', function () { removeWork(w); });
+    return el;
+  }
+
+  function renderWorks() {
+    var live = state.works.filter(function (w) { return w.status !== 'sold'; });
+    var sold = state.works.filter(function (w) { return w.status === 'sold'; });
+    var published = live.filter(function (w) { return w.status === 'published'; });
+    var drafts = live.filter(function (w) { return w.status === 'draft'; });
+
+    $('pubCount').textContent = 'published (' + published.length + '/' + MAX_PUBLISHED + ')';
+    $('draftCount').textContent = 'drafts (' + drafts.length + ')';
+
+    var grid = $('workGrid');
+    grid.innerHTML = '';
+    live.forEach(function (w) { grid.appendChild(card(w)); });
+
+    var add = document.createElement('button');
+    add.className = 'work add';
+    add.type = 'button';
+    add.textContent = published.length >= MAX_PUBLISHED ? 'six published — publish slots full' : '+ upload a work';
+    add.disabled = published.length >= MAX_PUBLISHED && drafts.length > 0;
+    add.addEventListener('click', function () { $('fileInput').click(); });
+    grid.appendChild(add);
+
+    $('workEmpty').hidden = live.length > 0;
+
+    var sg = $('soldGrid');
+    sg.innerHTML = '';
+    sold.forEach(function (w) { sg.appendChild(card(w)); });
+    $('soldEmpty').hidden = sold.length > 0;
+  }
+
+  function renderBooks() {
+    var grid = $('booksGrid');
+    grid.innerHTML = '';
+    state.books.forEach(function (b) { grid.appendChild(card(b)); });
+
+    var add = document.createElement('button');
+    add.className = 'work add';
+    add.type = 'button';
+    add.textContent = '+ add a book';
+    add.addEventListener('click', function () { $('bookInput').click(); });
+    grid.appendChild(add);
+
+    $('bookCount').textContent = 'books (' + state.books.length + ')';
+    $('booksEmpty').hidden = state.books.length > 0;
+  }
+
+  function render() { renderIdentity(); renderTodo(); renderWorks(); renderBooks(); }
+
+  // ── Actions ───────────────────────────────────────────────────────
+  async function removeWork(w) {
+    if (!confirm('Remove “' + w.title + '”? This cannot be undone.')) return;
+    if (state.live) {
+      try { await api('/works/' + w.id, { method: 'DELETE' }); }
+      catch (e) { alert('Could not remove that work. Try again.'); return; }
+    }
+    state.works = state.works.filter(function (x) { return x !== w; });
+    renderWorks();
+  }
+
+  function pickFile(input, onFile) {
+    input.addEventListener('change', function () {
+      var f = input.files && input.files[0];
+      input.value = '';
+      if (!f) return;
+      if (f.size > MAX_FILE_MB * 1024 * 1024) {
+        alert('That file is ' + (f.size / 1048576).toFixed(1) + ' MB. Please keep it under ' + MAX_FILE_MB + ' MB.');
+        return;
+      }
+      onFile(f);
+    });
+  }
+
+  pickFile(document.getElementById('fileInput'), async function (f) {
+    var title = prompt('Title of this work?');
+    if (!title) return;
+    var year = prompt('Year?') || null;
+    var medium = prompt('Medium? (e.g. Painting, Sculpture, Mixed Media)') || null;
+    var price = prompt('Price in dollars? Leave blank if not for sale.');
+    var priceCents = price ? Math.round(parseFloat(price) * 100) : null;
+
+    var work = {
+      id: 'tmp-' + Date.now(), title: title, year: year, medium: medium,
+      priceCents: priceCents, currency: 'usd', status: 'draft',
+      image: URL.createObjectURL(f)
+    };
+
+    if (state.live) {
+      var fd = new FormData();
+      fd.append('image', f);
+      fd.append('title', title);
+      if (year) fd.append('year', year);
+      if (medium) fd.append('medium', medium);
+      if (priceCents != null) fd.append('priceCents', priceCents);
+      try {
+        var saved = await fetch('/api/works', { method: 'POST', body: fd, credentials: 'same-origin' })
+          .then(function (r) { if (!r.ok) throw new Error(); return r.json(); });
+        work = saved;
+      } catch (e) { alert('Upload failed. Try again.'); return; }
+    }
+
+    state.works.push(work);
+    renderWorks();
+  });
+
+  pickFile(document.getElementById('photoInput'), async function (f) {
+    state.me.photo = URL.createObjectURL(f);
+    if (state.live) {
+      var fd = new FormData();
+      fd.append('photo', f);
+      try { await fetch('/api/me/photo', { method: 'POST', body: fd, credentials: 'same-origin' }); }
+      catch (e) { /* keep the local preview */ }
+    }
+    renderIdentity(); renderTodo();
+  });
+
+  $('photo').addEventListener('click', function () { $('photoInput').click(); });
+  $('photo').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('photoInput').click(); }
+  });
+  $('uploadBtn').addEventListener('click', function () { $('fileInput').click(); });
+  $('bookUploadBtn').addEventListener('click', function () { $('bookInput').click(); });
+
+  pickFile(document.getElementById('bookInput'), function (f) {
+    var title = prompt('Title of this book?');
+    if (!title) return;
+    state.books.push({
+      id: 'tmpb-' + Date.now(), title: title,
+      year: prompt('Year?') || null,
+      medium: prompt('Format? (e.g. Zine, Monograph, Catalogue)') || null,
+      priceCents: (function () { var p = prompt('Price in dollars? Leave blank if not for sale.'); return p ? Math.round(parseFloat(p) * 100) : null; })(),
+      currency: 'usd', status: 'draft', image: URL.createObjectURL(f)
+    });
+    renderBooks();
+  });
+  $('reorderBtn').addEventListener('click', function () {
+    alert('Drag-to-reorder is coming with the next piece of the backend.');
+  });
+  $('todoClose').addEventListener('click', function () { $('todo').hidden = true; });
+
+  document.querySelectorAll('[data-save]').forEach(function (btn) {
+    btn.addEventListener('click', async function () {
+      var field = btn.dataset.save;
+      var value = $(field === 'bio' ? 'bioText' : 'cvText').value;
+      state.me[field] = value;
+      if (state.live) {
+        var body = {}; body[field] = value;
+        try { await api('/me', { method: 'PATCH', body: JSON.stringify(body) }); }
+        catch (e) { alert('Could not save. Try again.'); return; }
+      }
+      btn.textContent = 'Saved ✓';
+      setTimeout(function () { btn.textContent = field === 'bio' ? 'Save bio' : 'Save c.v.'; }, 1600);
+      renderTodo();
+    });
+  });
+
+  // ── Tabs ──────────────────────────────────────────────────────────
+  var panels = {
+    work: ['workGrid', 'workEmpty', 'workBar'],
+    sold: ['soldGrid', 'soldEmpty'],
+    books: ['booksGrid', 'booksEmpty', 'booksBar'],
+    bio:  ['bioPanel'],
+    cv:   ['cvPanel']
+  };
+  document.querySelectorAll('.acct-tab').forEach(function (tab) {
+    tab.addEventListener('click', function () {
+      document.querySelectorAll('.acct-tab').forEach(function (t) {
+        t.setAttribute('aria-selected', String(t === tab));
+      });
+      Object.keys(panels).forEach(function (k) {
+        panels[k].forEach(function (id) { $(id).hidden = (k !== tab.dataset.tab); });
+      });
+      if (tab.dataset.tab === 'work') renderWorks();
+      if (tab.dataset.tab === 'books') renderBooks();
+      if (tab.dataset.tab === 'sold') $('soldEmpty').hidden = state.works.some(function (w) { return w.status === 'sold'; });
+    });
+  });
+
+  // ── Account menu ──────────────────────────────────────────────────
+  var menu = $('acctMenu'), menuBtn = $('acctMenuBtn');
+  menuBtn.addEventListener('click', function (e) {
+    e.stopPropagation();
+    var open = menu.dataset.open === 'true';
+    menu.dataset.open = String(!open);
+    menuBtn.setAttribute('aria-expanded', String(!open));
+  });
+  document.addEventListener('click', function () {
+    menu.dataset.open = 'false'; menuBtn.setAttribute('aria-expanded', 'false');
+  });
+  $('logoutLink').addEventListener('click', async function (e) {
+    e.preventDefault();
+    if (state.live) { try { await api('/auth/logout', { method: 'POST' }); } catch (err) {} }
+    location.href = 'login.html';
+  });
+
+  // ── Boot ──────────────────────────────────────────────────────────
+  (async function boot() {
+    try {
+      var data = await api('/me');
+      state.me = data.artist; state.works = data.works || []; state.books = data.books || []; state.live = true;
+    } catch (e) {
+      if (e.status === 401) { location.href = 'login.html'; return; }
+      var d = demo(); state.me = d.me; state.works = d.works; state.books = d.books; state.live = false;
+      console.info('Kudzu: backend not reachable — running in demo mode.');
+    }
+    render();
+  })();
+})();

@@ -3,107 +3,181 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>You're invited · Kudzu Arts</title>
-<meta name="theme-color" content="#f7f4ed">
+<title>Set up your page · Kudzu Arts</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#fbfaf7">
 <link rel="icon" href="img/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&family=Albert+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/v3.css">
-<link rel="stylesheet" href="css/pages.css">
+<link rel="stylesheet" href="css/account.css">
 </head>
 <body>
+
 <header class="site-header">
   <a href="index.html" class="brand"><img class="mark" src="img/logo-k.png" alt="" aria-hidden="true"><span class="word"><b>KUDZU</b><span class="arts">arts</span></span></a>
   <nav class="nav" aria-label="Primary">
     <a href="artists.html">Artists</a>
-    <a href="exhibitions.html">Exhibitions</a>
     <a href="gallery.html">Virtual Gallery</a>
-    <a href="printshop.html">Print Shop</a>
     <a href="contact.html">Contact</a>
   </nav>
-  <a href="login.html" class="btn btn-line nav-cta">Artist Login</a>
   <button class="nav-toggle" type="button" aria-expanded="false">Menu</button>
 </header>
 
-<section class="auth-sec">
-  <div class="auth-card wide">
-    <div id="inv-gate">
-      <p class="eyebrow">Join the roster</p>
-      <h1 id="gate-title">Checking your invitation…</h1>
-      <p class="auth-sub" id="gate-msg"></p>
-      <p class="auth-note" id="gate-note" style="display:none;">Invitations are personal, single-use, and expire — ask the gallery for a fresh link at <a href="mailto:info@kudzuarts.com">info@kudzuarts.com</a>.</p>
+<main class="acct">
+  <div class="signin">
+
+    <!-- Checking the invite ─────────────────────────────────────── -->
+    <div id="checking">
+      <h1>one moment</h1>
+      <p class="note" style="text-align:left;">Checking your invite…</p>
     </div>
-    <div id="inv-form" style="display:none;">
-      <p class="eyebrow">Join the roster</p>
-      <h1>Welcome, <em id="inv-name">artist</em>.</h1>
-      <p class="auth-sub">You've been invited to join Kudzu Arts. Set up your profile below — this link is personal, single-use, and <b id="inv-exp">expires soon</b>.</p>
-      <form id="signup-form" novalidate>
-        <div class="afield-row">
-          <div class="afield"><label for="s-name">Full name</label><input id="s-name" type="text" required placeholder="Your name as shown publicly"></div>
-          <div class="afield"><label for="s-email">Email</label><input id="s-email" type="email" readonly style="opacity:0.65;"></div>
-        </div>
-        <div class="afield-row">
-          <div class="afield"><label for="s-medium">Medium</label><input id="s-medium" type="text" placeholder="e.g. Painting &amp; drawing"></div>
-          <div class="afield"><label for="s-city">Based in</label><input id="s-city" type="text" placeholder="e.g. Nashville, TN"></div>
-        </div>
-        <div class="afield"><label for="s-ig">Instagram</label><input id="s-ig" type="text" placeholder="@yourhandle"></div>
-        <div class="afield"><label for="s-bio">Short bio</label><textarea id="s-bio" rows="4" placeholder="A few lines about you and your work — we can refine it together later."></textarea></div>
-        <div class="afield"><label for="s-pass">Choose a password</label><input id="s-pass" type="password" required minlength="8" autocomplete="new-password" placeholder="At least 8 characters"><div class="hint">You'll use this with your email to sign in from now on.</div></div>
-        <button type="submit" class="btn btn-clay">Create my profile →</button>
-        <div id="signup-msg" class="auth-msg" role="status" aria-live="polite"></div>
+
+    <!-- Invite is no good ───────────────────────────────────────── -->
+    <div id="bad" hidden>
+      <h1>this link won't work</h1>
+      <p class="note" style="text-align:left;" id="badWhy"></p>
+      <p class="note" style="text-align:left;">
+        Ask Kudzu for a fresh one — <a href="mailto:info@kudzuarts.com">info@kudzuarts.com</a>.
+      </p>
+    </div>
+
+    <!-- Sign up ─────────────────────────────────────────────────── -->
+    <div id="form" hidden>
+      <h1>set up your page</h1>
+      <p class="note" style="text-align:left;margin:0 0 22px;" id="hello">
+        You've been invited to show work on Kudzu Arts.
+      </p>
+
+      <div class="oauth" id="googleBox" hidden>
+        <a href="#" id="googleBtn">
+          <svg viewBox="0 0 48 48" aria-hidden="true">
+            <path fill="#4285F4" d="M45.1 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h11.8c-.5 2.7-2 5-4.4 6.6v5.5h7.1c4.1-3.8 6.6-9.4 6.6-16.1z"/>
+            <path fill="#34A853" d="M24 46c5.9 0 10.9-2 14.5-5.4l-7.1-5.5c-2 1.3-4.5 2.1-7.4 2.1-5.7 0-10.5-3.8-12.2-9H4.5v5.7C8.1 41.1 15.5 46 24 46z"/>
+            <path fill="#FBBC05" d="M11.8 28.2c-.4-1.3-.7-2.7-.7-4.2s.3-2.9.7-4.2v-5.7H4.5C2.9 17.3 2 20.5 2 24s.9 6.7 2.5 9.9l7.3-5.7z"/>
+            <path fill="#EA4335" d="M24 10.8c3.2 0 6.1 1.1 8.4 3.3l6.3-6.3C34.9 4.2 29.9 2 24 2 15.5 2 8.1 6.9 4.5 14.1l7.3 5.7c1.7-5.2 6.5-9 12.2-9z"/>
+          </svg>
+          Continue with Google
+        </a>
+      </div>
+
+      <p class="rule" id="orRule" hidden>or</p>
+
+      <form id="signupForm" novalidate>
+        <p class="err" id="err" role="alert" hidden></p>
+
+        <label for="name">your name</label>
+        <input id="name" name="name" type="text" autocomplete="name" required
+               placeholder="As it should appear on your page">
+
+        <label for="email">email</label>
+        <input id="email" name="email" type="email" autocomplete="email" required>
+
+        <label for="password">password</label>
+        <input id="password" name="password" type="password" autocomplete="new-password"
+               required minlength="10">
+        <p class="note" style="text-align:left;margin:-8px 0 14px;">At least 10 characters.</p>
+
+        <button class="acct-btn" type="submit" id="submitBtn">Create my page</button>
       </form>
     </div>
-  </div>
-</section>
 
-<footer class="site-footer">
-  <div class="footer-bot"><span>© Kudzu Arts MMXXVI</span><span>kudzuarts.com — the gallery is the door</span></div>
-</footer>
-<script src="js/main.js" defer></script>
-<script src="js/auth.js"></script>
+  </div>
+</main>
+
 <script>
 (function () {
-  var q = new URLSearchParams(location.search);
-  var token = q.get('inv') || (location.hash.match(/inv=([^&]+)/) || [])[1] || '';
-  var res = KudzuAuth.readInvite(token);
-  var title = document.getElementById('gate-title'), msg = document.getElementById('gate-msg'), note = document.getElementById('gate-note');
-  function gate(t, m) { title.textContent = t; msg.textContent = m; note.style.display = 'block'; }
-  if (res.status === 'ok') {
-    document.getElementById('inv-gate').style.display = 'none';
-    document.getElementById('inv-form').style.display = 'block';
-    var inv = res.invite;
-    document.getElementById('inv-name').textContent = (inv.n || 'artist').split(' ')[0];
-    document.getElementById('s-name').value = inv.n || '';
-    document.getElementById('s-email').value = inv.e;
-    var hrs = Math.max(1, Math.round((inv.x - Date.now()) / 3600e3));
-    document.getElementById('inv-exp').textContent = 'expires in ' + (hrs >= 48 ? Math.round(hrs / 24) + ' days' : hrs + ' hours');
-    document.getElementById('signup-form').addEventListener('submit', function (e) {
-      e.preventDefault();
-      var f = e.target;
-      if (!f.checkValidity()) { f.reportValidity(); return; }
-      var check = KudzuAuth.readInvite(token);
-      var m = document.getElementById('signup-msg');
-      if (check.status !== 'ok') { m.textContent = 'This invitation is no longer valid (' + check.status + '). Ask the gallery for a new link.'; m.classList.add('show'); return; }
-      KudzuAuth.redeem(inv, {
-        name: document.getElementById('s-name').value.trim(),
-        medium: document.getElementById('s-medium').value.trim(),
-        city: document.getElementById('s-city').value.trim(),
-        ig: document.getElementById('s-ig').value.trim().replace(/^@/, ''),
-        bio: document.getElementById('s-bio').value.trim()
-      }, document.getElementById('s-pass').value);
-      m.textContent = 'Profile created — welcome to Kudzu. Taking you to your profile…';
-      m.classList.add('show');
-      setTimeout(function () { location.href = 'profile.html'; }, 800);
-    });
-  } else if (res.status === 'expired') {
-    gate('This invitation has expired.', 'Invite links only live for a short window. Ask the gallery to send you a fresh one.');
-  } else if (res.status === 'used') {
-    gate('This invitation was already used.', 'If that was you, just sign in with your email and password.');
-    msg.insertAdjacentHTML('afterend', '<p style="margin-top:18px;"><a href="login.html" class="btn btn-line">Go to sign in →</a></p>');
-  } else {
-    gate('Invitation required.', 'Profiles on Kudzu are created by personal invitation from the gallery. If you believe you should have access, get in touch.');
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+  var token = new URLSearchParams(location.search).get('invite') || '';
+
+  var REASONS = {
+    missing: 'No invite code in this link. Check you copied the whole thing.',
+    invalid: 'We don’t recognise this invite.',
+    used:    'This invite has already been used. Each one works once.',
+    expired: 'This invite has expired.'
+  };
+
+  function show(which) {
+    ['checking', 'bad', 'form'].forEach(function (id) { $(id).hidden = id !== which; });
   }
+
+  function bad(reason) {
+    $('badWhy').textContent = REASONS[reason] || REASONS.invalid;
+    show('bad');
+  }
+
+  (async function check() {
+    if (!token) return bad('missing');
+    try {
+      var res = await fetch('/api/invites/' + encodeURIComponent(token));
+      if (res.status === 503) {
+        $('badWhy').textContent = 'Signups aren’t switched on yet. Hold tight.';
+        return show('bad');
+      }
+      var data = await res.json();
+      if (data.status !== 'ok') return bad(data.status);
+
+      if (data.note) $('hello').textContent =
+        'Hi ' + data.note + ' — you’ve been invited to show work on Kudzu Arts.';
+      if (data.email) {
+        $('email').value = data.email;
+        $('email').readOnly = true;
+      }
+      $('googleBtn').href = '/api/auth/google?invite=' + encodeURIComponent(token);
+      $('googleBox').hidden = false;
+      $('orRule').hidden = false;
+      show('form');
+    } catch (e) {
+      bad('invalid');
+    }
+  })();
+
+  $('signupForm').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    var err = $('err'), btn = $('submitBtn');
+    err.hidden = true;
+
+    var password = $('password').value;
+    if (password.length < 10) {
+      err.textContent = 'Please use at least 10 characters.';
+      err.hidden = false;
+      return;
+    }
+
+    btn.disabled = true; btn.textContent = 'Creating…';
+    try {
+      var res = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({
+          token: token,
+          name: $('name').value.trim(),
+          email: $('email').value.trim(),
+          password: password
+        })
+      });
+      if (!res.ok) {
+        var body = await res.json().catch(function () { return {}; });
+        throw new Error(body.error || 'server_error');
+      }
+      location.href = 'profile.html';
+    } catch (e2) {
+      var msgs = {
+        invite_used: 'This invite has already been used.',
+        invite_expired: 'This invite has expired.',
+        invite_invalid: 'We don’t recognise this invite.',
+        invite_email_mismatch: 'This invite was sent to a different email address.',
+        email_taken: 'There’s already an account with that email. Try logging in.',
+        password_too_short: 'Please use at least 10 characters.'
+      };
+      err.textContent = msgs[e2.message] || 'Something went wrong. Try again.';
+      err.hidden = false;
+      btn.disabled = false; btn.textContent = 'Create my page';
+    }
+  });
 })();
 </script>
 </body>

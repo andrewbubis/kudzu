@@ -3,102 +3,256 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Invite an artist · Kudzu Arts</title>
-<meta name="robots" content="noindex">
-<meta name="theme-color" content="#f7f4ed">
+<title>Invites · Kudzu Arts</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#fbfaf7">
 <link rel="icon" href="img/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&family=Albert+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/v3.css">
-<link rel="stylesheet" href="css/pages.css">
+<link rel="stylesheet" href="css/account.css">
+<style>
+  .inv { max-width: 560px; }
+  .inv h1 { font-family: var(--serif, Georgia, serif); font-size: 21px; margin-bottom: 6px; }
+  .inv .sub { color: #888; margin: 0 0 26px; }
+
+  .inv-new { display: grid; gap: 10px; padding: 16px; border: 1px solid #e2e2e2; background: #fff; }
+  .inv-new input { width: 100%; padding: 11px 12px; border: 1px solid #e2e2e2; font: inherit; }
+  .inv-new .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .inv-new .big { padding: 13px; font-size: 14px; }
+
+  .inv-out { margin: 22px 0 0; padding: 18px; border: 1px solid #dae2f5; background: #eef2fb; text-align: center; }
+  .inv-out[hidden] { display: none; }
+  .inv-out .who { font-style: italic; margin-bottom: 14px; }
+  .inv-out canvas { width: 200px; height: 200px; background: #fff; padding: 8px; border: 1px solid #e2e2e2; }
+  .inv-out .link { word-break: break-all; font-family: var(--mono, monospace); font-size: 11px; color: #555; margin: 14px 0 12px; }
+  .inv-out .acts { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+  .inv-out .exp { color: #888; margin-top: 12px; }
+  .inv-out .warn { color: #b3261e; margin-top: 10px; }
+
+  .inv-list { margin-top: 32px; }
+  .inv-list h2 { font-size: 13px; color: #888; margin-bottom: 10px; }
+  .inv-row { display: flex; justify-content: space-between; gap: 12px; align-items: baseline;
+             padding: 11px 0; border-bottom: 1px solid #e2e2e2; }
+  .inv-row .n { color: #111; }
+  .inv-row .s { font-size: 12px; white-space: nowrap; }
+  .inv-row .s.open { color: #2b2bd6; }
+  .inv-row .s.used { color: #888; text-decoration: line-through; }
+  .inv-row .s.exp  { color: #b3261e; }
+  @media (max-width: 480px) { .inv-new .row { grid-template-columns: 1fr; } }
+</style>
 </head>
 <body>
+
 <header class="site-header">
   <a href="index.html" class="brand"><img class="mark" src="img/logo-k.png" alt="" aria-hidden="true"><span class="word"><b>KUDZU</b><span class="arts">arts</span></span></a>
   <nav class="nav" aria-label="Primary">
     <a href="artists.html">Artists</a>
-    <a href="exhibitions.html">Exhibitions</a>
-    <a href="gallery.html">Virtual Gallery</a>
-    <a href="printshop.html">Print Shop</a>
-    <a href="contact.html">Contact</a>
+    <a href="profile.html">Profile</a>
   </nav>
-  <a href="login.html" class="btn btn-line nav-cta">Artist Login</a>
   <button class="nav-toggle" type="button" aria-expanded="false">Menu</button>
 </header>
 
-<section class="auth-sec">
-  <div class="auth-card wide">
-    <p class="eyebrow">Gallery admin</p>
-    <h1>Invite an <em>artist.</em></h1>
-    <p class="auth-sub">Generates a personal, single-use signup link. Send it to the artist directly — it expires automatically and can't be reused once they've created their profile.</p>
-    <form id="inv-gen" novalidate>
-      <div class="afield-row">
-        <div class="afield"><label for="i-name">Artist name</label><input id="i-name" type="text" required placeholder="e.g. Marta Lee"></div>
-        <div class="afield"><label for="i-email">Artist email</label><input id="i-email" type="email" required placeholder="artist@domain.com"></div>
-      </div>
-      <div class="afield"><label for="i-exp">Link expires after</label>
-        <select id="i-exp">
-          <option value="24">24 hours</option>
-          <option value="72" selected>3 days</option>
-          <option value="168">7 days</option>
-        </select>
-      </div>
-      <button type="submit" class="btn btn-clay">Generate invite link →</button>
-    </form>
-    <div id="inv-out" style="display:none;">
-      <div class="invite-link"><input id="inv-url" type="text" readonly><button type="button" class="btn btn-line" id="inv-copy">Copy</button></div>
-      <div id="inv-copied" class="auth-msg" role="status" aria-live="polite"></div>
-    </div>
-    <div class="inv-list" id="inv-list" style="display:none;">
-      <div class="h">Invites sent from this browser</div>
-      <div id="inv-rows"></div>
-    </div>
-    <p class="auth-note">Prototype note: expiry is baked into the link itself; "used" status is tracked in this browser. Wiring it to a real backend makes single-use airtight across devices.</p>
-  </div>
-</section>
+<main class="acct inv">
+  <h1>invites</h1>
+  <p class="sub">One link, one artist, one signup. Spent the moment it's used.</p>
 
-<footer class="site-footer">
-  <div class="footer-bot"><span>© Kudzu Arts MMXXVI</span><span>kudzuarts.com — the gallery is the door</span></div>
-</footer>
-<script src="js/main.js" defer></script>
-<script src="js/auth.js"></script>
+  <div class="inv-new">
+    <input id="invName" type="text" placeholder="Artist's name" autocomplete="off">
+    <div class="row">
+      <input id="invEmail" type="email" placeholder="Their email (optional)" autocomplete="off">
+      <select id="invDays" style="padding:11px 12px;border:1px solid #e2e2e2;font:inherit;">
+        <option value="7">expires in 7 days</option>
+        <option value="14" selected>expires in 14 days</option>
+        <option value="30">expires in 30 days</option>
+      </select>
+    </div>
+    <button class="acct-btn big" type="button" id="makeBtn">New invite</button>
+    <p class="hint" style="color:#888;margin:0;">Adding an email locks the link to that address — nobody else can use it.</p>
+  </div>
+
+  <section class="inv-out" id="out" hidden>
+    <p class="who" id="outWho"></p>
+    <canvas id="qr" width="200" height="200" aria-label="QR code for the invite link"></canvas>
+    <p class="link" id="outLink"></p>
+    <div class="acts">
+      <button class="acct-btn" type="button" id="shareBtn" hidden>Share</button>
+      <button class="acct-btn ghost" type="button" id="copyBtn">Copy link</button>
+    </div>
+    <p class="exp" id="outExp"></p>
+    <p class="warn">Send this now — you can't get it back later.</p>
+  </section>
+
+  <section class="inv-list">
+    <h2>recent invites</h2>
+    <div id="list"><p class="acct-empty" id="listEmpty">No invites yet.</p></div>
+  </section>
+</main>
+
 <script>
+/* Minimal QR encoder (byte mode, level L, auto version). Enough for
+   invite URLs; no external library, nothing loaded from a CDN. */
+(function(g){
+function QR(t){this.t=t}
+var EC=[[1,26,19],[1,44,34],[1,70,55],[1,100,80],[1,134,108],[2,86,68],[2,98,78],[2,121,97],[2,146,116],[2,86,68],[4,101,81]];
+function gf(){var e=[],l=[],x=1;for(var i=0;i<255;i++){e[i]=x;l[x]=i;x<<=1;if(x&256)x^=285}return{e:e,l:l}}
+var G=gf();
+function mul(a,b){return a&&b?G.e[(G.l[a]+G.l[b])%255]:0}
+function rsPoly(n){var p=[1];for(var i=0;i<n;i++){var q=[1,G.e[i]],r=[];for(var j=0;j<p.length+1;j++)r[j]=0;
+for(var a=0;a<p.length;a++)for(var b=0;b<q.length;b++)r[a+b]^=mul(p[a],q[b]);p=r}return p}
+function rs(d,n){var p=rsPoly(n),res=d.concat(new Array(n).fill(0));
+for(var i=0;i<d.length;i++){var f=res[i];if(f)for(var j=0;j<p.length;j++)res[i+j]^=mul(p[j],f)}
+return res.slice(d.length)}
+QR.prototype.encode=function(){
+ var t=this.t,bytes=[];for(var i=0;i<t.length;i++){var c=t.charCodeAt(i);
+  if(c<128)bytes.push(c);else if(c<2048){bytes.push(192|c>>6,128|c&63)}
+  else{bytes.push(224|c>>12,128|c>>6&63,128|c&63)}}
+ var ver=1,cap;for(;ver<=10;ver++){cap=EC[ver-1][2];if(bytes.length+2+(ver>=10?1:0)<=cap)break}
+ if(ver>10)throw new Error('too long');
+ var size=17+ver*4,bits=[];
+ function put(v,n){for(var i=n-1;i>=0;i--)bits.push(v>>i&1)}
+ put(4,4);put(bytes.length,ver<10?8:16);
+ for(var b=0;b<bytes.length;b++)put(bytes[b],8);
+ var total=EC[ver-1][2]*8;
+ for(var p=0;p<4&&bits.length<total;p++)bits.push(0);
+ while(bits.length%8)bits.push(0);
+ var pad=[236,17],pi=0;while(bits.length<total){put(pad[pi++%2],8)}
+ var data=[];for(var k=0;k<bits.length;k+=8){var v=0;for(var m=0;m<8;m++)v=v<<1|bits[k+m];data.push(v)}
+ var ecc=rs(data,EC[ver-1][1]-EC[ver-1][2]);
+ var all=data.concat(ecc);
+ var mod=[],res=[];for(var y=0;y<size;y++){mod[y]=[];res[y]=[];for(var x=0;x<size;x++){mod[y][x]=null;res[y][x]=0}}
+ function fp(r,c){for(var y=-1;y<=7;y++)for(var x=-1;x<=7;x++){var rr=r+y,cc=c+x;
+  if(rr<0||cc<0||rr>=size||cc>=size)continue;
+  var v=(0<=y&&y<=6&&(x===0||x===6))||(0<=x&&x<=6&&(y===0||y===6))||(2<=x&&x<=4&&2<=y&&y<=4);
+  mod[rr][cc]=v?1:0;res[rr][cc]=1}}
+ fp(0,0);fp(0,size-7);fp(size-7,0);
+ for(var i2=8;i2<size-8;i2++){mod[6][i2]=mod[i2][6]=i2%2===0?1:0;res[6][i2]=res[i2][6]=1}
+ if(ver>1){var ap=[6,size-7];for(var a1=0;a1<ap.length;a1++)for(var a2=0;a2<ap.length;a2++){
+  var r0=ap[a1],c0=ap[a2];if(res[r0][c0])continue;
+  for(var y2=-2;y2<=2;y2++)for(var x2=-2;x2<=2;x2++){
+   mod[r0+y2][c0+x2]=(Math.max(Math.abs(y2),Math.abs(x2))!==1)?1:0;res[r0+y2][c0+x2]=1}}}
+ for(var i3=0;i3<9;i3++){if(!res[8][i3]){res[8][i3]=1;mod[8][i3]=0}if(!res[i3][8]){res[i3][8]=1;mod[i3][8]=0}}
+ for(var i4=0;i4<8;i4++){res[8][size-1-i4]=1;mod[8][size-1-i4]=mod[8][size-1-i4]||0;
+  res[size-1-i4][8]=1;mod[size-1-i4][8]=mod[size-1-i4][8]||0}
+ mod[size-8][8]=1;res[size-8][8]=1;
+ var idx=0,dir=-1,row=size-1;
+ for(var col=size-1;col>0;col-=2){if(col===6)col--;
+  while(true){for(var c2=0;c2<2;c2++){var cc2=col-c2;
+   if(!res[row][cc2]){var dark=0;
+    if(idx<all.length*8)dark=(all[idx>>3]>>(7-(idx&7)))&1;
+    if((row+cc2)%2===0)dark^=1;
+    mod[row][cc2]=dark;idx++}}
+   row+=dir;if(row<0||row>=size){row-=dir;dir=-dir;break}}}
+ var fmt=(1<<3|0),d2=fmt<<10;
+ for(var q=4;q>=0;q--)if(d2>>(q+10)&1)d2^=0x537<<q;
+ var f=((fmt<<10|d2)^0x5412);
+ for(var i5=0;i5<15;i5++){var bit=(f>>i5)&1;
+  if(i5<6)mod[i5][8]=bit;else if(i5<8)mod[i5+1][8]=bit;else mod[size-15+i5][8]=bit;
+  if(i5<8)mod[8][size-1-i5]=bit;else mod[8][14-i5]=bit}
+ return{size:size,mod:mod}};
+g.drawQR=function(canvas,text){
+ try{
+  var q=new QR(text).encode(),s=q.size,px=Math.floor(canvas.width/(s+8)),off=Math.floor((canvas.width-px*s)/2),
+      c=canvas.getContext('2d');
+  c.fillStyle='#fff';c.fillRect(0,0,canvas.width,canvas.height);c.fillStyle='#000';
+  for(var y=0;y<s;y++)for(var x=0;x<s;x++)if(q.mod[y][x])c.fillRect(off+x*px,off+y*px,px,px);
+  return true;
+ }catch(e){return false}
+};
+})(window);
+
 (function () {
-  function esc(s) { var d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
-  function renderList() {
-    var log = KudzuAuth.invitesLog();
-    var wrap = document.getElementById('inv-list'), rows = document.getElementById('inv-rows');
-    if (!log.length) { wrap.style.display = 'none'; return; }
-    wrap.style.display = 'block';
-    var used = KudzuAuth.usedIds();
-    rows.innerHTML = log.map(function (r) {
-      var st = used.indexOf(r.id) >= 0 ? ['used', 'Used'] : (Date.now() > r.exp ? ['expired', 'Expired'] : ['active', 'Active']);
-      var when = new Date(r.exp);
-      return '<div class="inv-row"><div class="who"><b>' + esc(r.name) + '</b><span>' + esc(r.email) + ' · expires ' + when.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + '</span></div><span class="st ' + st[0] + '">' + st[1] + '</span></div>';
-    }).join('');
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+  var current = null;
+
+  function fmtDate(d) {
+    return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   }
-  document.getElementById('inv-gen').addEventListener('submit', function (e) {
-    e.preventDefault();
-    var f = e.target;
-    if (!f.checkValidity()) { f.reportValidity(); return; }
-    var name = document.getElementById('i-name').value.trim();
-    var email = document.getElementById('i-email').value.trim();
-    var hours = parseInt(document.getElementById('i-exp').value, 10);
-    var made = KudzuAuth.makeInvite(name, email, hours);
-    var url = new URL('signup.html?inv=' + made.token, location.href).href;
-    document.getElementById('inv-out').style.display = 'block';
-    document.getElementById('inv-url').value = url;
-    KudzuAuth.logInvite({ name: name, email: email, exp: made.invite.x, id: made.invite.i });
-    renderList();
+
+  async function load() {
+    try {
+      var data = await fetch('/api/invites', { credentials: 'same-origin' })
+        .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); });
+      renderList(data.invites || []);
+    } catch (e) {
+      $('listEmpty').textContent = e.message === '401'
+        ? 'Log in to manage invites.'
+        : 'Invite list will appear once the backend is live.';
+    }
+  }
+
+  function renderList(rows) {
+    var box = $('list');
+    if (!rows.length) return;
+    box.innerHTML = '';
+    rows.forEach(function (r) {
+      var status = r.usedAt ? 'used' : (new Date(r.expiresAt) < new Date() ? 'exp' : 'open');
+      var label = status === 'used' ? 'signed up ' + fmtDate(r.usedAt)
+                : status === 'exp'  ? 'expired'
+                : 'open · expires ' + fmtDate(r.expiresAt);
+      var row = document.createElement('div');
+      row.className = 'inv-row';
+      row.innerHTML = '<span class="n"></span><span class="s ' + status + '"></span>';
+      row.querySelector('.n').textContent = r.note || r.email || 'unnamed';
+      row.querySelector('.s').textContent = label;
+      box.appendChild(row);
+    });
+  }
+
+  $('makeBtn').addEventListener('click', async function () {
+    var btn = this;
+    var note = $('invName').value.trim();
+    var email = $('invEmail').value.trim();
+    btn.disabled = true; btn.textContent = 'Creating…';
+    try {
+      var res = await fetch('/api/invites', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({ note: note, email: email, days: +$('invDays').value })
+      });
+      if (!res.ok) throw new Error(res.status);
+      var data = await res.json();
+      current = data.url;
+
+      $('outWho').textContent = note ? 'for ' + note : 'invite link';
+      $('outLink').textContent = data.url;
+      $('outExp').textContent = 'Expires ' + fmtDate(data.expiresAt) + '.';
+      $('out').hidden = false;
+      drawQR($('qr'), data.url);
+      $('shareBtn').hidden = !navigator.share;
+      $('invName').value = ''; $('invEmail').value = '';
+      $('out').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      load();
+    } catch (e) {
+      alert(e.message === '401'
+        ? 'Log in first.'
+        : 'Invites need the backend running. Not available yet.');
+    } finally {
+      btn.disabled = false; btn.textContent = 'New invite';
+    }
   });
-  document.getElementById('inv-copy').addEventListener('click', function () {
-    var inp = document.getElementById('inv-url');
-    inp.select();
-    var done = function () { var m = document.getElementById('inv-copied'); m.textContent = 'Copied — paste it into an email or DM to the artist.'; m.classList.add('show'); };
-    if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(inp.value).then(done, done); } else { document.execCommand('copy'); done(); }
+
+  $('copyBtn').addEventListener('click', async function () {
+    if (!current) return;
+    try { await navigator.clipboard.writeText(current); } catch (e) {}
+    this.textContent = 'Copied ✓';
+    var b = this;
+    setTimeout(function () { b.textContent = 'Copy link'; }, 1600);
   });
-  renderList();
+
+  $('shareBtn').addEventListener('click', function () {
+    if (!current || !navigator.share) return;
+    navigator.share({
+      title: 'Your Kudzu Arts invite',
+      text: 'Set up your Kudzu Arts artist page here — this link works once.',
+      url: current
+    }).catch(function () {});
+  });
+
+  load();
 })();
 </script>
 </body>
