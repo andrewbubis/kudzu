@@ -1,201 +1,177 @@
-# *Kudzu*
+# *Kudzu Arts*
 
 > An art consultancy and 501(c)(3) rooted in the American South.
 
-A small, fast, content-editable static frontend served by a tiny Express
-server. No build step — edit the HTML files in `public/` and refresh.
+Kudzu started as a static site. It is now a small Express application with
+a Postgres database behind it, because artists need to log in, upload work,
+and get paid.
+
+The public pages are still plain HTML files you can edit and refresh. The
+artist platform on top of them is real software.
 
 ---
 
-## Quick start (local)
-
-```bash
-# requires Node 18+
-npm install
-npm start
-# → http://localhost:3000
-```
-
-That's the whole thing. Every page is a real HTML file in `public/` and a
-shared stylesheet in `public/css/style.css`. Edit, save, refresh.
-
----
-
-## Project structure
+## What this repo actually contains
 
 ```
 .
-├── public/                    ← everything that gets served
-│   ├── index.html             ← home
-│   ├── about.html
-│   ├── services.html          ← "The Practice"
-│   ├── work.html              ← portfolio index
-│   ├── work/
-│   │   └── lowndes-collection.html   ← sample case study
-│   ├── initiatives.html       ← "The Vine" non-profit
-│   ├── contact.html           ← inquiry form
-│   ├── 404.html
-│   ├── css/style.css          ← all design tokens & components
-│   ├── js/main.js             ← nav, scroll-reveal, form handling
-│   └── img/favicon.svg
-├── server.js                  ← Express static server + pretty URLs
-├── package.json
-├── railway.json               ← Railway deploy config
-├── .gitignore
-└── README.md
+├── public/
+│   ├── workinprogress/        ← the current site (v3) — this is the live one
+│   │   ├── index.html            home
+│   │   ├── artists.html          grid; swaps in real artists from the database
+│   │   ├── artist.html           dynamic artist page — artist.html?a=<slug>
+│   │   ├── gallery.html          virtual gallery, hung to scale
+│   │   ├── printshop.html        curated print shop
+│   │   ├── login.html            artist login (email, Google, Apple)
+│   │   ├── signup.html           invite redemption
+│   │   ├── profile.html          the artist's own dashboard
+│   │   ├── invites.html          admin only — issue invite links
+│   │   ├── css/                  v3.css (site), pages.css (per-page), account.css
+│   │   ├── fonts/                Cardinal Alternate — print shop headline only
+│   │   └── js/                   main.js, account.js, live-works.js, fields.js
+│   └── *.html                 ← the older static pages, still served
+├── db/schema.sql              ← tables, constraints, and the business rules
+├── server/
+│   ├── db.js                     pool + applies schema.sql on boot
+│   ├── auth.js                   scrypt passwords, sessions, single-use invites
+│   ├── api.js                    the REST API
+│   ├── commerce.js               Stripe Connect, checkout, webhook, Buttondown
+│   ├── oauth.js                  Google sign-in
+│   ├── storage.js                image intake — re-encodes and strips EXIF
+│   └── lumaprints.js             print fulfilment
+├── scripts/seed-admins.js     ← creates the two admin accounts
+├── server.js                  ← wiring, security headers, static serving
+└── railway.json               ← deploy config
 ```
 
 ---
 
-## Deploying to Railway
-
-1. **Push to GitHub** (see below).
-2. Go to [railway.app](https://railway.app) → **New Project** → **Deploy
-   from GitHub repo**, and pick this repository.
-3. Railway will auto-detect Node, run `npm install`, then `npm start`.
-   The `railway.json` in this repo locks that behavior in.
-4. **Generate a domain** (Settings → Networking → Generate Domain), or
-   point your own domain at it via CNAME.
-
-That's it. No env vars required for the basic site.
-
-### Setting environment variables
-
-If/when you wire the contact form to a backend (see below), add the
-relevant secrets under **Variables** in your Railway service.
-
----
-
-## Pushing to GitHub
+## Running it locally
 
 ```bash
-git init
-git add .
-git commit -m "Initial commit: kudzu site"
-git branch -M main
-git remote add origin https://github.com/<your-username>/<repo-name>.git
-git push -u origin main
+npm install
+cp .env.example .env      # then fill in DATABASE_URL at minimum
+npm start                 # → http://localhost:3000
 ```
 
-The `.gitignore` excludes `node_modules/`, env files, and the design
-exploration scratchpad files at the project root. If you want the design
-explorations in the repo too, remove their entries from `.gitignore`.
+`db/schema.sql` is idempotent and runs automatically on every boot, so there
+is no migration step. Starting the server against an empty database creates
+the tables.
+
+Without a `DATABASE_URL` the server still boots and serves every public page —
+logins and uploads are simply switched off. That is deliberate: you can work
+on the front end without running Postgres.
+
+### Creating the admin accounts
+
+```bash
+IAN_PASSWORD=... ANDREW_PASSWORD=... npm run seed
+```
+
+Creates (or promotes) Ian and Andrew as admins. Safe to re-run; it updates
+rather than duplicating. Passwords come from the environment so they never
+land in the repo or your shell history.
+
+If you skip this, the first person to sign up on an empty install becomes
+admin automatically, and the server prints a one-time signup link to the
+deploy logs on boot.
 
 ---
 
-## Editing content
+## Environment variables
 
-Every page is a self-contained HTML file. Find a heading or paragraph,
-change the text, save. Repeat. No framework, no JSX, no compile step.
+Every one of these is optional except `DATABASE_URL`. Missing keys switch off
+just that feature and log a line saying so — nothing crashes.
 
-### Adding a new case study
+| Variable | Needed for |
+| --- | --- |
+| `DATABASE_URL` | **Everything.** Accounts, uploads, sales. |
+| `PUBLIC_BASE_URL` | Absolute links in invites and Stripe redirects. |
+| `UPLOAD_DIR` | Where artwork is written. On Railway this is the volume mount. |
+| `MAX_UPLOAD_MB` | Upload ceiling. Defaults to a sane value. |
+| `STRIPE_SECRET_KEY` | Payouts and checkout. |
+| `STRIPE_WEBHOOK_SECRET` | Marking work sold when a payment lands. |
+| `KUDZU_COMMISSION_PCT` | Kudzu's cut. Plain number, e.g. `25`. Defaults to 25. |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | "Continue with Google". |
+| `BUTTONDOWN_API_KEY` | Newsletter signups. |
+| `LUMAPRINTS_API_KEY` / `_SECRET` / `_STORE_ID` / `_API_BASE` | Print fulfilment. |
+| `PORT`, `NODE_ENV` | Set by Railway. |
 
-1. Duplicate `public/work/lowndes-collection.html`
-2. Update title, content, and image labels
-3. Add a link to it from `public/work.html` and (optionally)
-   `public/index.html`
+---
 
-### Replacing placeholder images
+## How the artist platform works
 
-The striped boxes you see are CSS placeholders (`<div class="ph ...">`).
-To use a real image:
+**It is invite only.** There is no public signup and no password reset. An
+admin issues a link from `/workinprogress/invites.html`; it works exactly
+once and then it is spent. Only a SHA-256 hash of each invite is stored, and
+redemption happens inside a transaction with a row lock, so two people
+clicking the same link cannot both get an account.
 
-```html
-<!-- before -->
-<div class="ph r-4x5" data-label="Studio portrait"></div>
+**An artist cannot list work until Stripe is connected.** This is enforced by
+a Postgres trigger, not by application code, so no bug in the API can get
+around it. Buyers pay the artist directly through Stripe Connect and Kudzu's
+commission is taken in transit as an application fee — Kudzu never holds an
+artist's money. If an artist later disconnects Stripe, everything they have
+published drops back to draft automatically.
 
-<!-- after -->
-<img src="/img/studio-portrait.jpg" alt="Studio portrait" style="width:100%; aspect-ratio: 4/5; object-fit: cover;">
-```
+**Six published works per artist.** Also a database trigger. Drafts are
+unlimited.
 
-Put real images in `public/img/` and reference them with absolute paths
-(`/img/your-image.jpg`).
+**Uploads are re-encoded on arrival.** Every image is decoded and re-written
+through sharp, which strips EXIF — including the GPS coordinates phone
+cameras attach — resizes the longest edge to 2200px, and rejects anything
+that is not really an image. Nothing is ever cropped.
 
-### Color, type, spacing
+---
 
-All design tokens are CSS variables at the top of `public/css/style.css`:
+## Deploying
+
+Railway builds from `main` and deploys within a couple of minutes of a
+successful push. See `DEPLOY.md` for the one-liner.
+
+The service needs two things beyond the environment variables above:
+
+1. **A Postgres database** — use Railway's one-click Postgres, which comes
+   with its own volume. Do not attach a bare `postgres` image with no volume;
+   the data will not survive a redeploy.
+2. **A separate volume for uploads**, mounted at the path you set as
+   `UPLOAD_DIR`. Artwork lives on disk, not in the database.
+
+---
+
+## Type and colour
+
+Design tokens are CSS variables at the top of `public/workinprogress/css/v3.css`:
 
 ```css
 :root {
-  --forest:        #1d2a22;
-  --gold:          #c8a558;
-  --serif: "Spectral", …;
-  --sans:  "Albert Sans", …;
-  …
+  --paper:  #fbfaf7;
+  --ink:    #211c2a;
+  --olive:  #5f5a2c;
+  --serif:  "EB Garamond", Georgia, "Times New Roman", serif;
+  --sans:   "EB Garamond", Georgia, "Times New Roman", serif;
 }
 ```
 
-Change them in one place, the whole site updates.
+The whole site is set in EB Garamond. Cardinal Alternate appears on exactly
+one heading — the print shop `<h1>` — and is self-hosted from
+`public/workinprogress/fonts/`. It is licensed for commercial use including
+webfont embedding; see the README in that folder before adding any other face.
 
 ---
 
-## Wiring up the contact form
+## Still outstanding
 
-The inquiry form on `/contact` is built but not yet pointed at a backend.
-Two easy paths:
-
-### Option A — Use a hosted form service (no backend code)
-
-Sign up at [Formspree](https://formspree.io), [Basin](https://usebasin.com),
-or [Web3Forms](https://web3forms.com); they all give you a POST endpoint.
-Then edit `public/contact.html`:
-
-```html
-<form class="form"
-      data-endpoint="https://formspree.io/f/YOUR_FORM_ID"
-      …>
-```
-
-The form JS will POST the form data as JSON and show the success state.
-
-### Option B — Add a POST handler to server.js
-
-If you want to handle submissions yourself (e.g. forward to your own
-email via SendGrid/Postmark/Resend), add to `server.js`:
-
-```js
-app.use(express.json());
-app.post('/api/contact', async (req, res) => {
-  const { name, email, organization, topic, message } = req.body;
-  // … send email, store in db, etc.
-  res.json({ ok: true });
-});
-```
-
-Then in `public/contact.html`, set `data-endpoint="/api/contact"`.
+- [ ] `public/workinprogress/img/gallery-wall.jpg` — the virtual gallery wants
+      a real photograph of an empty gallery wall, shot straight on, ≥2400px,
+      even light, a little floor visible. It falls back gracefully until then.
+- [ ] Lumaprints API credentials.
+- [ ] Print shop prices are hard-coded at $40–$400; they should come from
+      Lumaprints once those keys exist.
+- [ ] End-to-end test of invite → signup → Stripe → upload → sale.
 
 ---
-
-## What's placeholder vs real
-
-This site ships with **placeholder copy** so you can see the structure.
-Tour these before publishing:
-
-- [ ] **Founding year, location, EIN** — currently "Atlanta, 2021, EIN
-      pending." Update across all pages.
-- [ ] **Phone, email, address** — currently `hello@kudzu.studio` /
-      `(404) 555-0118`. Search/replace.
-- [ ] **Team bios** on `/about` — three placeholder cards.
-- [ ] **Press list** on `/about#press` — invented outlets and headlines.
-- [ ] **Selected work** — invented project names; replace with real
-      engagements and add case study pages for the ones you want to
-      feature.
-- [ ] **Statistics on `/initiatives`** — invented numbers; replace with
-      your actuals.
-- [ ] **Patronage tiers and pricing** on `/initiatives#patrons`.
-- [ ] **Images** — every `<div class="ph">` is a placeholder; swap with
-      real photography.
-- [ ] **Social links** in the footer.
-
----
-
-## Browser support
-
-Modern evergreen browsers (Chrome, Safari, Firefox, Edge). Uses CSS
-custom properties, `aspect-ratio`, `clamp()`, IntersectionObserver, and
-modest backdrop-filter. No polyfills shipped.
 
 ### License
 
-All rights reserved by Kudzu (replace with your actual license/copyright
-notice when ready).
+All rights reserved by Kudzu Arts.

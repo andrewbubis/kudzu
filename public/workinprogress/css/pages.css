@@ -97,7 +97,7 @@
 /* ── Interior page head ───────────────────────────────────────── */
 .page-head { padding-block: clamp(48px,7vw,92px) clamp(28px,4vw,44px); overflow: hidden; }
 .page-head .wrap { max-width: 980px; }
-.page-head h1 { font-family: var(--serif); font-weight: 300; font-size: clamp(46px,7vw,92px); line-height: 0.96; letter-spacing: -0.03em; color: var(--ink); margin: 18px 0 0; }
+.page-head h1 { font-family: var(--serif); font-weight: 400; font-size: clamp(46px,7vw,92px); line-height: 1.02; letter-spacing: -0.005em; color: var(--ink); margin: 18px 0 0; }
 .page-head h1 .ital { font-style: italic; color: var(--olive); }
 .page-head .lede { margin-top: 22px; max-width: 620px; }
 
@@ -166,7 +166,7 @@
 .press-grid { display: grid; grid-template-columns: 1.05fr 0.95fr; gap: clamp(32px,4vw,64px); align-items: center; }
 .press-grid .press-img { position: relative; }
 .press-grid .press-img .blob { position: absolute; inset: -6%; background: radial-gradient(closest-side, rgba(138,143,67,0.18), transparent); z-index: -1; }
-.press-copy h1 { font-family: var(--serif); font-weight: 300; font-size: clamp(44px,6.5vw,86px); line-height: 0.96; letter-spacing: -0.03em; color: var(--ink); margin: 16px 0 0; }
+.press-copy h1 { font-family: var(--serif); font-weight: 400; font-size: clamp(44px,6.5vw,86px); line-height: 1.02; letter-spacing: -0.005em; color: var(--ink); margin: 16px 0 0; }
 .press-copy h1 .ital { font-style: italic; color: var(--leaf); }
 .press-copy .lede { margin-top: 22px; max-width: 480px; }
 .press-copy .press-cta { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 30px; }
@@ -394,4 +394,40 @@
 .print .popts {
   font-family: var(--sans); font-size: 11.5px;
   color: var(--ink-mute); margin: 4px 0 0;
+}
+
+/* ── Cardinal Alternate — print shop display face ──────────────────────
+   Blackletter by Dieter Steffmann, free for commercial use including
+   webfont embedding (1001Fonts FFC licence).
+
+   Used only for the print shop headline. Blackletter is punishing to
+   read at length and nearly illegible in ALL CAPS — the capitals are
+   ornate enough that words stop resolving — so it stays on one line of
+   large, mixed-case text and nowhere else.
+
+   The font only loads on pages that use it. If it ever fails to load
+   the headline falls back to EB Garamond and simply looks normal.
+   ──────────────────────────────────────────────────────────────────── */
+@font-face {
+  font-family: "Cardinal Alternate";
+  src: url("../fonts/cardinal-alternate.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;   /* show EB Garamond immediately, swap when ready */
+}
+
+.press-copy h1.cardinal {
+  font-family: "Cardinal Alternate", var(--serif);
+  font-weight: 400;
+  /* Blackletter runs visually larger and tighter than a text serif,
+     so it needs less size and more line height than the default. */
+  font-size: clamp(38px, 5.6vw, 76px);
+  line-height: 1.12;
+  letter-spacing: 0.01em;
+}
+.press-copy h1.cardinal .ital {
+  /* Cardinal has no true italic — faux-slanting blackletter looks
+     broken, so the accent is carried by colour instead. */
+  font-style: normal;
+  color: var(--olive);
 }

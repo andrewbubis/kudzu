@@ -38,7 +38,7 @@
   border: 1px dashed var(--a-line);
   transition: border-color .15s, color .15s;
 }
-.acct-photo .plus { font-size: 26px; line-height: 1; font-weight: 300; }
+.acct-photo .plus { font-size: 26px; line-height: 1; font-weight: 400; }
 .acct-photo:hover, .acct-photo:focus-visible {
   border-color: var(--a-link); color: var(--a-link); outline: none;
 }

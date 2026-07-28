@@ -80,8 +80,17 @@ app.use(express.static(PUBLIC, { extensions: ['html'], index: 'index.html' }));
 
 app.use((req, res) => {
   if (req.path.startsWith('/api/')) return res.status(404).json({ error: 'not_found' });
-  const four04 = path.join(PUBLIC, '404.html');
-  if (fs.existsSync(four04)) return res.status(404).sendFile(four04);
+
+  // Serve the 404 belonging to whichever site the URL was under, so the
+  // nav and branding match where the visitor thought they were.
+  const candidates = [];
+  if (req.path.startsWith('/workinprogress/')) {
+    candidates.push(path.join(PUBLIC, 'workinprogress', '404.html'));
+  }
+  candidates.push(path.join(PUBLIC, '404.html'));
+
+  const page = candidates.find((p) => p.startsWith(PUBLIC) && fs.existsSync(p));
+  if (page) return res.status(404).sendFile(page);
   res.status(404).send('Not found.');
 });
 
