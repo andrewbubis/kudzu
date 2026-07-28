@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Your profile · Kudzu Arts</title>
+<meta name="theme-color" content="#f7f4ed">
+<link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/v3.css">
+<link rel="stylesheet" href="css/pages.css">
+</head>
+<body>
+<header class="site-header">
+  <a href="index.html" class="brand"><img class="mark" src="img/logo-k.png" alt="" aria-hidden="true"><span class="word"><b>KUDZU</b><span class="arts">arts</span></span></a>
+  <nav class="nav" aria-label="Primary">
+    <a href="artists.html">Artists</a>
+    <a href="exhibitions.html">Exhibitions</a>
+    <a href="gallery.html">Virtual Gallery</a>
+    <a href="printshop.html">Print Shop</a>
+    <a href="contact.html">Contact</a>
+  </nav>
+  <a href="login.html" class="btn btn-line nav-cta">Artist Login</a>
+  <button class="nav-toggle" type="button" aria-expanded="false">Menu</button>
+</header>
+
+<section class="auth-sec">
+  <div class="auth-card wide" id="pro-card" style="display:none;">
+    <div class="profile-head">
+      <div class="avatar" id="p-avatar">A</div>
+      <div>
+        <p class="eyebrow" style="margin:0;">Your Kudzu profile</p>
+        <h1 style="margin:6px 0 0;" id="p-name">Artist</h1>
+        <span class="chip" id="p-chip">Roster artist</span>
+      </div>
+    </div>
+    <div class="pro-rows" id="p-rows"></div>
+    <div class="pro-actions">
+      <a id="p-page" class="btn btn-clay" style="display:none;" href="#">View your public page →</a>
+      <a class="btn btn-line" href="mailto:info@kudzuarts.com?subject=New%20works%20for%20my%20Kudzu%20page">Send us new works</a>
+      <button type="button" class="btn btn-line" id="p-logout">Sign out</button>
+    </div>
+    <p class="auth-note">Want something changed on your public page — bio, images, prices? Email <a href="mailto:info@kudzuarts.com">info@kudzuarts.com</a> and we'll handle it.</p>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="footer-bot"><span>© Kudzu Arts MMXXVI</span><span>kudzuarts.com — the gallery is the door</span></div>
+</footer>
+<script src="js/main.js" defer></script>
+<script src="js/auth.js"></script>
+<script>
+(function () {
+  var acc = KudzuAuth.session();
+  if (!acc) { location.replace('login.html'); return; }
+  document.getElementById('pro-card').style.display = 'block';
+  document.getElementById('p-avatar').textContent = (acc.name || '?').charAt(0).toUpperCase();
+  document.getElementById('p-name').textContent = acc.name;
+  document.getElementById('p-chip').textContent = acc.roster ? 'Roster artist' : 'New member — ' + new Date(acc.joined || Date.now()).getFullYear();
+  function esc(s) { var d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
+  var rows = [['Email', acc.email]];
+  if (acc.medium) rows.push(['Medium', acc.medium]);
+  if (acc.city) rows.push(['Based in', acc.city]);
+  if (acc.ig) rows.push(['Instagram', '<a href="https://instagram.com/' + esc(acc.ig) + '" target="_blank" rel="noopener" style="color:var(--olive);">@' + esc(acc.ig) + '</a>']);
+  if (acc.bio) rows.push(['Bio', acc.bio]);
+  document.getElementById('p-rows').innerHTML = rows.map(function (r) {
+    var v = r[0] === 'Instagram' ? r[1] : esc(r[1]);
+    return '<div class="pro-row"><div class="k">' + r[0] + '</div><div class="v">' + v + '</div></div>';
+  }).join('');
+  if (acc.page) { var b = document.getElementById('p-page'); b.href = acc.page; b.style.display = 'inline-flex'; }
+  document.getElementById('p-logout').addEventListener('click', function () { KudzuAuth.logout(); location.href = 'login.html'; });
+})();
+</script>
+</body>
+</html>

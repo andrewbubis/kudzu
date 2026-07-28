@@ -154,17 +154,19 @@ section { position: relative; padding-block: clamp(72px, 9vw, 128px); }
 .nav-toggle { display: none; background: transparent; border: 2px solid var(--ink); color: var(--ink); padding: 9px 15px; font-size: 12px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; }
 
 /* ── Vine decals ──────────────────────────────────────────────── */
-.vine-edge { position: absolute; top: 0; height: 100%; width: 190px; background-repeat: no-repeat; background-size: contain; pointer-events: none; z-index: 0; opacity: 0.62; }
-.vine-edge.left  { left: -22px;  background-image: url("../img/vine-climb-left.svg");  background-position: top left; }
-.vine-edge.right { right: -22px; background-image: url("../img/vine-climb-right.svg"); background-position: top right; }
-.vine-corner { position: absolute; width: 210px; height: 210px; background: url("../img/vine-corner.svg") no-repeat; background-size: contain; pointer-events: none; z-index: 0; opacity: 0.5; }
+.vine-edge { position: absolute; top: 0; height: 100%; width: 150px; background-repeat: no-repeat; background-size: cover; pointer-events: none; z-index: 0; opacity: 0.92; transform-origin: top center; animation: vine-sway 6s ease-in-out infinite; }
+.vine-edge.left  { left: 4%;  background-image: url("../img/vine-hand-left.png");  background-position: top center; }
+.vine-edge.right { right: 4%; background-image: url("../img/vine-hand-right.png"); background-position: top center; animation-delay: -3s; }
+@keyframes vine-sway { 0%,100% { transform: rotate(-1.6deg) translateX(-5px) scaleY(1); } 50% { transform: rotate(1.6deg) translateX(5px) scaleY(1.02); } }
+@media (prefers-reduced-motion: reduce) { .vine-edge { animation: none; } }
+.vine-corner { position: absolute; width: 210px; height: 210px; background: url("../img/vine-hand-corner.png") no-repeat; background-size: contain; pointer-events: none; z-index: 0; opacity: 0.5; }
 .vine-corner.tr { top: 0; right: 0; transform: scaleX(-1); }
 .vine-corner.tl { top: 0; left: 0; }
 .vine-corner.br { bottom: 0; right: 0; transform: scale(-1,-1); }
 .vine-corner.bl { bottom: 0; left: 0; transform: scaleY(-1); }
-.vine-divider { width: 100%; max-width: 1100px; height: 64px; margin: 0 auto; background: url("../img/vine-divider.svg") center/contain no-repeat; opacity: 0.7; }
-.sprig { width: 104px; height: 60px; background: url("../img/vine-sprig.svg") center/contain no-repeat; margin: 0 auto 6px; }
-.sprig.gold { background-image: url("../img/vine-sprig-gold.svg"); }
+.vine-divider { width: 100%; max-width: 1100px; height: 64px; margin: 0 auto; background: url("../img/vine-hand.png") center/contain no-repeat; opacity: 0.7; }
+.sprig { width: 104px; height: 60px; background: url("../img/vine-hand-sprig.png") center/contain no-repeat; margin: 0 auto 6px; }
+.sprig.gold { background-image: url("../img/vine-hand-sprig-gold.png"); }
 
 /* ── Hero ─────────────────────────────────────────────────────── */
 .hero { padding-block: clamp(36px, 5vw, 60px); overflow: hidden; }
@@ -288,9 +290,9 @@ section { position: relative; padding-block: clamp(72px, 9vw, 128px); }
 .print-strip-head { font-family: var(--sans); font-size: 11px; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: var(--olive); margin: 0; }
 /* Clothesline of real prints (replaces the blank drying-line graphic) */
 .clothesline { position: relative; padding-top: 24px; }
-.clothesline::before, .clothesline::after { content: ""; position: absolute; top: -4px; width: 72px; height: 44px; background: url("../img/vine-sprig.svg") center/contain no-repeat; opacity: 0.9; pointer-events: none; z-index: 3; }
+.clothesline::before, .clothesline::after { content: ""; position: absolute; top: -4px; width: 72px; height: 44px; background: url("../img/vine-hand-sprig.png") center/contain no-repeat; opacity: 0.9; pointer-events: none; z-index: 3; }
 .clothesline::before { left: -20px; transform: scaleX(-1); }
-.clothesline::after { right: -20px; background-image: url("../img/vine-sprig-gold.svg"); }
+.clothesline::after { right: -20px; background-image: url("../img/vine-hand-sprig-gold.png"); }
 .clothesline .cord { position: absolute; top: 11px; left: -2%; width: 104%; border-top: 2px solid var(--olive); opacity: 0.85; }
 .clothesline .hangs { display: flex; justify-content: center; align-items: flex-start; gap: clamp(6px,1.5vw,16px); }
 .clothesline .hang { position: relative; display: block; width: 31%; max-width: 152px; background: #f6f0e1; padding: 7px 7px 19px; box-shadow: 0 14px 26px rgba(33,28,42,0.22); transform: rotate(var(--r,0deg)); transform-origin: top center; transition: transform .4s cubic-bezier(.2,.7,.2,1), box-shadow .4s; text-decoration: none; }

@@ -176,22 +176,25 @@ section { padding-block: clamp(72px, 10vw, 116px); position: relative; }
 
 /* ── Decorative vines ─────────────────────────────────────────── */
 .vine-climb {
-  position: absolute; top: 0; height: 100%; width: 200px;
-  background-repeat: no-repeat; background-size: contain;
-  pointer-events: none; opacity: 0.6; z-index: 0;
+  position: absolute; top: 0; height: 100%; width: 150px;
+  background-repeat: no-repeat; background-size: cover;
+  pointer-events: none; opacity: 0.92; z-index: 0;
+  transform-origin: top center; animation: vine-sway 6s ease-in-out infinite;
 }
-.vine-climb.left  { left: -30px;  background-image: url("../img/vine-climb-left.svg");  background-position: top left; }
-.vine-climb.right { right: -30px; background-image: url("../img/vine-climb-right.svg"); background-position: top right; }
+.vine-climb.left  { left: 4%;  background-image: url("../img/vine-hand-left.png");  background-position: top center; }
+.vine-climb.right { right: 4%; background-image: url("../img/vine-hand-right.png"); background-position: top center; animation-delay: -3s; }
+@keyframes vine-sway { 0%,100% { transform: rotate(-1.6deg) translateX(-5px) scaleY(1); } 50% { transform: rotate(1.6deg) translateX(5px) scaleY(1.02); } }
+@media (prefers-reduced-motion: reduce) { .vine-climb { animation: none; } }
 
 .vine-divider {
   width: 100%; max-width: 1200px; margin: 0 auto;
   height: 70px;
-  background: url("../img/vine-divider.svg") center / contain no-repeat;
+  background: url("../img/vine-hand.png") center / contain no-repeat;
   opacity: 0.7;
 }
 .vine-corner {
   position: absolute; width: 220px; height: 220px;
-  background: url("../img/vine-corner.svg") no-repeat; background-size: contain;
+  background: url("../img/vine-hand-corner.png") no-repeat; background-size: contain;
   pointer-events: none; opacity: 0.55; z-index: 0;
 }
 .vine-corner.tr { top: 0; right: 0; transform: scaleX(-1); }
@@ -201,10 +204,10 @@ section { padding-block: clamp(72px, 10vw, 116px); position: relative; }
 
 .sprig {
   width: 110px; height: 64px;
-  background: url("../img/vine-sprig.svg") center / contain no-repeat;
+  background: url("../img/vine-hand-sprig.png") center / contain no-repeat;
   margin: 0 auto 8px;
 }
-.sprig.gold { background-image: url("../img/vine-sprig-gold.svg"); }
+.sprig.gold { background-image: url("../img/vine-hand-sprig-gold.png"); }
 
 section > .wrap { position: relative; z-index: 1; }
 

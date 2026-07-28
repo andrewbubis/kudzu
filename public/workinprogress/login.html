@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Artist Login · Kudzu Arts</title>
+<meta name="theme-color" content="#f7f4ed">
+<link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/v3.css">
+<link rel="stylesheet" href="css/pages.css">
+</head>
+<body>
+<header class="site-header">
+  <a href="index.html" class="brand"><img class="mark" src="img/logo-k.png" alt="" aria-hidden="true"><span class="word"><b>KUDZU</b><span class="arts">arts</span></span></a>
+  <nav class="nav" aria-label="Primary">
+    <a href="artists.html">Artists</a>
+    <a href="exhibitions.html">Exhibitions</a>
+    <a href="gallery.html">Virtual Gallery</a>
+    <a href="printshop.html">Print Shop</a>
+    <a href="contact.html">Contact</a>
+  </nav>
+  <a href="login.html" class="btn btn-line nav-cta">Artist Login</a>
+  <button class="nav-toggle" type="button" aria-expanded="false">Menu</button>
+</header>
+
+<section class="auth-sec">
+  <div class="auth-card">
+    <p class="eyebrow">Artist access</p>
+    <h1>Sign in<em>.</em></h1>
+    <p class="auth-sub">For Kudzu roster artists — manage your profile, works, and details.</p>
+    <form id="login-form" novalidate>
+      <div class="afield"><label for="l-email">Email</label><input id="l-email" type="email" required autocomplete="email" placeholder="you@yourdomain.com"></div>
+      <div class="afield"><label for="l-pass">Password</label><input id="l-pass" type="password" required autocomplete="current-password" placeholder="••••••••"></div>
+      <button type="submit" class="btn btn-clay">Sign in →</button>
+      <div id="login-msg" class="auth-msg" role="status" aria-live="polite"></div>
+    </form>
+    <p class="auth-note">Kudzu accounts are <b>invitation-only</b>. If you're joining the roster, use the personal invite link we sent you — it signs you up and builds your profile. Lost yours? Write <a href="mailto:info@kudzuarts.com">info@kudzuarts.com</a>.<br><br>Gallery admin? <a href="invites.html">Create an invite →</a></p>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="vine-corner br"></div>
+  <div class="footer-grid">
+    <div class="footer-brand"><img class="mark" src="img/logo-k.png" alt="" aria-hidden="true">
+      <p class="blurb">Helping good art take root — a southern art practice, climbing everywhere it can.</p>
+    </div>
+    <div class="footer-col"><h4>Visit</h4><a href="artists.html">Artists</a><a href="exhibitions.html">Exhibitions</a><a href="gallery.html">Virtual Gallery</a><a href="printshop.html">Print Shop</a></div>
+    <div class="footer-col"><h4>Gallery</h4><a href="contact.html">Contact</a><a href="contact.html">Newsletter</a><a href="contact.html">Submit work</a></div>
+    <div class="footer-col"><h4>Connect</h4><a href="https://instagram.com/kudzu.arts" target="_blank" rel="noopener">@kudzu.arts</a><a href="mailto:info@kudzuarts.com">info@kudzuarts.com</a><p>Rooted in Nashville &amp; Los Angeles</p></div>
+  </div>
+  <div class="footer-bot"><span>© Kudzu Arts MMXXVI</span><span>kudzuarts.com — the gallery is the door</span></div>
+</footer>
+<script src="js/main.js" defer></script>
+<script src="js/auth.js"></script>
+<script>
+document.getElementById('login-form').addEventListener('submit', function (e) {
+  e.preventDefault();
+  var f = e.target;
+  if (!f.checkValidity()) { f.reportValidity(); return; }
+  var acc = KudzuAuth.login(document.getElementById('l-email').value, document.getElementById('l-pass').value);
+  var m = document.getElementById('login-msg');
+  if (acc) {
+    m.textContent = 'Welcome back, ' + acc.name.split(' ')[0] + ' — taking you to your profile…';
+    m.classList.add('show');
+    setTimeout(function () { location.href = 'profile.html'; }, 700);
+  } else {
+    m.textContent = 'We don\u2019t recognize that email and password. Accounts are invitation-only — use your invite link, or write info@kudzuarts.com.';
+    m.classList.add('show');
+  }
+});
+</script>
+</body>
+</html>

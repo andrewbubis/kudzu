@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Invite an artist · Kudzu Arts</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#f7f4ed">
+<link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/v3.css">
+<link rel="stylesheet" href="css/pages.css">
+</head>
+<body>
+<header class="site-header">
+  <a href="index.html" class="brand"><img class="mark" src="img/logo-k.png" alt="" aria-hidden="true"><span class="word"><b>KUDZU</b><span class="arts">arts</span></span></a>
+  <nav class="nav" aria-label="Primary">
+    <a href="artists.html">Artists</a>
+    <a href="exhibitions.html">Exhibitions</a>
+    <a href="gallery.html">Virtual Gallery</a>
+    <a href="printshop.html">Print Shop</a>
+    <a href="contact.html">Contact</a>
+  </nav>
+  <a href="login.html" class="btn btn-line nav-cta">Artist Login</a>
+  <button class="nav-toggle" type="button" aria-expanded="false">Menu</button>
+</header>
+
+<section class="auth-sec">
+  <div class="auth-card wide">
+    <p class="eyebrow">Gallery admin</p>
+    <h1>Invite an <em>artist.</em></h1>
+    <p class="auth-sub">Generates a personal, single-use signup link. Send it to the artist directly — it expires automatically and can't be reused once they've created their profile.</p>
+    <form id="inv-gen" novalidate>
+      <div class="afield-row">
+        <div class="afield"><label for="i-name">Artist name</label><input id="i-name" type="text" required placeholder="e.g. Marta Lee"></div>
+        <div class="afield"><label for="i-email">Artist email</label><input id="i-email" type="email" required placeholder="artist@domain.com"></div>
+      </div>
+      <div class="afield"><label for="i-exp">Link expires after</label>
+        <select id="i-exp">
+          <option value="24">24 hours</option>
+          <option value="72" selected>3 days</option>
+          <option value="168">7 days</option>
+        </select>
+      </div>
+      <button type="submit" class="btn btn-clay">Generate invite link →</button>
+    </form>
+    <div id="inv-out" style="display:none;">
+      <div class="invite-link"><input id="inv-url" type="text" readonly><button type="button" class="btn btn-line" id="inv-copy">Copy</button></div>
+      <div id="inv-copied" class="auth-msg" role="status" aria-live="polite"></div>
+    </div>
+    <div class="inv-list" id="inv-list" style="display:none;">
+      <div class="h">Invites sent from this browser</div>
+      <div id="inv-rows"></div>
+    </div>
+    <p class="auth-note">Prototype note: expiry is baked into the link itself; "used" status is tracked in this browser. Wiring it to a real backend makes single-use airtight across devices.</p>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="footer-bot"><span>© Kudzu Arts MMXXVI</span><span>kudzuarts.com — the gallery is the door</span></div>
+</footer>
+<script src="js/main.js" defer></script>
+<script src="js/auth.js"></script>
+<script>
+(function () {
+  function esc(s) { var d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
+  function renderList() {
+    var log = KudzuAuth.invitesLog();
+    var wrap = document.getElementById('inv-list'), rows = document.getElementById('inv-rows');
+    if (!log.length) { wrap.style.display = 'none'; return; }
+    wrap.style.display = 'block';
+    var used = KudzuAuth.usedIds();
+    rows.innerHTML = log.map(function (r) {
+      var st = used.indexOf(r.id) >= 0 ? ['used', 'Used'] : (Date.now() > r.exp ? ['expired', 'Expired'] : ['active', 'Active']);
+      var when = new Date(r.exp);
+      return '<div class="inv-row"><div class="who"><b>' + esc(r.name) + '</b><span>' + esc(r.email) + ' · expires ' + when.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + '</span></div><span class="st ' + st[0] + '">' + st[1] + '</span></div>';
+    }).join('');
+  }
+  document.getElementById('inv-gen').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var f = e.target;
+    if (!f.checkValidity()) { f.reportValidity(); return; }
+    var name = document.getElementById('i-name').value.trim();
+    var email = document.getElementById('i-email').value.trim();
+    var hours = parseInt(document.getElementById('i-exp').value, 10);
+    var made = KudzuAuth.makeInvite(name, email, hours);
+    var url = new URL('signup.html?inv=' + made.token, location.href).href;
+    document.getElementById('inv-out').style.display = 'block';
+    document.getElementById('inv-url').value = url;
+    KudzuAuth.logInvite({ name: name, email: email, exp: made.invite.x, id: made.invite.i });
+    renderList();
+  });
+  document.getElementById('inv-copy').addEventListener('click', function () {
+    var inp = document.getElementById('inv-url');
+    inp.select();
+    var done = function () { var m = document.getElementById('inv-copied'); m.textContent = 'Copied — paste it into an email or DM to the artist.'; m.classList.add('show'); };
+    if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(inp.value).then(done, done); } else { document.execCommand('copy'); done(); }
+  });
+  renderList();
+})();
+</script>
+</body>
+</html>
