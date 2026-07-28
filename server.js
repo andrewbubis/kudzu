@@ -15,6 +15,8 @@ const auth = require('./server/auth');
 const oauth = require('./server/oauth');
 const api = require('./server/api');
 const storage = require('./server/storage');
+const commerce = require('./server/commerce');
+const lumaprints = require('./server/lumaprints');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -34,6 +36,13 @@ app.use((_req, res, next) => {
 });
 
 app.use(cookieParser());
+
+// The Stripe webhook must see the raw, unparsed body — Stripe signs the
+// exact bytes, so this has to be registered before express.json().
+app.post('/api/webhooks/stripe',
+  express.raw({ type: 'application/json' }),
+  commerce.webhookHandler);
+
 app.use(express.json({ limit: '256kb' }));
 app.use(express.urlencoded({ extended: false, limit: '256kb' }));
 
@@ -52,6 +61,7 @@ app.use('/uploads', express.static(storage.UPLOAD_DIR, {
 
 // ── API ──────────────────────────────────────────────────────────────
 app.use('/api', oauth.router);
+app.use('/api', commerce.router);
 app.use('/api', api);
 
 // ── Pages ────────────────────────────────────────────────────────────
@@ -135,5 +145,7 @@ async function bootstrapFirstAdmin() {
     console.log(`kudzu · listening on http://localhost:${PORT}`);
     if (!db.isConfigured()) console.log('kudzu · accounts off (no DATABASE_URL)');
     if (!oauth.isConfigured('google')) console.log('kudzu · Google sign-in off (no GOOGLE_CLIENT_ID)');
+    if (!commerce.isConfigured()) console.log('kudzu · selling off (no STRIPE_SECRET_KEY)');
+    if (!lumaprints.isConfigured()) console.log('kudzu · print fulfilment off (no Lumaprints keys)');
   });
 })();
