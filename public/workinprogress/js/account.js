@@ -69,8 +69,15 @@
     if (adminItem) adminItem.hidden = !me.isAdmin;
 
     var photo = $('photo');
-    if (me.photo) { photo.style.backgroundImage = 'url("' + me.photo + '")'; photo.textContent = ''; }
-    else { photo.style.backgroundImage = ''; photo.textContent = 'add a photo'; }
+    if (me.photo) {
+      photo.style.backgroundImage = 'url("' + me.photo + '")';
+      photo.classList.add('has-photo');
+      photo.setAttribute('aria-label', 'Change your profile photo');
+    } else {
+      photo.style.backgroundImage = '';
+      photo.classList.remove('has-photo');
+      photo.setAttribute('aria-label', 'Upload a profile photo');
+    }
 
     var link = $('linkLine');
     if (me.link) {
