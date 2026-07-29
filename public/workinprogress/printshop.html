@@ -16,6 +16,27 @@
 <meta property="og:title" content="Print Shop · Kudzu Arts">
 <meta property="og:description" content="Limited-edition and open-edition prints from the Kudzu Arts roster — assorted sizes and materials, from $40. Signed editions available.">
 <noscript><style>.reveal{opacity:1 !important;transform:none !important;}</style></noscript>
+
+<style>
+  /* ── Full-page right vine ─────────────────────────────────────── */
+  .vine-tall-right {
+    position: fixed;
+    right: 0;
+    top: 0;
+    width: 200px;
+    height: 100vh;
+    background: url("img/vine-hand-right.png") top center / cover no-repeat;
+    pointer-events: none;
+    z-index: 5;
+    opacity: 0.88;
+    transform-origin: top right;
+    animation: vine-sway 6s ease-in-out infinite;
+    animation-delay: -3s;
+  }
+  @media (max-width: 860px) { .vine-tall-right { width: 120px; opacity: 0.7; } }
+  @media (max-width: 560px) { .vine-tall-right { width: 80px; opacity: 0.6; } }
+  @media (prefers-reduced-motion: reduce) { .vine-tall-right { animation: none; } }
+</style>
 </head>
 <body>
 <header class="site-header">
@@ -30,19 +51,24 @@
   <button class="nav-toggle" type="button" aria-expanded="false">Menu</button>
 </header>
 
+<!-- Full-page swinging vine fixed to right edge, spanning all sections -->
+<div class="vine-tall-right" aria-hidden="true"></div>
+
 <section class="press-hero">
   <div class="wrap">
     <div class="press-grid solo">
       <div class="press-copy reveal">
         <p class="eyebrow">The Print Shop</p>
         <h1 class="cardinal">Ink, paper,<br><span class="ital">and a little overgrowth.</span></h1>
-        <p class="lede">Original art shouldn’t need a collector’s budget. We put work from the roster on your wall — open-edition prints that ship fast, and signed, numbered editions for the ones you want to keep forever. A share of every print funds free workshops.</p>
+        <p class="lede">Original art shouldn't need a collector's budget. We put work from the roster on your wall — open-edition prints that ship fast, and signed, numbered editions for the ones you want to keep forever. A share of every print funds free workshops.</p>
       </div>
     </div>
   </div>
 </section>
 
 <section id="prints" style="padding-top: clamp(28px,3.5vw,48px);">
+  <!-- Corner vine above Available Now heading -->
+  <div class="vine-corner tl" aria-hidden="true"></div>
   <div class="wrap">
     <div class="sec-head"><div><span class="num">Available now</span><h2>Prints from the <em>roster.</em></h2></div></div>
     <div class="prints-grid">
@@ -57,7 +83,6 @@
 
 
 <section class="band-dark">
-  <div class="vine-edge right" style="width:220px; right:0; opacity:1; height:130%;"></div>
   <div class="wrap" style="text-align:center; max-width:640px;">
     <div class="sprig gold" aria-hidden="true"></div>
     <p class="eyebrow center" style="justify-content:center;">Prints with a purpose</p>
@@ -77,7 +102,7 @@
     <div class="footer-col"><h4>Connect</h4><a href="https://instagram.com/kudzu.arts" target="_blank" rel="noopener">@kudzu.arts</a><a href="mailto:info@kudzuarts.com">info@kudzuarts.com</a><p>Rooted in Nashville &amp; Los Angeles</p>
     <a href="https://instagram.com/kudzu.arts" target="_blank" rel="noopener" class="btn btn-line" style="margin-top:14px; display:inline-flex; align-items:center; gap:9px; font-size:12px; padding:8px 16px;">Follow on Instagram</a>
 
-    
+
   </div>
   </div>
   <div class="footer-bot"><span>© Kudzu Arts MMXXVI</span><span>kudzuarts.com — the gallery is the door</span></div>
