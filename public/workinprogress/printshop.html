@@ -20,12 +20,12 @@
 <style>
   /* ── Full-page right vine ─────────────────────────────────────── */
   .vine-tall-right {
-    position: fixed;
+    position: absolute;
     right: 0;
     top: 0;
     width: 200px;
-    height: 100vh;
-    background: url("img/vine-hand-right.png") top center / cover no-repeat;
+    height: calc(100% - 3in);
+    background: url("img/vine-hand-right.png") top center / 100% auto repeat-y;
     pointer-events: none;
     z-index: 5;
     opacity: 0.88;
@@ -38,7 +38,7 @@
   @media (prefers-reduced-motion: reduce) { .vine-tall-right { animation: none; } }
 </style>
 </head>
-<body>
+<body style="position:relative;">
 <header class="site-header">
   <a href="index.html" class="brand"><img class="mark" src="img/logo-k.png" alt="" aria-hidden="true"><span class="word"><b>KUDZU</b><span class="arts">arts</span></span></a>
   <nav class="nav" aria-label="Primary">
