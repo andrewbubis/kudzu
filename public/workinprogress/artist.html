@@ -36,6 +36,25 @@
     .ap-work .fr img { transition: none; }
     .ap-work:hover .fr img { transform: none; }
   }
+
+  /* ── Full-page right vine ─────────────────────────────────────── */
+  .vine-tall-right {
+    position: fixed;
+    right: 0;
+    top: 0;
+    width: 200px;
+    height: 100vh;
+    background: url("img/vine-hand-right.png") top center / cover no-repeat;
+    pointer-events: none;
+    z-index: 5;
+    opacity: 0.88;
+    transform-origin: top right;
+    animation: vine-sway 6s ease-in-out infinite;
+    animation-delay: -3s;
+  }
+  @media (max-width: 860px) { .vine-tall-right { width: 120px; opacity: 0.7; } }
+  @media (max-width: 560px) { .vine-tall-right { width: 80px; opacity: 0.6; } }
+  @media (prefers-reduced-motion: reduce) { .vine-tall-right { animation: none; } }
 </style>
 </head>
 <body>
@@ -52,8 +71,10 @@
   <button class="nav-toggle" type="button" aria-expanded="false">Menu</button>
 </header>
 
+<!-- Full-page swinging vine fixed to right edge, spanning all sections -->
+<div class="vine-tall-right" aria-hidden="true"></div>
+
 <section class="page-head">
-  <div class="vine-edge right"></div>
   <div class="wrap">
     <div class="ap-head">
       <div class="ap-photo" id="apPhoto"></div>
@@ -86,6 +107,8 @@
 </section>
 
 <section style="padding-top:0;">
+  <!-- Corner vine above Available Now heading -->
+  <div class="vine-corner tl" aria-hidden="true"></div>
   <div class="wrap">
     <div class="sec-head"><div><span class="num">Work</span><h2>Available <em>now.</em></h2></div></div>
     <div class="ap-works" id="apWorks"></div>
@@ -171,7 +194,7 @@
       e.preventDefault();
       var btn = $('eqSend'), note = $('apEnqNote');
       note.hidden = true;
-      btn.disabled = true; btn.textContent = 'Sending\u2026';
+      btn.disabled = true; btn.textContent = 'Sending…';
       try {
         var res = await fetch('/api/inquiries', {
           method: 'POST',
