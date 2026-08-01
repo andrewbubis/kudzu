@@ -150,15 +150,18 @@ const PROFILE_FIELDS = {
   worksCity: 'works_city', worksCountry: 'works_country', link: 'link_url'
 };
 
-router.patch('/me', auth.requireArtist, async (req, res) => {
+// Shared by /me and the admin editor below — same whitelist, same
+// validation, whether you're editing your own page or fixing a typo
+// on someone else's.
+function buildProfileSets(body) {
   const sets = [], vals = [];
   for (const [key, col] of Object.entries(PROFILE_FIELDS)) {
-    if (req.body && Object.prototype.hasOwnProperty.call(req.body, key)) {
-      let v = req.body[key];
+    if (body && Object.prototype.hasOwnProperty.call(body, key)) {
+      let v = body[key];
       if (key === 'bornYear') {
         v = v === '' || v == null ? null : parseInt(v, 10);
         if (v != null && (!Number.isFinite(v) || v < 1850 || v > 2100)) {
-          return res.status(400).json({ error: 'bad_year' });
+          throw Object.assign(new Error('bad_year'), { code: 'bad_year' });
         }
       } else if (typeof v === 'string') {
         v = v.trim().slice(0, key === 'bio' || key === 'cv' ? 8000 : 200) || null;
@@ -167,6 +170,16 @@ router.patch('/me', auth.requireArtist, async (req, res) => {
       sets.push(`${col} = $${sets.length + 1}`);
       vals.push(v);
     }
+  }
+  return { sets, vals };
+}
+
+router.patch('/me', auth.requireArtist, async (req, res) => {
+  let sets, vals;
+  try {
+    ({ sets, vals } = buildProfileSets(req.body));
+  } catch (err) {
+    return res.status(400).json({ error: err.code || 'bad_request' });
   }
   // Whether an artist's page is visible on the public site is Kudzu's
   // call, not the artist's — it's a review gate, separate from whether
@@ -472,6 +485,42 @@ router.post('/invites', auth.requireArtist, auth.requireAdmin, async (req, res) 
     });
   } catch (err) {
     console.error('invite create failed:', err.message);
+    res.status(500).json({ error: 'server_error' });
+  }
+});
+
+// ── Admin: fix another artist's profile (admin only) ─────────────────
+// For typos and small corrections Kudzu needs to make on an artist's
+// behalf — a misspelled name, a wrong city. Same fields and the same
+// whitelist an artist can edit on themselves in Settings; nothing here
+// touches login, uploads, or a way to remove anything of theirs.
+router.get('/admin/artists', auth.requireArtist, auth.requireAdmin, async (_req, res) => {
+  try {
+    const { rows } = await db.query('SELECT * FROM artists ORDER BY name');
+    res.json({ artists: rows.map(publicArtist) });
+  } catch (err) {
+    console.error('admin artist list failed:', err.message);
+    res.status(500).json({ error: 'server_error' });
+  }
+});
+
+router.patch('/admin/artists/:id', auth.requireArtist, auth.requireAdmin, async (req, res) => {
+  let sets, vals;
+  try {
+    ({ sets, vals } = buildProfileSets(req.body));
+  } catch (err) {
+    return res.status(400).json({ error: err.code || 'bad_request' });
+  }
+  if (!sets.length) return res.status(400).json({ error: 'nothing_to_update' });
+  vals.push(req.params.id);
+  try {
+    const { rows } = await db.query(
+      `UPDATE artists SET ${sets.join(', ')}, updated_at = now()
+        WHERE id = $${vals.length} RETURNING *`, vals);
+    if (!rows[0]) return res.status(404).json({ error: 'not_found' });
+    res.json({ artist: publicArtist(rows[0]) });
+  } catch (err) {
+    console.error('admin profile update failed:', err.message);
     res.status(500).json({ error: 'server_error' });
   }
 });

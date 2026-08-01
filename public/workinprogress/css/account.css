@@ -63,6 +63,13 @@
 .acct-id h1 { font-family: var(--serif, Georgia, serif); font-size: 21px; margin-bottom: 9px; }
 .acct-id p { margin: 0 0 3px; color: var(--a-ink); }
 .acct-id .nolink { color: var(--a-mute); font-style: italic; margin-top: 12px; }
+.acct-id h1 .edit-name {
+  font-family: var(--sans, sans-serif); font-size: 11px; font-style: normal;
+  text-transform: uppercase; letter-spacing: .06em; color: var(--a-soft);
+  text-decoration: none; border-bottom: 1px solid currentColor; padding-bottom: 1px;
+  vertical-align: middle;
+}
+.acct-id h1 .edit-name:hover { color: var(--a-ink); }
 .acct-share { background: none; border: 0; color: var(--a-soft); font-size: 15px; padding: 4px; }
 
 /* ── Onboarding checklist ──────────────────────────────────────────── */

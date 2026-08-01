@@ -88,80 +88,70 @@
     <h2>recent invites</h2>
     <div id="list"><p class="acct-empty" id="listEmpty">No invites yet.</p></div>
   </section>
+
+  <!-- Admin only: fix a typo on any artist's page without them having
+       to do it themselves. Hidden until we know the signed-in artist
+       is actually an admin — the server enforces this regardless. -->
+  <section class="inv-list" id="artistsSection" hidden>
+    <h2>edit an artist's profile</h2>
+    <select id="artistPick" style="width:100%;padding:11px 12px;border:1px solid #e2e2e2;font:inherit;">
+      <option value="">Choose an artist…</option>
+    </select>
+
+    <div class="inv-new" id="artistEdit" hidden style="margin-top:14px;">
+      <input id="aName" type="text" placeholder="Name">
+      <div class="row">
+        <input id="aBornYear" type="number" placeholder="Born year">
+        <input id="aBornCountry" type="text" placeholder="Born — country">
+      </div>
+      <div class="row">
+        <input id="aWorksCity" type="text" placeholder="Works — city">
+        <input id="aWorksCountry" type="text" placeholder="Works — country">
+      </div>
+      <input id="aLink" type="url" placeholder="Website">
+      <textarea id="aBio" rows="4" placeholder="Bio"
+        style="width:100%;padding:11px 12px;border:1px solid #e2e2e2;font:inherit;resize:vertical;"></textarea>
+      <textarea id="aCv" rows="4" placeholder="C.V. — one line per entry"
+        style="width:100%;padding:11px 12px;border:1px solid #e2e2e2;font:inherit;resize:vertical;"></textarea>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <button class="acct-btn big" type="button" id="artistSaveBtn">Save changes</button>
+        <span id="artistSaveNote" style="color:#555;"></span>
+      </div>
+    </div>
+  </section>
 </main>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.0.3/qrcode.min.js"></script>
 <script>
-/* Minimal QR encoder (byte mode, level L, auto version). Enough for
-   invite URLs; no external library, nothing loaded from a CDN. */
-(function(g){
-function QR(t){this.t=t}
-var EC=[[1,26,19],[1,44,34],[1,70,55],[1,100,80],[1,134,108],[2,86,68],[2,98,78],[2,121,97],[2,146,116],[2,86,68],[4,101,81]];
-function gf(){var e=[],l=[],x=1;for(var i=0;i<255;i++){e[i]=x;l[x]=i;x<<=1;if(x&256)x^=285}return{e:e,l:l}}
-var G=gf();
-function mul(a,b){return a&&b?G.e[(G.l[a]+G.l[b])%255]:0}
-function rsPoly(n){var p=[1];for(var i=0;i<n;i++){var q=[1,G.e[i]],r=[];for(var j=0;j<p.length+1;j++)r[j]=0;
-for(var a=0;a<p.length;a++)for(var b=0;b<q.length;b++)r[a+b]^=mul(p[a],q[b]);p=r}return p}
-function rs(d,n){var p=rsPoly(n),res=d.concat(new Array(n).fill(0));
-for(var i=0;i<d.length;i++){var f=res[i];if(f)for(var j=0;j<p.length;j++)res[i+j]^=mul(p[j],f)}
-return res.slice(d.length)}
-QR.prototype.encode=function(){
- var t=this.t,bytes=[];for(var i=0;i<t.length;i++){var c=t.charCodeAt(i);
-  if(c<128)bytes.push(c);else if(c<2048){bytes.push(192|c>>6,128|c&63)}
-  else{bytes.push(224|c>>12,128|c>>6&63,128|c&63)}}
- var ver=1,cap;for(;ver<=10;ver++){cap=EC[ver-1][2];if(bytes.length+2+(ver>=10?1:0)<=cap)break}
- if(ver>10)throw new Error('too long');
- var size=17+ver*4,bits=[];
- function put(v,n){for(var i=n-1;i>=0;i--)bits.push(v>>i&1)}
- put(4,4);put(bytes.length,ver<10?8:16);
- for(var b=0;b<bytes.length;b++)put(bytes[b],8);
- var total=EC[ver-1][2]*8;
- for(var p=0;p<4&&bits.length<total;p++)bits.push(0);
- while(bits.length%8)bits.push(0);
- var pad=[236,17],pi=0;while(bits.length<total){put(pad[pi++%2],8)}
- var data=[];for(var k=0;k<bits.length;k+=8){var v=0;for(var m=0;m<8;m++)v=v<<1|bits[k+m];data.push(v)}
- var ecc=rs(data,EC[ver-1][1]-EC[ver-1][2]);
- var all=data.concat(ecc);
- var mod=[],res=[];for(var y=0;y<size;y++){mod[y]=[];res[y]=[];for(var x=0;x<size;x++){mod[y][x]=null;res[y][x]=0}}
- function fp(r,c){for(var y=-1;y<=7;y++)for(var x=-1;x<=7;x++){var rr=r+y,cc=c+x;
-  if(rr<0||cc<0||rr>=size||cc>=size)continue;
-  var v=(0<=y&&y<=6&&(x===0||x===6))||(0<=x&&x<=6&&(y===0||y===6))||(2<=x&&x<=4&&2<=y&&y<=4);
-  mod[rr][cc]=v?1:0;res[rr][cc]=1}}
- fp(0,0);fp(0,size-7);fp(size-7,0);
- for(var i2=8;i2<size-8;i2++){mod[6][i2]=mod[i2][6]=i2%2===0?1:0;res[6][i2]=res[i2][6]=1}
- if(ver>1){var ap=[6,size-7];for(var a1=0;a1<ap.length;a1++)for(var a2=0;a2<ap.length;a2++){
-  var r0=ap[a1],c0=ap[a2];if(res[r0][c0])continue;
-  for(var y2=-2;y2<=2;y2++)for(var x2=-2;x2<=2;x2++){
-   mod[r0+y2][c0+x2]=(Math.max(Math.abs(y2),Math.abs(x2))!==1)?1:0;res[r0+y2][c0+x2]=1}}}
- for(var i3=0;i3<9;i3++){if(!res[8][i3]){res[8][i3]=1;mod[8][i3]=0}if(!res[i3][8]){res[i3][8]=1;mod[i3][8]=0}}
- for(var i4=0;i4<8;i4++){res[8][size-1-i4]=1;mod[8][size-1-i4]=mod[8][size-1-i4]||0;
-  res[size-1-i4][8]=1;mod[size-1-i4][8]=mod[size-1-i4][8]||0}
- mod[size-8][8]=1;res[size-8][8]=1;
- var idx=0,dir=-1,row=size-1;
- for(var col=size-1;col>0;col-=2){if(col===6)col--;
-  while(true){for(var c2=0;c2<2;c2++){var cc2=col-c2;
-   if(!res[row][cc2]){var dark=0;
-    if(idx<all.length*8)dark=(all[idx>>3]>>(7-(idx&7)))&1;
-    if((row+cc2)%2===0)dark^=1;
-    mod[row][cc2]=dark;idx++}}
-   row+=dir;if(row<0||row>=size){row-=dir;dir=-dir;break}}}
- var fmt=(1<<3|0),d2=fmt<<10;
- for(var q=4;q>=0;q--)if(d2>>(q+10)&1)d2^=0x537<<q;
- var f=((fmt<<10|d2)^0x5412);
- for(var i5=0;i5<15;i5++){var bit=(f>>i5)&1;
-  if(i5<6)mod[i5][8]=bit;else if(i5<8)mod[i5+1][8]=bit;else mod[size-15+i5][8]=bit;
-  if(i5<8)mod[8][size-1-i5]=bit;else mod[8][14-i5]=bit}
- return{size:size,mod:mod}};
-g.drawQR=function(canvas,text){
- try{
-  var q=new QR(text).encode(),s=q.size,px=Math.floor(canvas.width/(s+8)),off=Math.floor((canvas.width-px*s)/2),
-      c=canvas.getContext('2d');
-  c.fillStyle='#fff';c.fillRect(0,0,canvas.width,canvas.height);c.fillStyle='#000';
-  for(var y=0;y<s;y++)for(var x=0;x<s;x++)if(q.mod[y][x])c.fillRect(off+x*px,off+y*px,px,px);
-  return true;
- }catch(e){return false}
+/* QR rendering via the qrcode-generator library (kazuhikoarase, MIT),
+   loaded above from cdnjs. Swapped in after the previous hand-rolled
+   encoder was silently failing on some invite URLs and leaving the
+   canvas blank with no error shown anywhere. */
+window.drawQR = function (canvas, text) {
+  try {
+    var qr = qrcode(0, 'L'); // typeNumber 0 = auto-size, level L
+    qr.addData(text);
+    qr.make();
+    var count = qr.getModuleCount();
+    var px = Math.floor(canvas.width / (count + 8));
+    var off = Math.floor((canvas.width - px * count) / 2);
+    var c = canvas.getContext('2d');
+    c.fillStyle = '#fff';
+    c.fillRect(0, 0, canvas.width, canvas.height);
+    c.fillStyle = '#000';
+    for (var row = 0; row < count; row++) {
+      for (var col = 0; col < count; col++) {
+        if (qr.isDark(row, col)) c.fillRect(off + col * px, off + row * px, px, px);
+      }
+    }
+    return true;
+  } catch (e) {
+    console.error('QR render failed:', e);
+    return false;
+  }
 };
-})(window);
-
+</script>
+<script>
 (function () {
   'use strict';
   var $ = function (id) { return document.getElementById(id); };
@@ -221,7 +211,9 @@ g.drawQR=function(canvas,text){
       $('outLink').textContent = data.url;
       $('outExp').textContent = 'Expires ' + fmtDate(data.expiresAt) + '.';
       $('out').hidden = false;
-      drawQR($('qr'), data.url);
+      if (!drawQR($('qr'), data.url)) {
+        $('qr').style.display = 'none';
+      }
       $('shareBtn').hidden = !navigator.share;
       $('invName').value = ''; $('invEmail').value = '';
       $('out').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -252,7 +244,81 @@ g.drawQR=function(canvas,text){
     }).catch(function () {});
   });
 
+  // ── Edit an artist's profile (admin only) ─────────────────────────
+  // The server is the real gate here — this just stays hidden unless
+  // the request actually succeeds, so non-admins never see an empty
+  // picker that fails the moment they touch it.
+  var artistsById = {};
+
+  async function loadArtists() {
+    try {
+      var data = await fetch('/api/admin/artists', { credentials: 'same-origin' })
+        .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); });
+      var pick = $('artistPick');
+      (data.artists || []).forEach(function (a) {
+        artistsById[a.id] = a;
+        var opt = document.createElement('option');
+        opt.value = a.id;
+        opt.textContent = a.name + (a.published ? '' : '  (not public yet)');
+        pick.appendChild(opt);
+      });
+      $('artistsSection').hidden = false;
+    } catch (e) {
+      // Not an admin, or backend not up — leave this whole section out.
+    }
+  }
+
+  $('artistPick').addEventListener('change', function () {
+    var a = artistsById[this.value];
+    if (!a) { $('artistEdit').hidden = true; return; }
+    $('aName').value = a.name || '';
+    $('aBornYear').value = a.bornYear || '';
+    $('aBornCountry').value = a.bornCountry || '';
+    $('aWorksCity').value = a.worksCity || '';
+    $('aWorksCountry').value = a.worksCountry || '';
+    $('aLink').value = a.link || '';
+    $('aBio').value = a.bio || '';
+    $('aCv').value = a.cv || '';
+    $('artistSaveNote').textContent = '';
+    $('artistEdit').hidden = false;
+  });
+
+  $('artistSaveBtn').addEventListener('click', async function () {
+    var id = $('artistPick').value;
+    if (!id) return;
+    var btn = this, note = $('artistSaveNote');
+    btn.disabled = true; btn.textContent = 'Saving…'; note.textContent = '';
+    try {
+      var res = await fetch('/api/admin/artists/' + id, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({
+          name: $('aName').value.trim(),
+          bornYear: $('aBornYear').value,
+          bornCountry: $('aBornCountry').value.trim(),
+          worksCity: $('aWorksCity').value.trim(),
+          worksCountry: $('aWorksCountry').value.trim(),
+          link: $('aLink').value.trim(),
+          bio: $('aBio').value,
+          cv: $('aCv').value
+        })
+      });
+      if (!res.ok) throw new Error(res.status);
+      var data = await res.json();
+      artistsById[id] = data.artist;
+      var opt = $('artistPick').querySelector('option[value="' + id + '"]');
+      if (opt) opt.textContent = data.artist.name + (data.artist.published ? '' : '  (not public yet)');
+      note.textContent = 'Saved ✓';
+    } catch (e) {
+      note.textContent = 'Could not save — try again.';
+      note.style.color = '#b3261e';
+    }
+    btn.disabled = false; btn.textContent = 'Save changes';
+  });
+
   load();
+  loadArtists();
 })();
 </script>
 </body>
