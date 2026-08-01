@@ -126,7 +126,7 @@ section { position: relative; padding-block: clamp(72px, 9vw, 128px); }
 /* ── Header ───────────────────────────────────────────────────── */
 .site-header {
   position: sticky; top: 0; z-index: 80;
-  display: flex; align-items: center; justify-content: space-between;
+  display: flex; align-items: center;
   gap: 24px; padding: 14px var(--pad);
   background: rgba(244, 242, 236, 0.94);
   backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
@@ -137,7 +137,10 @@ section { position: relative; padding-block: clamp(72px, 9vw, 128px); }
 .brand .word { font-family: var(--serif); font-size: 24px; color: var(--ink); letter-spacing: 0.04em; line-height: 1; }
 .brand .word b { font-weight: 500; }
 .brand .word .arts { font-family: var(--sans); font-size: 11px; font-weight: 600; letter-spacing: 0.28em; text-transform: lowercase; color: var(--olive); margin-left: 6px; }
-.nav { display: flex; gap: 26px; align-items: center; }
+/* Nav + whatever follows it (login button, account menu) group together
+   and hug the right edge — previously space-between let the nav links
+   float in the middle of the header instead. */
+.nav { display: flex; gap: 26px; align-items: center; margin-left: auto; }
 .nav a {
   font-size: 13px; font-weight: 500; letter-spacing: 0.02em; color: var(--ink);
   text-decoration: none; position: relative; padding: 6px 0;
@@ -169,8 +172,19 @@ section { position: relative; padding-block: clamp(72px, 9vw, 128px); }
 .sprig.gold { background-image: url("../img/vine-hand-sprig-gold.png"); }
 
 /* ── Hero ─────────────────────────────────────────────────────── */
-.hero { padding-block: clamp(48px, 7vw, 88px); overflow: hidden; }
+/* Fills almost the whole first viewport on purpose — the dark "virtual
+   gallery" band below should only just peek into view, not compete
+   with the hero on first load. */
+.hero {
+  min-height: 92vh; display: flex; align-items: center; justify-content: center;
+  padding-block: clamp(48px, 7vw, 88px); overflow: hidden;
+}
 .hero .vine-edge { opacity: 0.7; }
+/* Flush to the true page edge, not inset — the general .vine-edge rule
+   below leaves a 4% gap, which reads as "not quite reaching the edge". */
+.hero .vine-edge.left { left: 0; }
+.hero .vine-edge.right { right: 0; }
+@media (max-width: 1040px) { .hero { min-height: 78vh; } }
 .hero-inner { max-width: 1040px; margin-inline: auto; text-align: center; position: relative; z-index: 2; }
 .hero-painted { width: min(82%, 560px); margin: 22px auto clamp(20px, 3vw, 30px); }
 .hero-lockup { display: flex; align-items: center; justify-content: center; gap: clamp(6px, 1vw, 14px); margin: clamp(10px,1.5vw,18px) auto clamp(12px, 2vw, 20px); }
@@ -223,9 +237,17 @@ section { position: relative; padding-block: clamp(72px, 9vw, 128px); }
 
 .wall { display: grid; grid-template-columns: repeat(4, 1fr); gap: clamp(18px, 2.2vw, 30px); }
 .tile { text-decoration: none; color: inherit; display: block; position: relative; }
-.tile .frame { position: relative; overflow: hidden; aspect-ratio: 1 / 1; }
-.tile .frame .art { width: 100%; height: 100%; aspect-ratio: auto; transition: transform .5s ease; }
-.tile:hover .frame .art { transform: scale(1.06); }
+/* A shorter box than before, with a white mat around the photo so it
+   sits centered inside the frame instead of bleeding into the top edge. */
+.tile .frame {
+  position: relative; overflow: hidden; aspect-ratio: 5 / 4;
+  background: var(--paper); padding: 12px;
+}
+.tile .frame img, .tile .frame .art {
+  width: 100%; height: 100%; aspect-ratio: auto; display: block;
+  object-fit: cover; transition: transform .5s ease;
+}
+.tile:hover .frame img, .tile:hover .frame .art { transform: scale(1.06); }
 .tile .frame .art.empty { background-color: var(--paper-3); }
 .tile .name {
   position: absolute; inset: auto 0 0 0; z-index: 2;
