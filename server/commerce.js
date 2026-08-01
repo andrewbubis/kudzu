@@ -93,7 +93,11 @@ router.post('/connect/start', auth.requireArtist, async (req, res) => {
         },
         capabilities: {
           transfers: { requested: true },
-          card_payments: { requested: true }
+          card_payments: { requested: true },
+          // Buy-now-pay-later at checkout. Express accounts have no
+          // Stripe Dashboard of their own, so the capability has to be
+          // requested by the platform or Klarna never appears.
+          klarna_payments: { requested: true }
         },
         metadata: { kudzu_artist_id: String(req.artist.id) }
       });
@@ -105,6 +109,21 @@ router.post('/connect/start', auth.requireArtist, async (req, res) => {
       await db.query(
         'UPDATE artists SET stripe_account = $1, updated_at = now() WHERE id = $2',
         [acct, req.artist.id]);
+    } else {
+      // Accounts created before Klarna was switched on don't have the
+      // capability. Ask for it once, on the way back through onboarding.
+      try {
+        const existing = await stripe.accounts.retrieve(acct);
+        const klarna = existing.capabilities && existing.capabilities.klarna_payments;
+        if (!klarna) {
+          await stripe.accounts.update(acct, {
+            capabilities: { klarna_payments: { requested: true } }
+          });
+        }
+      } catch (err) {
+        // Not worth blocking onboarding over — card payments still work.
+        console.error('klarna capability request failed:', err.message);
+      }
     }
 
     const site = baseUrl(req);
@@ -199,6 +218,13 @@ router.post('/checkout/work/:id', async (req, res) => {
       application_fee_amount: Math.round(work.price_cents * commissionPct / 100)
     };
 
+    // No payment_method_types here on purpose: that leaves Checkout on
+    // automatic payment methods, so Klarna (pay in 4, or financing on
+    // larger pieces) shows up on its own for buyers who qualify, and
+    // quietly doesn't for those who don't — no per-price special-casing
+    // here. Klarna has to be enabled once in the Stripe Dashboard, and
+    // the artist's connected account needs the klarna_payments
+    // capability, which /connect/start requests above.
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
       line_items: [{
