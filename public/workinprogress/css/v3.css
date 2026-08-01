@@ -169,7 +169,7 @@ section { position: relative; padding-block: clamp(72px, 9vw, 128px); }
 .sprig.gold { background-image: url("../img/vine-hand-sprig-gold.png"); }
 
 /* ── Hero ─────────────────────────────────────────────────────── */
-.hero { padding-block: clamp(24px, 3.5vw, 44px); overflow: hidden; }
+.hero { padding-block: clamp(48px, 7vw, 88px); overflow: hidden; }
 .hero .vine-edge { opacity: 0.7; }
 .hero-inner { max-width: 1040px; margin-inline: auto; text-align: center; position: relative; z-index: 2; }
 .hero-painted { width: min(82%, 560px); margin: 22px auto clamp(20px, 3vw, 30px); }
