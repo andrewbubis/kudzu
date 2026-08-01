@@ -168,6 +168,15 @@ router.patch('/me', auth.requireArtist, async (req, res) => {
       vals.push(v);
     }
   }
+  // Whether an artist's page is visible on the public site is Kudzu's
+  // call, not the artist's — it's a review gate, separate from whether
+  // any individual piece is published. Only admins can flip it.
+  if (Object.prototype.hasOwnProperty.call(req.body || {}, 'published')) {
+    if (!req.artist.is_admin) return res.status(403).json({ error: 'admin_only' });
+    sets.push(`published = $${sets.length + 1}`);
+    vals.push(!!req.body.published);
+  }
+
   if (!sets.length) return res.status(400).json({ error: 'nothing_to_update' });
   vals.push(req.artist.id);
   try {

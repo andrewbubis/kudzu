@@ -57,6 +57,14 @@
     <button class="acct-share" type="button" title="Share your profile" aria-label="Share your profile">⤴</button>
   </div>
 
+  <!-- Admin-only: whether this artist's page shows on the public site.
+       Separate from publishing individual pieces — this is a review
+       gate, so it stays hidden for non-admins. -->
+  <section class="acct-todo" id="adminPublish" hidden>
+    <p style="margin:0 0 10px;">Public on Kudzu: <strong id="adminPublishState">off</strong></p>
+    <button class="acct-btn ghost" type="button" id="adminPublishBtn">Make public</button>
+  </section>
+
   <!-- Onboarding checklist ─────────────────────────────────────── -->
   <section class="acct-todo" id="todo" aria-label="Getting started">
     <button class="x" type="button" id="todoClose" aria-label="Dismiss">×</button>

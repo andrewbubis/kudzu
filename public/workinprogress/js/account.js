@@ -21,7 +21,11 @@
       headers: { 'Content-Type': 'application/json' },
       credentials: 'same-origin'
     }, opts || {}));
-    if (!res.ok) throw Object.assign(new Error('request_failed'), { status: res.status });
+    if (!res.ok) {
+      var body = null;
+      try { body = await res.json(); } catch (e) {}
+      throw Object.assign(new Error('request_failed'), { status: res.status, body: body });
+    }
     return res.status === 204 ? null : res.json();
   }
 
@@ -181,7 +185,8 @@
     if (all) $('todo').hidden = true;
   }
 
-  function card(w) {
+  function card(w, opts) {
+    opts = opts || {};
     var el = document.createElement(w.status === 'sold' ? 'div' : 'article');
     el.className = 'work';
     el.innerHTML =
@@ -192,11 +197,55 @@
         '<div class="t">' + esc(w.title) + '</div>' +
         '<div class="r"><span>' + esc(w.year || '') + '</span><span>' + money(w.priceCents, w.currency) + '</span></div>' +
         '<div class="m">' + esc(w.medium || '') + '</div>' +
+        (opts.toggle ?
+          '<div class="pub-row">' +
+            '<span class="pub-state' + (w.status === 'published' ? ' is-live' : '') + '">' +
+              (w.status === 'published' ? 'Live' : 'Draft') +
+            '</span>' +
+            '<button class="acct-btn ghost pub-toggle" type="button">' +
+              (w.status === 'published' ? 'Unpublish' : 'Publish') +
+            '</button>' +
+          '</div>'
+        : '') +
       '</div>';
 
     var kill = el.querySelector('.kill');
     if (kill) kill.addEventListener('click', function () { removeWork(w); });
+
+    var pub = el.querySelector('.pub-toggle');
+    if (pub) pub.addEventListener('click', function () { toggleWorkStatus(w, pub); });
+
     return el;
+  }
+
+  // A piece uploads as a draft. This is the only way it goes live —
+  // the server re-checks the same two rules either way: Stripe has to
+  // be connected, and at most six published works per artist.
+  async function toggleWorkStatus(w, btn) {
+    var next = w.status === 'published' ? 'draft' : 'published';
+    var original = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = next === 'published' ? 'Publishing…' : 'Unpublishing…';
+    try {
+      if (state.live) {
+        var updated = await api('/works/' + w.id, {
+          method: 'PATCH', body: JSON.stringify({ status: next })
+        });
+        w.status = updated.status;
+      } else {
+        w.status = next;
+      }
+      renderWorks();
+    } catch (e) {
+      var code = e && e.body && e.body.error;
+      var msgs = {
+        stripe_not_connected: 'Connect Stripe before publishing work.',
+        publish_limit_reached: 'You already have six published — unpublish one first.'
+      };
+      alert((code && msgs[code]) || 'Could not update that piece. Try again.');
+      btn.disabled = false;
+      btn.textContent = original;
+    }
   }
 
   function renderWorks() {
@@ -210,7 +259,7 @@
 
     var grid = $('workGrid');
     grid.innerHTML = '';
-    live.forEach(function (w) { grid.appendChild(card(w)); });
+    live.forEach(function (w) { grid.appendChild(card(w, { toggle: true })); });
 
     var add = document.createElement('button');
     add.className = 'work add';
@@ -247,7 +296,39 @@
     $('booksEmpty').hidden = state.books.length > 0;
   }
 
-  function render() { renderIdentity(); renderTodo(); renderWorks(); renderBooks(); }
+  // Admin-only: whether this artist's page shows on the public site.
+  // Kudzu reviews a profile before it goes live, separate from any
+  // individual piece being published.
+  function renderAdminPublish() {
+    var panel = $('adminPublish');
+    if (!panel) return;
+    if (!state.me.isAdmin) { panel.hidden = true; return; }
+    panel.hidden = false;
+    $('adminPublishState').textContent = state.me.published ? 'on' : 'off';
+    $('adminPublishBtn').textContent = state.me.published ? 'Take offline' : 'Make public';
+  }
+
+  if ($('adminPublishBtn')) {
+    $('adminPublishBtn').addEventListener('click', async function () {
+      var btn = this;
+      var next = !state.me.published;
+      btn.disabled = true;
+      try {
+        if (state.live) {
+          var r = await api('/me', { method: 'PATCH', body: JSON.stringify({ published: next }) });
+          state.me.published = r.artist.published;
+        } else {
+          state.me.published = next;
+        }
+        renderAdminPublish();
+      } catch (e) {
+        alert('Could not change that. Try again.');
+      }
+      btn.disabled = false;
+    });
+  }
+
+  function render() { renderIdentity(); renderTodo(); renderAdminPublish(); renderWorks(); renderBooks(); }
 
   // ── Actions ───────────────────────────────────────────────────────
   async function removeWork(w) {

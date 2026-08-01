@@ -108,6 +108,10 @@
 .work .t { font-style: italic; margin-bottom: 7px; }
 .work .r { display: flex; justify-content: space-between; gap: 10px; color: var(--a-soft); }
 .work .m { color: var(--a-soft); margin-top: 5px; }
+.work .pub-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 10px; }
+.work .pub-state { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--a-mute); }
+.work .pub-state.is-live { color: var(--a-ink); }
+.work .pub-toggle { padding: 5px 10px; font-size: 12px; }
 .work .kill {
   position: absolute; top: 7px; right: 7px; z-index: 2;
   background: rgba(255,255,255,0.92); border: 1px solid var(--a-line);
