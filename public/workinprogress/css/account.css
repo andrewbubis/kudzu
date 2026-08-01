@@ -119,6 +119,10 @@
 .work .pub-state { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--a-mute); }
 .work .pub-state.is-live { color: var(--a-ink); }
 .work .pub-toggle { padding: 5px 10px; font-size: 12px; }
+.work .ship-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 8px; }
+.work .ship-state { font-size: 11px; color: var(--a-mute); }
+.work .ship-state.missing { color: #b3261e; }
+.work .ship-edit { padding: 5px 10px; font-size: 12px; }
 .work .kill {
   position: absolute; top: 7px; right: 7px; z-index: 2;
   background: rgba(255,255,255,0.92); border: 1px solid var(--a-line);

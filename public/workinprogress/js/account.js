@@ -205,6 +205,19 @@
             '<button class="acct-btn ghost pub-toggle" type="button">' +
               (w.status === 'published' ? 'Unpublish' : 'Publish') +
             '</button>' +
+          '</div>' +
+          // Without packed weight and box size we can't quote freight, so
+          // the piece can't ship. Called out on the card rather than
+          // buried, since it silently blocks a sale.
+          '<div class="ship-row">' +
+            (w.shipWeightOz
+              ? '<span class="ship-state">Ships: ' + (w.shipWeightOz / 16).toFixed(1) + ' lb · ' +
+                  esc(w.shipLengthIn + ' × ' + w.shipWidthIn + ' × ' + w.shipDepthIn + ' in') +
+                '</span>'
+              : '<span class="ship-state missing">No shipping size set</span>') +
+            '<button class="acct-btn ghost ship-edit" type="button">' +
+              (w.shipWeightOz ? 'Edit' : 'Add') +
+            '</button>' +
           '</div>'
         : '') +
       '</div>';
@@ -215,7 +228,54 @@
     var pub = el.querySelector('.pub-toggle');
     if (pub) pub.addEventListener('click', function () { toggleWorkStatus(w, pub); });
 
+    var ship = el.querySelector('.ship-edit');
+    if (ship) ship.addEventListener('click', function () { editShipping(w); });
+
     return el;
+  }
+
+  // Packed weight and box size for an existing piece. Same parsing as
+  // the upload prompt, kept here so work added before this existed —
+  // and anything the artist skipped — can be filled in.
+  async function editShipping(w) {
+    var current = w.shipWeightOz
+      ? (w.shipWeightOz / 16) + ', ' + w.shipLengthIn + ' x ' + w.shipWidthIn + ' x ' + w.shipDepthIn
+      : '';
+    var raw = prompt(
+      'Packed for shipping — weight in pounds, then box size.\n\n' +
+      'Format:  weight, length x width x depth\n' +
+      'e.g.     8, 30 x 40 x 4\n\n' +
+      'Measure the BOX once it’s wrapped, not the artwork.',
+      current);
+    if (raw == null) return;
+
+    var m = String(raw).trim().match(
+      /^\s*([\d.]+)\s*,\s*([\d.]+)\s*[x×]\s*([\d.]+)\s*[x×]\s*([\d.]+)\s*$/i);
+    if (!m) return alert('Please use:  weight, length x width x depth\n\ne.g.  8, 30 x 40 x 4');
+
+    var lb = parseFloat(m[1]);
+    if (!(lb > 0)) return alert('Weight needs to be more than zero.');
+
+    var patch = {
+      shipWeightOz: Math.round(lb * 16),
+      shipLengthIn: parseFloat(m[2]),
+      shipWidthIn:  parseFloat(m[3]),
+      shipDepthIn:  parseFloat(m[4])
+    };
+
+    try {
+      if (state.live) {
+        var updated = await api('/works/' + w.id, {
+          method: 'PATCH', body: JSON.stringify(patch)
+        });
+        Object.assign(w, updated);
+      } else {
+        Object.assign(w, patch);
+      }
+      renderWorks();
+    } catch (e) {
+      alert('Could not save that. Try again.');
+    }
   }
 
   // A piece uploads as a draft. This is the only way it goes live —
@@ -380,12 +440,47 @@
     var price = prompt('Price in dollars? Leave blank if not for sale.');
     var priceCents = price ? Math.round(parseFloat(price) * 100) : null;
 
+    // Shipping is quoted from the PACKED parcel, not the artwork — a
+    // carrier prices the crate, not the canvas. Without these the piece
+    // can still be uploaded, but checkout can't quote freight for it.
+    var pack = null;
+    while (!pack) {
+      var raw = (prompt(
+        'Packed for shipping — weight in pounds, then box size.\n\n' +
+        'Format:  weight, length x width x depth\n' +
+        'e.g.     8, 30 x 40 x 4\n\n' +
+        'Measure the BOX once it’s wrapped, not the artwork.\n' +
+        'Leave blank to add this later — it can’t sell overseas until you do.'
+      ) || '').trim();
+      if (!raw) break;                       // fine — fill it in later
+      var m = raw.match(
+        /^\s*([\d.]+)\s*,\s*([\d.]+)\s*[x×]\s*([\d.]+)\s*[x×]\s*([\d.]+)\s*$/i);
+      if (!m) {
+        alert('Please use:  weight, length x width x depth\n\ne.g.  8, 30 x 40 x 4');
+        continue;
+      }
+      var lb = parseFloat(m[1]);
+      if (!(lb > 0)) { alert('Weight needs to be more than zero.'); continue; }
+      pack = {
+        shipWeightOz: Math.round(lb * 16),   // stored in ounces
+        shipLengthIn: parseFloat(m[2]),
+        shipWidthIn:  parseFloat(m[3]),
+        shipDepthIn:  parseFloat(m[4])
+      };
+    }
+
     var work = {
       id: 'tmp-' + Date.now(), title: title, year: year, medium: medium,
       dimensions: dimensions,
       priceCents: priceCents, currency: 'usd', status: 'draft',
       image: URL.createObjectURL(f)
     };
+    if (pack) {
+      work.shipWeightOz = pack.shipWeightOz;
+      work.shipLengthIn = pack.shipLengthIn;
+      work.shipWidthIn  = pack.shipWidthIn;
+      work.shipDepthIn  = pack.shipDepthIn;
+    }
 
     if (state.live) {
       var fd = new FormData();
@@ -395,6 +490,12 @@
       if (medium) fd.append('medium', medium);
       if (dimensions) fd.append('dimensions', dimensions);
       if (priceCents != null) fd.append('priceCents', priceCents);
+      if (pack) {
+        fd.append('shipWeightOz', pack.shipWeightOz);
+        fd.append('shipLengthIn', pack.shipLengthIn);
+        fd.append('shipWidthIn', pack.shipWidthIn);
+        fd.append('shipDepthIn', pack.shipDepthIn);
+      }
       try {
         var saved = await fetch('/api/works', { method: 'POST', body: fd, credentials: 'same-origin' })
           .then(function (r) { if (!r.ok) throw new Error(); return r.json(); });

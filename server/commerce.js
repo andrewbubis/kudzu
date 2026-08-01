@@ -11,6 +11,7 @@ const express = require('express');
 const db = require('./db');
 const auth = require('./auth');
 const lumaprints = require('./lumaprints');
+const { SHIPPING_COUNTRIES } = require('./shipping-countries');
 
 const router = express.Router();
 
@@ -241,7 +242,7 @@ router.post('/checkout/work/:id', async (req, res) => {
         }
       }],
       payment_intent_data: transfer,
-      shipping_address_collection: { allowed_countries: ['US', 'CA', 'GB', 'AU'] },
+      shipping_address_collection: { allowed_countries: SHIPPING_COUNTRIES },
       phone_number_collection: { enabled: true },
       success_url: `${site}/workinprogress/gallery.html?bought=${work.id}`,
       cancel_url: `${site}/workinprogress/piece-${work.id}.html`,

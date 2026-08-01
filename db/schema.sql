@@ -64,6 +64,20 @@ CREATE TABLE IF NOT EXISTS artworks (
 CREATE INDEX IF NOT EXISTS artworks_artist_idx
   ON artworks (artist_id, status, position);
 
+-- Shipping: the PACKAGE, not the artwork. A 24x36in canvas crates up
+-- bigger than it measures, and that crated size and weight is what a
+-- carrier prices on. Kept separate from the `dimensions` text field
+-- above, which is the artwork's own size as shown on the placard.
+--
+-- Added after the table shipped, so these are ALTERs rather than
+-- columns in the CREATE above. Nullable on purpose: works uploaded
+-- before this existed have no figures, and we'd rather show "shipping
+-- quoted separately" than invent a weight and undercharge the artist.
+ALTER TABLE artworks ADD COLUMN IF NOT EXISTS ship_weight_oz int;
+ALTER TABLE artworks ADD COLUMN IF NOT EXISTS ship_length_in numeric(6,2);
+ALTER TABLE artworks ADD COLUMN IF NOT EXISTS ship_width_in  numeric(6,2);
+ALTER TABLE artworks ADD COLUMN IF NOT EXISTS ship_depth_in  numeric(6,2);
+
 -- Two rules, enforced here rather than in the app so no bug can slip past:
 --
 --   1. At most 6 PUBLISHED works per artist. Drafts are unlimited.

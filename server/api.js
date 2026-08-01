@@ -43,7 +43,12 @@ const publicWork = (w) => ({
   width: w.image_w,
   height: w.image_h,
   status: w.status,
-  position: w.position
+  position: w.position,
+  // Packed-for-shipping figures, used to quote freight at checkout.
+  shipWeightOz: w.ship_weight_oz,
+  shipLengthIn: w.ship_length_in == null ? null : Number(w.ship_length_in),
+  shipWidthIn:  w.ship_width_in  == null ? null : Number(w.ship_width_in),
+  shipDepthIn:  w.ship_depth_in  == null ? null : Number(w.ship_depth_in)
 });
 
 const publicBook = (b) => ({
@@ -219,6 +224,16 @@ router.post('/me/photo', auth.requireArtist, storage.upload.single('photo'), asy
 });
 
 // ── Works ────────────────────────────────────────────────────────────
+// Package figures arrive as strings from a multipart form. Anything
+// missing, non-numeric, or non-positive becomes null rather than 0 —
+// a zero-ounce parcel would quote as free shipping.
+function positiveNumber(v, max) {
+  if (v === '' || v == null) return null;
+  const n = Number(v);
+  if (!Number.isFinite(n) || n <= 0 || n > max) return null;
+  return n;
+}
+
 function parseWorkFields(body) {
   const price = body.priceCents === '' || body.priceCents == null
     ? null : Math.round(Number(body.priceCents));
@@ -227,7 +242,16 @@ function parseWorkFields(body) {
     year: body.year ? parseInt(body.year, 10) || null : null,
     medium: body.medium ? String(body.medium).trim().slice(0, 120) : null,
     dimensions: body.dimensions ? String(body.dimensions).trim().slice(0, 120) : null,
-    priceCents: Number.isFinite(price) && price >= 0 ? price : null
+    priceCents: Number.isFinite(price) && price >= 0 ? price : null,
+    // 4000 oz (250 lb) and 200 in are sanity ceilings, not real limits —
+    // past those someone has fat-fingered a field.
+    shipWeightOz: (function () {
+      const n = positiveNumber(body.shipWeightOz, 4000);
+      return n == null ? null : Math.round(n);
+    })(),
+    shipLengthIn: positiveNumber(body.shipLengthIn, 200),
+    shipWidthIn:  positiveNumber(body.shipWidthIn, 200),
+    shipDepthIn:  positiveNumber(body.shipDepthIn, 200)
   };
 }
 
@@ -247,12 +271,15 @@ router.post('/works', auth.requireArtist, storage.upload.single('image'), async 
     const { rows } = await db.query(
       `INSERT INTO artworks
          (artist_id, title, year, medium, dimensions, price_cents,
-          image_path, image_w, image_h, status, position)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'draft',
+          image_path, image_w, image_h,
+          ship_weight_oz, ship_length_in, ship_width_in, ship_depth_in,
+          status, position)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,'draft',
                COALESCE((SELECT max(position)+1 FROM artworks WHERE artist_id = $1), 0))
        RETURNING *`,
       [req.artist.id, f.title, f.year, f.medium, f.dimensions, f.priceCents,
-       saved.path, saved.width, saved.height]);
+       saved.path, saved.width, saved.height,
+       f.shipWeightOz, f.shipLengthIn, f.shipWidthIn, f.shipDepthIn]);
     res.status(201).json(publicWork(rows[0]));
   } catch (err) {
     storage.remove(saved.path);
@@ -266,14 +293,24 @@ router.patch('/works/:id', auth.requireArtist, async (req, res) => {
   const sets = [], vals = [];
   const map = { title: 'title', year: 'year', medium: 'medium',
                 dimensions: 'dimensions', priceCents: 'price_cents',
-                forSale: 'for_sale', status: 'status', position: 'position' };
+                forSale: 'for_sale', status: 'status', position: 'position',
+                shipWeightOz: 'ship_weight_oz', shipLengthIn: 'ship_length_in',
+                shipWidthIn: 'ship_width_in', shipDepthIn: 'ship_depth_in' };
+  const SHIP_KEYS = ['shipWeightOz', 'shipLengthIn', 'shipWidthIn', 'shipDepthIn'];
   for (const [key, col] of Object.entries(map)) {
     if (Object.prototype.hasOwnProperty.call(body, key)) {
       if (key === 'status' && !['draft', 'published'].includes(body[key])) {
         return res.status(400).json({ error: 'bad_status' }); // 'sold' is set by Stripe, not the artist
       }
+      let v = body[key];
+      // Same guard as on upload: never let a 0 or a stray string through,
+      // or the piece quotes as free to ship.
+      if (SHIP_KEYS.includes(key)) {
+        v = positiveNumber(v, key === 'shipWeightOz' ? 4000 : 200);
+        if (key === 'shipWeightOz' && v != null) v = Math.round(v);
+      }
       sets.push(`${col} = $${sets.length + 1}`);
-      vals.push(body[key]);
+      vals.push(v);
     }
   }
   if (!sets.length) return res.status(400).json({ error: 'nothing_to_update' });
