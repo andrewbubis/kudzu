@@ -1,7 +1,7 @@
 // The account API. Everything under /api.
 //
 // Rule followed throughout: the browser is never trusted. Ownership,
-// the six-work limit, file type and size are all re-checked here even
+// the eight-work limit, file type and size are all re-checked here even
 // though the page checks them too.
 
 const express = require('express');
@@ -26,7 +26,12 @@ const publicArtist = (a) => ({
   worksCountry: a.works_country,
   link: a.link_url,
   isAdmin: a.is_admin,
-  published: a.published,
+  // Visibility is computed, not switched. A page is public once the
+  // profile is complete — unless an admin has explicitly pulled it down.
+  pagePublic: !!(a.stripe_account && a.photo_path &&
+                 String(a.bio || '').trim() && String(a.cv || '').trim() &&
+                 !a.admin_hidden),
+  adminHidden: !!a.admin_hidden,
   stripeConnected: !!a.stripe_account
 });
 
@@ -186,13 +191,13 @@ router.patch('/me', auth.requireArtist, async (req, res) => {
   } catch (err) {
     return res.status(400).json({ error: err.code || 'bad_request' });
   }
-  // Whether an artist's page is visible on the public site is Kudzu's
-  // call, not the artist's — it's a review gate, separate from whether
-  // any individual piece is published. Only admins can flip it.
-  if (Object.prototype.hasOwnProperty.call(req.body || {}, 'published')) {
+  // There is no approval gate any more: a page is public as soon as the
+  // profile is complete. `adminHidden` is the emergency brake — abuse, a
+  // departure, a legal problem — and only an admin can pull it.
+  if (Object.prototype.hasOwnProperty.call(req.body || {}, 'adminHidden')) {
     if (!req.artist.is_admin) return res.status(403).json({ error: 'admin_only' });
-    sets.push(`published = $${sets.length + 1}`);
-    vals.push(!!req.body.published);
+    sets.push(`admin_hidden = $${sets.length + 1}`);
+    vals.push(!!req.body.adminHidden);
   }
 
   if (!sets.length) return res.status(400).json({ error: 'nothing_to_update' });
@@ -302,7 +307,15 @@ router.post('/works', auth.requireArtist, storage.upload.single('image'), async 
           image_path, image_w, image_h,
           ship_weight_oz, ship_length_in, ship_width_in, ship_depth_in,
           status, position)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,'draft',
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,
+               -- A finished work goes straight up. Nothing waits on an
+               -- approval that no longer exists, and by this point the
+               -- profile and the packed figures are already accounted for.
+               -- Past the cap it lands as a draft rather than failing the
+               -- upload outright — the artist keeps the piece either way.
+               CASE WHEN (SELECT count(*) FROM artworks
+                           WHERE artist_id = $1 AND status = 'published') < 8
+                    THEN 'published' ELSE 'draft' END,
                COALESCE((SELECT max(position)+1 FROM artworks WHERE artist_id = $1), 0))
        RETURNING *`,
       [req.artist.id, f.title, f.year, f.medium, f.dimensions, f.priceCents,
@@ -469,7 +482,7 @@ router.post('/inquiries', async (req, res) => {
     // Resolve the artist from their slug so the browser can't post an
     // enquiry into someone else's inbox by guessing ids.
     const { rows: ar } = await db.query(
-      'SELECT id FROM artists WHERE slug = $1 AND published = true',
+      'SELECT id FROM artists WHERE slug =  AND kudzu_artist_public(id)',
       [String(b.artistSlug || '')]);
     if (!ar[0]) return res.status(404).json({ error: 'artist_not_found' });
 
@@ -592,7 +605,7 @@ router.get('/admin/artists', auth.requireArtist, auth.requireAdmin, async (_req,
 router.get('/admin/roster', auth.requireArtist, auth.requireAdmin, async (_req, res) => {
   try {
     const { rows } = await db.query(`
-      SELECT a.id, a.name, a.slug, a.email, a.created_at, a.is_admin, a.published,
+      SELECT a.id, a.name, a.slug, a.email, a.created_at, a.is_admin, a.admin_hidden,
              a.photo_path, a.bio, a.cv, a.stripe_account,
              count(w.id) FILTER (WHERE w.status = 'draft')     AS drafts,
              count(w.id) FILTER (WHERE w.status = 'published') AS published_works,
@@ -620,7 +633,9 @@ router.get('/admin/roster', auth.requireArtist, auth.requireAdmin, async (_req, 
           slug: r.slug,
           email: r.email,
           isAdmin: r.is_admin,
-          pagePublic: r.published,
+          // Complete profile puts them live; only an admin pull hides them.
+          pagePublic: has.photo && has.bio && has.cv && has.stripe && !r.admin_hidden,
+          adminHidden: r.admin_hidden,
           joinedAt: r.created_at,
           has,
           // Can they add work at all? Same test the database applies.
@@ -647,6 +662,13 @@ router.patch('/admin/artists/:id', auth.requireArtist, auth.requireAdmin, async 
   } catch (err) {
     return res.status(400).json({ error: err.code || 'bad_request' });
   }
+  // The override, applied to somebody else's page. Pulling it down does
+  // not touch a thing they own — clear the flag and the page returns
+  // exactly as it was.
+  if (Object.prototype.hasOwnProperty.call(req.body || {}, 'adminHidden')) {
+    sets.push(`admin_hidden = $${sets.length + 1}`);
+    vals.push(!!req.body.adminHidden);
+  }
   if (!sets.length) return res.status(400).json({ error: 'nothing_to_update' });
   vals.push(req.params.id);
   try {
@@ -670,7 +692,7 @@ router.get('/artists', async (_req, res) => {
                 WHERE w.artist_id = a.id AND w.status = 'published'
              ORDER BY w.position LIMIT 1) AS cover
          FROM artists a
-        WHERE a.published = true
+        WHERE kudzu_artist_public(a.id)
      ORDER BY a.name`);
     res.json({
       artists: rows.map((a) => ({
@@ -694,7 +716,7 @@ router.get('/works', async (req, res) => {
          FROM artworks w
          JOIN artists a ON a.id = w.artist_id
         WHERE w.status IN ('published','sold')
-          AND a.published = true
+          AND kudzu_artist_public(a.id)
      ORDER BY (w.status = 'sold'), w.created_at DESC
         LIMIT $1`, [limit]);
 
@@ -713,7 +735,7 @@ router.get('/works', async (req, res) => {
 router.get('/artists/:slug', async (req, res) => {
   try {
     const { rows } = await db.query(
-      'SELECT * FROM artists WHERE slug = $1 AND published = true', [req.params.slug]);
+      'SELECT * FROM artists WHERE slug =  AND kudzu_artist_public(id)', [req.params.slug]);
     if (!rows[0]) return res.status(404).json({ error: 'not_found' });
     const artist = rows[0];
     const [works, books] = await Promise.all([

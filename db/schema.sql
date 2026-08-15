@@ -25,7 +25,7 @@ CREATE TABLE IF NOT EXISTS artists (
 
   -- admin
   is_admin        boolean NOT NULL DEFAULT false,
-  published       boolean NOT NULL DEFAULT false,  -- Ian flips this to show them publicly
+  published       boolean NOT NULL DEFAULT false,  -- legacy; see admin_hidden below
   stripe_account  text,                            -- Stripe Connect account id
 
   created_at      timestamptz NOT NULL DEFAULT now(),
@@ -80,7 +80,7 @@ ALTER TABLE artworks ADD COLUMN IF NOT EXISTS ship_depth_in  numeric(6,2);
 
 -- Two rules, enforced here rather than in the app so no bug can slip past:
 --
---   1. At most 6 PUBLISHED works per artist. Drafts are unlimited.
+--   1. At most 8 PUBLISHED works per artist. Drafts are unlimited.
 --   2. Nothing gets published at all until the artist has connected
 --      their own Stripe account. Priced or not — if they can't be paid,
 --      their work doesn't go up. Drafts are always allowed, so they can
@@ -101,7 +101,7 @@ BEGIN
      WHERE artist_id = NEW.artist_id
        AND status = 'published'
        AND id <> NEW.id;
-    IF n >= 6 THEN
+    IF n >= 8 THEN
       RAISE EXCEPTION 'publish_limit_reached';
     END IF;
   END IF;
@@ -157,6 +157,24 @@ RETURNS boolean AS $$
      AND btrim(COALESCE(bio,      '')) <> ''
      AND btrim(COALESCE(cv,       '')) <> ''
     FROM artists WHERE id = a_id;
+$$ LANGUAGE sql STABLE;
+
+-- ── Who is visible ───────────────────────────────────────────────────
+-- There is no approval queue. An artist's page goes public the moment
+-- their profile is complete, and comes down by itself if they gut it.
+-- The artist decides what the public sees by what they finish and what
+-- they leave in draft — nobody waits on Kudzu to be let through.
+--
+-- `admin_hidden` is the one exception: a manual override for abuse, a
+-- departure, or a legal problem. Default false, untouched in the normal
+-- flow. The old `published` column is left in place but no longer gates
+-- anything, so nothing breaks if something still reads it.
+ALTER TABLE artists ADD COLUMN IF NOT EXISTS admin_hidden boolean NOT NULL DEFAULT false;
+
+CREATE OR REPLACE FUNCTION kudzu_artist_public(a_id uuid)
+RETURNS boolean AS $$
+  SELECT kudzu_profile_ready(a_id)
+     AND NOT COALESCE((SELECT admin_hidden FROM artists WHERE id = a_id), false);
 $$ LANGUAGE sql STABLE;
 
 -- ── Shipping figures ─────────────────────────────────────────────────
@@ -215,7 +233,7 @@ CREATE TRIGGER artworks_requirements
   FOR EACH ROW EXECUTE FUNCTION enforce_artwork_requirements();
 
 -- ── Books ────────────────────────────────────────────────────────────
--- Zines, catalogues, monographs. No six-item cap — that limit is for
+-- Zines, catalogues, monographs. No eight-item cap — that limit is for
 -- original works only.
 CREATE TABLE IF NOT EXISTS books (
   id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),

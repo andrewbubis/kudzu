@@ -50,6 +50,10 @@
   .ros-num { text-align: right; white-space: nowrap; color: #555; font-size: 13px; }
   .ros-num b { color: #111; font-weight: 600; }
   .ros-when { color: #999; font-size: 12px; margin-top: 6px; }
+  .ros-hide { background: none; border: 0; font: inherit; font-size: 12px; color: #999;
+              cursor: pointer; padding: 4px 0 0; text-decoration: underline; }
+  .ros-hide:hover { color: #b3261e; }
+  .tag-hidden { color: #b3261e !important; border-color: #f0c8c5 !important; }
 
   .ros-flag { grid-column: 1 / -1; font-size: 12px; padding: 8px 10px; margin-top: 4px; }
   .ros-flag.block { color: #8a5a00; background: #fdf6e7; border: 1px solid #f0dcae; }
@@ -129,7 +133,7 @@
         '<div class="ros-name">' +
           '<a href="artist.html?a=' + encodeURIComponent(a.slug) + '">' + esc(a.name) + '</a>' +
           (a.isAdmin ? '<span class="tag">admin</span>' : '') +
-          (a.pagePublic ? '' : '<span class="tag">page hidden</span>') +
+          (a.adminHidden ? '<span class="tag tag-hidden">hidden by you</span>' : '') +
         '</div>' +
         '<div class="ros-mail">' + esc(a.email) + '</div>' +
         '<div class="ros-ticks">' +
@@ -143,7 +147,44 @@
         '<div class="ros-when">joined ' + whenText(a.joinedAt) +
           (a.lastUpload ? ' · last upload ' + whenText(a.lastUpload) : '') +
         '</div>' +
+        '<button class="ros-hide" type="button">' +
+          (a.adminHidden ? 'restore page' : 'hide page') +
+        '</button>' +
       '</div>';
+
+    // The override. Nothing an artist owns is touched — clearing the flag
+    // puts the page back exactly as it was.
+    el.querySelector('.ros-hide').addEventListener('click', async function () {
+      var btn = this, next = !a.adminHidden;
+      if (next && !confirm('Hide ' + a.name + '’s page from the public site?\n\n' +
+                           'Nothing of theirs is deleted, and you can restore it at any time.')) return;
+      btn.disabled = true;
+      try {
+        var r = await fetch('/api/admin/artists/' + encodeURIComponent(a.id), {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'same-origin',
+          body: JSON.stringify({ adminHidden: next })
+        });
+        if (!r.ok) throw new Error();
+        a.adminHidden = next;
+        a.pagePublic = a.canUpload && !next;
+        btn.textContent = next ? 'restore page' : 'hide page';
+        var tagHost = el.querySelector('.ros-name');
+        var existing = tagHost.querySelector('.tag-hidden');
+        if (next && !existing) {
+          var t = document.createElement('span');
+          t.className = 'tag tag-hidden';
+          t.textContent = 'hidden by you';
+          tagHost.appendChild(t);
+        } else if (!next && existing) {
+          existing.remove();
+        }
+      } catch (e) {
+        alert('Could not change that. Try again.');
+      }
+      btn.disabled = false;
+    });
 
     // Why they're stuck, in the order it matters.
     if (!a.canUpload) {

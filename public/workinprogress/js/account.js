@@ -4,13 +4,13 @@
    Talks to the API under /api/*. While the backend is still being built
    those calls 404, so the page falls back to a local demo state and
    keeps working — you can click through the whole flow and judge the
-   layout. Nothing here trusts the browser: the six-work limit, file
+   layout. Nothing here trusts the browser: the eight-work limit, file
    size, and ownership are all re-checked on the server.
    ───────────────────────────────────────────────────────────────────── */
 (function () {
   'use strict';
 
-  var MAX_PUBLISHED = 6;
+  var MAX_PUBLISHED = 8;
   var MAX_FILE_MB = 12;
 
   var state = { me: null, works: [], books: [], live: false };
@@ -302,7 +302,7 @@
 
   // A piece uploads as a draft. This is the only way it goes live —
   // the server re-checks the same two rules either way: Stripe has to
-  // be connected, and at most six published works per artist.
+  // be connected, and at most eight published works per artist.
   async function toggleWorkStatus(w, btn) {
     var next = w.status === 'published' ? 'draft' : 'published';
     var original = btn.textContent;
@@ -322,7 +322,7 @@
       var code = e && e.body && e.body.error;
       var msgs = {
         stripe_not_connected: 'Connect Stripe before publishing work.',
-        publish_limit_reached: 'You already have six published — unpublish one first.',
+        publish_limit_reached: 'You already have eight live — move one to draft first.',
         shipping_missing: 'This piece needs its packed weight and box size before it can go live.\n\n' +
                           'Use the “Add” link under the piece to fill them in.',
         profile_incomplete: 'Finish your profile first — photo, bio, C.V., and Stripe.'
@@ -352,7 +352,7 @@
     var gaps = profileGaps();
     add.textContent = gaps.length
       ? 'finish your profile to add work'
-      : (published.length >= MAX_PUBLISHED ? 'six published — publish slots full' : '+ upload a work');
+      : (published.length >= MAX_PUBLISHED ? 'eight live — no free slots' : '+ upload a work');
     add.disabled = (published.length >= MAX_PUBLISHED && drafts.length > 0) || gaps.length > 0;
     add.title = gaps.length ? 'Still to do: ' + gaps.join(', ') : '';
     add.addEventListener('click', function () {
@@ -388,39 +388,7 @@
     $('booksEmpty').hidden = state.books.length > 0;
   }
 
-  // Admin-only: whether this artist's page shows on the public site.
-  // Kudzu reviews a profile before it goes live, separate from any
-  // individual piece being published.
-  function renderAdminPublish() {
-    var panel = $('adminPublish');
-    if (!panel) return;
-    if (!state.me.isAdmin) { panel.hidden = true; return; }
-    panel.hidden = false;
-    $('adminPublishState').textContent = state.me.published ? 'on' : 'off';
-    $('adminPublishBtn').textContent = state.me.published ? 'Take offline' : 'Make public';
-  }
-
-  if ($('adminPublishBtn')) {
-    $('adminPublishBtn').addEventListener('click', async function () {
-      var btn = this;
-      var next = !state.me.published;
-      btn.disabled = true;
-      try {
-        if (state.live) {
-          var r = await api('/me', { method: 'PATCH', body: JSON.stringify({ published: next }) });
-          state.me.published = r.artist.published;
-        } else {
-          state.me.published = next;
-        }
-        renderAdminPublish();
-      } catch (e) {
-        alert('Could not change that. Try again.');
-      }
-      btn.disabled = false;
-    });
-  }
-
-  function render() { renderIdentity(); renderTodo(); renderAdminPublish(); renderWorks(); renderBooks(); }
+  function render() { renderIdentity(); renderTodo(); renderWorks(); renderBooks(); }
 
   // ── Actions ───────────────────────────────────────────────────────
   async function removeWork(w) {

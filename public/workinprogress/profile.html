@@ -57,13 +57,11 @@
     <button class="acct-share" type="button" title="Share your profile" aria-label="Share your profile">⤴</button>
   </div>
 
-  <!-- Admin-only: whether this artist's page shows on the public site.
-       Separate from publishing individual pieces — this is a review
-       gate, so it stays hidden for non-admins. -->
-  <section class="acct-todo" id="adminPublish" hidden>
-    <p style="margin:0 0 10px;">Public on Kudzu: <strong id="adminPublishState">off</strong></p>
-    <button class="acct-btn ghost" type="button" id="adminPublishBtn">Make public</button>
-  </section>
+  <!-- The "make public" switch that used to sit here is gone. A page goes
+       live the moment its profile is complete — there is no review queue
+       to wait in. The admin override for pulling a page down lives on the
+       roster, where it applies to any artist, not just whoever is signed
+       in. -->
 
   <!-- Onboarding checklist ─────────────────────────────────────── -->
   <section class="acct-todo" id="todo" aria-label="Getting started">
