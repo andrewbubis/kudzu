@@ -581,6 +581,65 @@ router.get('/admin/artists', auth.requireArtist, auth.requireAdmin, async (_req,
   }
 });
 
+// ── Admin: the roster ────────────────────────────────────────────────
+// One row per artist, enough to see who is stuck without visiting each
+// public page. The four ticks are the same four the database demands
+// before an artist can upload anything, so a row with a gap in it is
+// literally an artist who cannot add work yet.
+//
+// `lastActivity` is the newest of their signup or any upload — what the
+// page sorts and highlights on.
+router.get('/admin/roster', auth.requireArtist, auth.requireAdmin, async (_req, res) => {
+  try {
+    const { rows } = await db.query(`
+      SELECT a.id, a.name, a.slug, a.email, a.created_at, a.is_admin, a.published,
+             a.photo_path, a.bio, a.cv, a.stripe_account,
+             count(w.id) FILTER (WHERE w.status = 'draft')     AS drafts,
+             count(w.id) FILTER (WHERE w.status = 'published') AS published_works,
+             count(w.id) FILTER (WHERE w.status = 'sold')      AS sold_works,
+             count(w.id) FILTER (
+               WHERE w.status <> 'sold' AND w.ship_weight_oz IS NULL)  AS missing_ship,
+             max(w.created_at) AS last_upload
+        FROM artists a
+        LEFT JOIN artworks w ON w.artist_id = a.id
+    GROUP BY a.id
+    ORDER BY a.created_at DESC`);
+
+    res.json({
+      artists: rows.map((r) => {
+        const has = {
+          photo:  !!r.photo_path,
+          bio:    !!String(r.bio || '').trim(),
+          cv:     !!String(r.cv || '').trim(),
+          stripe: !!r.stripe_account
+        };
+        const lastUpload = r.last_upload || null;
+        return {
+          id: r.id,
+          name: r.name,
+          slug: r.slug,
+          email: r.email,
+          isAdmin: r.is_admin,
+          pagePublic: r.published,
+          joinedAt: r.created_at,
+          has,
+          // Can they add work at all? Same test the database applies.
+          canUpload: has.photo && has.bio && has.cv && has.stripe,
+          drafts: Number(r.drafts),
+          published: Number(r.published_works),
+          sold: Number(r.sold_works),
+          missingShip: Number(r.missing_ship),
+          lastUpload,
+          lastActivity: lastUpload && lastUpload > r.created_at ? lastUpload : r.created_at
+        };
+      })
+    });
+  } catch (err) {
+    console.error('roster failed:', err.message);
+    res.status(500).json({ error: 'server_error' });
+  }
+});
+
 router.patch('/admin/artists/:id', auth.requireArtist, auth.requireAdmin, async (req, res) => {
   let sets, vals;
   try {

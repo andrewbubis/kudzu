@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Roster · Kudzu Arts</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#fbfaf7">
+<link rel="icon" href="img/logo-k.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/v3.css">
+<link rel="stylesheet" href="css/account.css">
+<style>
+  .ros { max-width: 900px; }
+  .ros h1 { font-family: var(--serif, Georgia, serif); font-size: 21px; margin-bottom: 6px; }
+  .ros .sub { color: #888; margin: 0 0 22px; }
+
+  .ros-bar { display: flex; justify-content: space-between; align-items: baseline;
+             gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+  .ros-bar .counts { color: #888; font-size: 13px; }
+  .ros-bar button { background: none; border: 0; font: inherit; color: #2b2bd6;
+                    cursor: pointer; padding: 0; text-decoration: underline; }
+
+  .ros-row { display: grid; grid-template-columns: 1fr auto; gap: 10px 18px;
+             padding: 15px 14px; border: 1px solid #e2e2e2; background: #fff;
+             margin-bottom: 8px; position: relative; }
+  /* Anything that happened since the last time this page was opened. */
+  .ros-row.is-new { border-color: #b9c6ee; background: #f6f8fe; }
+  .ros-row.is-new::before {
+    content: "new"; position: absolute; top: -8px; left: 12px; background: #2b2bd6;
+    color: #fff; font-size: 10px; letter-spacing: .08em; text-transform: uppercase;
+    padding: 2px 7px; }
+
+  .ros-who { min-width: 0; }
+  .ros-name { font-size: 16px; color: #111; }
+  .ros-name a { color: inherit; }
+  .ros-name .tag { font-size: 10px; letter-spacing: .08em; text-transform: uppercase;
+                   color: #888; border: 1px solid #ddd; padding: 1px 5px; margin-left: 7px;
+                   vertical-align: 2px; }
+  .ros-mail { color: #888; font-size: 12px; word-break: break-all; }
+
+  .ros-ticks { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 9px; }
+  .tick { font-size: 11px; letter-spacing: .04em; padding: 2px 8px; border: 1px solid #ddd;
+          color: #999; white-space: nowrap; }
+  .tick.on { color: #1f7a45; border-color: #bfe0cd; background: #f2faf5; }
+  .tick.off { color: #b3261e; border-color: #f0c8c5; background: #fdf5f4; }
+
+  .ros-num { text-align: right; white-space: nowrap; color: #555; font-size: 13px; }
+  .ros-num b { color: #111; font-weight: 600; }
+  .ros-when { color: #999; font-size: 12px; margin-top: 6px; }
+
+  .ros-flag { grid-column: 1 / -1; font-size: 12px; padding: 8px 10px; margin-top: 4px; }
+  .ros-flag.block { color: #8a5a00; background: #fdf6e7; border: 1px solid #f0dcae; }
+  .ros-flag.ship  { color: #b3261e; background: #fdf5f4; border: 1px solid #f0c8c5; }
+
+  @media (max-width: 620px) {
+    .ros-row { grid-template-columns: 1fr; }
+    .ros-num { text-align: left; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <a href="index.html" class="brand"><img class="mark" src="img/logo-k.png" alt="" aria-hidden="true"><span class="word"><b>KUDZU</b><span class="arts">arts</span></span></a>
+  <nav class="nav" aria-label="Primary">
+    <a href="artists.html">Artists</a>
+    <a href="invites.html">Invites</a>
+    <a href="profile.html">Profile</a>
+  </nav>
+  <button class="nav-toggle" type="button" aria-expanded="false">Menu</button>
+</header>
+
+<main class="acct ros">
+  <h1>roster</h1>
+  <p class="sub">Everyone with an account, and how far they've got.</p>
+
+  <div class="ros-bar">
+    <span class="counts" id="counts"></span>
+    <button type="button" id="seenBtn" hidden>mark all as seen</button>
+  </div>
+
+  <div id="list"><p class="acct-empty" id="empty">Loading…</p></div>
+</main>
+
+<script>
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+
+  // "New" is per-browser and deliberately dumb: the last time this page
+  // was opened here. Good enough to catch what changed since you looked,
+  // and it costs nothing on the server.
+  var SEEN_KEY = 'kudzu.roster.seen';
+  var seenAt = Number(localStorage.getItem(SEEN_KEY) || 0);
+  var openedAt = Date.now();
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  function whenText(iso) {
+    if (!iso) return '';
+    var then = new Date(iso), days = Math.floor((Date.now() - then) / 864e5);
+    if (days <= 0) return 'today';
+    if (days === 1) return 'yesterday';
+    if (days < 30) return days + ' days ago';
+    return then.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+
+  function tick(on, label) {
+    return '<span class="tick ' + (on ? 'on' : 'off') + '">' +
+           (on ? '✓' : '·') + ' ' + label + '</span>';
+  }
+
+  function row(a) {
+    var el = document.createElement('div');
+    el.className = 'ros-row';
+    if (seenAt && new Date(a.lastActivity).getTime() > seenAt) el.classList.add('is-new');
+
+    var total = a.drafts + a.published + a.sold;
+
+    el.innerHTML =
+      '<div class="ros-who">' +
+        '<div class="ros-name">' +
+          '<a href="artist.html?a=' + encodeURIComponent(a.slug) + '">' + esc(a.name) + '</a>' +
+          (a.isAdmin ? '<span class="tag">admin</span>' : '') +
+          (a.pagePublic ? '' : '<span class="tag">page hidden</span>') +
+        '</div>' +
+        '<div class="ros-mail">' + esc(a.email) + '</div>' +
+        '<div class="ros-ticks">' +
+          tick(a.has.photo, 'photo') + tick(a.has.bio, 'bio') +
+          tick(a.has.cv, 'C.V.') + tick(a.has.stripe, 'Stripe') +
+        '</div>' +
+      '</div>' +
+      '<div class="ros-num">' +
+        '<b>' + a.published + '</b> live · <b>' + a.drafts + '</b> draft' +
+        (a.sold ? ' · <b>' + a.sold + '</b> sold' : '') +
+        '<div class="ros-when">joined ' + whenText(a.joinedAt) +
+          (a.lastUpload ? ' · last upload ' + whenText(a.lastUpload) : '') +
+        '</div>' +
+      '</div>';
+
+    // Why they're stuck, in the order it matters.
+    if (!a.canUpload) {
+      var missing = [];
+      if (!a.has.stripe) missing.push('Stripe');
+      if (!a.has.photo) missing.push('a photo');
+      if (!a.has.bio) missing.push('a bio');
+      if (!a.has.cv) missing.push('a C.V.');
+      var flag = document.createElement('div');
+      flag.className = 'ros-flag block';
+      flag.textContent = total
+        ? 'Can’t add more work until they add ' + missing.join(', ') + '.'
+        : 'Hasn’t finished setting up — still needs ' + missing.join(', ') + '.';
+      el.appendChild(flag);
+    } else if (a.missingShip) {
+      var ship = document.createElement('div');
+      ship.className = 'ros-flag ship';
+      ship.textContent = a.missingShip + ' piece' + (a.missingShip === 1 ? '' : 's') +
+        ' with no packed weight or box size — those can’t be published.';
+      el.appendChild(ship);
+    }
+
+    return el;
+  }
+
+  function render(list) {
+    var box = $('list');
+    box.innerHTML = '';
+    if (!list.length) {
+      box.innerHTML = '<p class="acct-empty">Nobody has signed up yet.</p>';
+      return;
+    }
+    // Most recently active first — who moved is more useful than who's oldest.
+    list.slice().sort(function (a, b) {
+      return new Date(b.lastActivity) - new Date(a.lastActivity);
+    }).forEach(function (a) { box.appendChild(row(a)); });
+
+    var ready = list.filter(function (a) { return a.canUpload; }).length;
+    var live = list.reduce(function (n, a) { return n + a.published; }, 0);
+    $('counts').textContent =
+      list.length + ' artist' + (list.length === 1 ? '' : 's') + ' · ' +
+      ready + ' able to upload · ' + live + ' work' + (live === 1 ? '' : 's') + ' live';
+
+    if (box.querySelector('.is-new')) $('seenBtn').hidden = false;
+  }
+
+  $('seenBtn').addEventListener('click', function () {
+    localStorage.setItem(SEEN_KEY, String(openedAt));
+    document.querySelectorAll('.ros-row.is-new').forEach(function (el) {
+      el.classList.remove('is-new');
+    });
+    this.hidden = true;
+  });
+
+  fetch('/api/admin/roster', { credentials: 'same-origin' })
+    .then(function (r) {
+      if (r.status === 401) throw new Error('Log in to see the roster.');
+      if (r.status === 403) throw new Error('Admins only.');
+      if (!r.ok) throw new Error('Could not load the roster.');
+      return r.json();
+    })
+    .then(function (data) {
+      render(data.artists || []);
+      // First ever visit: don't drown the page in "new" badges.
+      if (!seenAt) localStorage.setItem(SEEN_KEY, String(openedAt));
+    })
+    .catch(function (e) { $('empty').textContent = e.message; });
+})();
+</script>
+<script src="js/nav-auth.js" defer></script>
+</body>
+</html>
