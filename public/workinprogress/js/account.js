@@ -103,6 +103,28 @@
   // Nothing publishes until the artist can actually be paid.
   function canSell() { return !!(state.me && state.me.stripeConnected); }
 
+  // Four things stand between a new artist and their first upload. The
+  // server and the database both enforce this — the list here exists so
+  // the page can name what's outstanding rather than just refusing.
+  function profileGaps() {
+    var me = state.me || {};
+    var gaps = [];
+    if (!me.stripeConnected) gaps.push('connect your Stripe account');
+    if (!me.photo) gaps.push('add a profile photo');
+    if (!(me.bio && me.bio.trim())) gaps.push('write something in your bio');
+    if (!(me.cv && me.cv.trim())) gaps.push('add your C.V.');
+    return gaps;
+  }
+
+  function blockedByProfile() {
+    var gaps = profileGaps();
+    if (!gaps.length) return false;
+    alert('Before you can add work, please:\n\n· ' + gaps.join('\n· ') +
+          '\n\nThis is what collectors see first — a page with no face and ' +
+          'no words behind it doesn’t sell anything.');
+    return true;
+  }
+
   // ── Stripe Connect ────────────────────────────────────────────────
   // Having an account id isn't the same as being ready to take money —
   // Stripe may still want ID or bank details. Ask, don't assume.
@@ -300,7 +322,10 @@
       var code = e && e.body && e.body.error;
       var msgs = {
         stripe_not_connected: 'Connect Stripe before publishing work.',
-        publish_limit_reached: 'You already have six published — unpublish one first.'
+        publish_limit_reached: 'You already have six published — unpublish one first.',
+        shipping_missing: 'This piece needs its packed weight and box size before it can go live.\n\n' +
+                          'Use the “Add” link under the piece to fill them in.',
+        profile_incomplete: 'Finish your profile first — photo, bio, C.V., and Stripe.'
       };
       alert((code && msgs[code]) || 'Could not update that piece. Try again.');
       btn.disabled = false;
@@ -324,9 +349,16 @@
     var add = document.createElement('button');
     add.className = 'work add';
     add.type = 'button';
-    add.textContent = published.length >= MAX_PUBLISHED ? 'six published — publish slots full' : '+ upload a work';
-    add.disabled = published.length >= MAX_PUBLISHED && drafts.length > 0;
-    add.addEventListener('click', function () { $('fileInput').click(); });
+    var gaps = profileGaps();
+    add.textContent = gaps.length
+      ? 'finish your profile to add work'
+      : (published.length >= MAX_PUBLISHED ? 'six published — publish slots full' : '+ upload a work');
+    add.disabled = (published.length >= MAX_PUBLISHED && drafts.length > 0) || gaps.length > 0;
+    add.title = gaps.length ? 'Still to do: ' + gaps.join(', ') : '';
+    add.addEventListener('click', function () {
+      if (blockedByProfile()) return;
+      $('fileInput').click();
+    });
     grid.appendChild(add);
 
     $('workEmpty').hidden = live.length > 0;
@@ -441,18 +473,23 @@
     var priceCents = price ? Math.round(parseFloat(price) * 100) : null;
 
     // Shipping is quoted from the PACKED parcel, not the artwork — a
-    // carrier prices the crate, not the canvas. Without these the piece
-    // can still be uploaded, but checkout can't quote freight for it.
+    // carrier prices the crate, not the canvas. Required now, not later:
+    // the artist ships the piece themselves, and a work that can't be
+    // quoted is a work that can't be sold.
     var pack = null;
     while (!pack) {
       var raw = (prompt(
-        'Packed for shipping — weight in pounds, then box size.\n\n' +
+        'Packed dimensions — the outer size of the fully packed shipment.\n\n' +
         'Format:  weight, length x width x depth\n' +
         'e.g.     8, 30 x 40 x 4\n\n' +
-        'Measure the BOX once it’s wrapped, not the artwork.\n' +
-        'Leave blank to add this later — it can’t sell overseas until you do.'
+        'Weight in pounds, box in inches. Measure the BOX once it’s\n' +
+        'wrapped, not the artwork itself.'
       ) || '').trim();
-      if (!raw) break;                       // fine — fill it in later
+      if (!raw) {
+        if (confirm('Packed weight and box size are required — without them\n' +
+                    'this piece can’t be shipped or sold.\n\nCancel this upload?')) return;
+        continue;
+      }
       var m = raw.match(
         /^\s*([\d.]+)\s*,\s*([\d.]+)\s*[x×]\s*([\d.]+)\s*[x×]\s*([\d.]+)\s*$/i);
       if (!m) {
@@ -522,7 +559,10 @@
   $('photo').addEventListener('keydown', function (e) {
     if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('photoInput').click(); }
   });
-  $('uploadBtn').addEventListener('click', function () { $('fileInput').click(); });
+  $('uploadBtn').addEventListener('click', function () {
+    if (blockedByProfile()) return;
+    $('fileInput').click();
+  });
   $('bookUploadBtn').addEventListener('click', function () { $('bookInput').click(); });
 
   pickFile(document.getElementById('bookInput'), function (f) {

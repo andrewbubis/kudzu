@@ -135,6 +135,85 @@ CREATE TRIGGER artworks_publish_limit
   BEFORE INSERT OR UPDATE ON artworks
   FOR EACH ROW EXECUTE FUNCTION enforce_publish_limit();
 
+
+-- ── Profile completeness ─────────────────────────────────────────────
+-- An artist has to be a finished artist before they can be a selling
+-- one. Four things, all of them things a collector expects to find on
+-- a page they're about to spend money on:
+--
+--   · a payout account, or the sale can't reach them
+--   · a face, or the page reads like a placeholder
+--   · a bio and a C.V., in whatever form they like — the rule is that
+--     the fields aren't empty, not that they're any good
+--
+-- Checked at INSERT on artworks: no work goes in at all until the
+-- profile is whole. That's deliberately stricter than gating publish,
+-- because a half-built profile with a pile of drafts behind it is how
+-- pages rot.
+CREATE OR REPLACE FUNCTION kudzu_profile_ready(a_id uuid)
+RETURNS boolean AS $$
+  SELECT COALESCE(stripe_account, '') <> ''
+     AND COALESCE(photo_path,     '') <> ''
+     AND btrim(COALESCE(bio,      '')) <> ''
+     AND btrim(COALESCE(cv,       '')) <> ''
+    FROM artists WHERE id = a_id;
+$$ LANGUAGE sql STABLE;
+
+-- ── Shipping figures ─────────────────────────────────────────────────
+-- The artist ships the work themselves, so the packed parcel has to be
+-- described before the piece exists — all four figures, each positive.
+-- A carrier prices the crate, not the canvas.
+--
+-- Enforced on INSERT, and again on any move to 'published'. NOT applied
+-- retroactively: works that predate this rule stay exactly as they are
+-- until someone touches them, so nobody logs in to a page that emptied
+-- itself overnight.
+CREATE OR REPLACE FUNCTION kudzu_has_ship_figures(w artworks)
+RETURNS boolean AS $$
+  SELECT w.ship_weight_oz  IS NOT NULL AND w.ship_weight_oz  > 0
+     AND w.ship_length_in  IS NOT NULL AND w.ship_length_in  > 0
+     AND w.ship_width_in   IS NOT NULL AND w.ship_width_in   > 0
+     AND w.ship_depth_in   IS NOT NULL AND w.ship_depth_in   > 0;
+$$ LANGUAGE sql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION enforce_artwork_requirements() RETURNS trigger AS $$
+BEGIN
+  -- INSERT is handled entirely here and returns early. OLD is unassigned
+  -- during an INSERT, and plpgsql does not promise to short-circuit a
+  -- boolean chain before touching it, so OLD must not appear on this path
+  -- at all — reading it would abort every upload.
+  IF TG_OP = 'INSERT' THEN
+    IF NOT kudzu_profile_ready(NEW.artist_id) THEN
+      RAISE EXCEPTION 'profile_incomplete';
+    END IF;
+    IF NOT kudzu_has_ship_figures(NEW) THEN
+      RAISE EXCEPTION 'shipping_missing';
+    END IF;
+    RETURN NEW;
+  END IF;
+
+  -- UPDATE from here down, so OLD is safe to read.
+  --
+  -- Deliberately narrow: fires when a work is being published, or when
+  -- someone strips the figures off one that's already live. It does NOT
+  -- fire on an unrelated edit to a work published before this rule
+  -- existed — otherwise those pieces couldn't even be dragged into a new
+  -- order without the save failing.
+  IF NEW.status = 'published'
+     AND NOT kudzu_has_ship_figures(NEW)
+     AND (OLD.status IS DISTINCT FROM 'published'
+          OR kudzu_has_ship_figures(OLD)) THEN
+    RAISE EXCEPTION 'shipping_missing';
+  END IF;
+
+  RETURN NEW;
+END $$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS artworks_requirements ON artworks;
+CREATE TRIGGER artworks_requirements
+  BEFORE INSERT OR UPDATE ON artworks
+  FOR EACH ROW EXECUTE FUNCTION enforce_artwork_requirements();
+
 -- ── Books ────────────────────────────────────────────────────────────
 -- Zines, catalogues, monographs. No six-item cap — that limit is for
 -- original works only.

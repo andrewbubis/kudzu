@@ -255,10 +255,38 @@ function parseWorkFields(body) {
   };
 }
 
+// What an artist is still missing before they can add work at all.
+// The database enforces this too — this is here so the UI can say which
+// of the four is outstanding instead of just refusing.
+function profileGaps(a) {
+  const gaps = [];
+  if (!a.stripe_account) gaps.push('stripe');
+  if (!a.photo_path) gaps.push('photo');
+  if (!String(a.bio || '').trim()) gaps.push('bio');
+  if (!String(a.cv || '').trim()) gaps.push('cv');
+  return gaps;
+}
+
+router.get('/me/readiness', auth.requireArtist, (req, res) => {
+  const gaps = profileGaps(req.artist);
+  res.json({ ready: gaps.length === 0, missing: gaps });
+});
+
 router.post('/works', auth.requireArtist, storage.upload.single('image'), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'no_file' });
   const f = parseWorkFields(req.body || {});
   if (!f.title) return res.status(400).json({ error: 'title_required' });
+
+  // Refuse before touching disk, so a rejected upload doesn't leave an
+  // orphaned image behind.
+  const gaps = profileGaps(req.artist);
+  if (gaps.length) {
+    return res.status(409).json({ error: 'profile_incomplete', missing: gaps });
+  }
+  if (f.shipWeightOz == null || f.shipLengthIn == null ||
+      f.shipWidthIn == null || f.shipDepthIn == null) {
+    return res.status(400).json({ error: 'shipping_missing' });
+  }
 
   let saved;
   try {
@@ -283,6 +311,16 @@ router.post('/works', auth.requireArtist, storage.upload.single('image'), async 
     res.status(201).json(publicWork(rows[0]));
   } catch (err) {
     storage.remove(saved.path);
+    // The triggers raise these by name; pass them through rather than
+    // flattening a rule the artist can actually act on into a 500.
+    const RULES = {
+      profile_incomplete: 409,
+      shipping_missing: 400,
+      stripe_not_connected: 409,
+      publish_limit_reached: 409
+    };
+    const rule = Object.keys(RULES).find((k) => err.message.includes(k));
+    if (rule) return res.status(RULES[rule]).json({ error: rule });
     console.error('work insert failed:', err.message);
     res.status(500).json({ error: 'server_error' });
   }
@@ -323,11 +361,13 @@ router.patch('/works/:id', auth.requireArtist, async (req, res) => {
     if (!rows[0]) return res.status(404).json({ error: 'not_found' });
     res.json(publicWork(rows[0]));
   } catch (err) {
-    if (String(err.message).includes('publish_limit_reached')) {
-      return res.status(409).json({ error: 'publish_limit_reached' });
-    }
-    if (String(err.message).includes('stripe_not_connected')) {
-      return res.status(409).json({ error: 'stripe_not_connected' });
+    // `shipping_missing` is the one that fires when an artist tries to
+    // publish a piece uploaded before the packed figures were required.
+    for (const rule of ['publish_limit_reached', 'stripe_not_connected',
+                        'shipping_missing', 'profile_incomplete']) {
+      if (String(err.message).includes(rule)) {
+        return res.status(409).json({ error: rule });
+      }
     }
     console.error('work update failed:', err.message);
     res.status(500).json({ error: 'server_error' });
