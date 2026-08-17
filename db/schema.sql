@@ -177,6 +177,31 @@ RETURNS boolean AS $$
      AND NOT COALESCE((SELECT admin_hidden FROM artists WHERE id = a_id), false);
 $$ LANGUAGE sql STABLE;
 
+-- ── How we reach an artist ───────────────────────────────────────────
+-- Internal only. None of this is ever returned by the public artist
+-- endpoint — a collector sees an artist's Instagram and website, never a
+-- way to email them directly. This is so Kudzu can tell them a piece
+-- sold, or that somebody asked about one, without them having to think
+-- to log in and check.
+--
+-- Defaults to the address they signed up with, so nobody is blocked on a
+-- decision they haven't been asked to make yet. Choosing SMS is the only
+-- case that needs a new value from them.
+ALTER TABLE artists ADD COLUMN IF NOT EXISTS notify_phone text;
+ALTER TABLE artists ADD COLUMN IF NOT EXISTS notify_channel text
+  NOT NULL DEFAULT 'email' CHECK (notify_channel IN ('email', 'sms'));
+
+-- Reachable means: email always works (an account can't exist without
+-- one), and SMS works once there's a number on file.
+CREATE OR REPLACE FUNCTION kudzu_artist_reachable(a_id uuid)
+RETURNS boolean AS $$
+  SELECT CASE
+    WHEN notify_channel = 'sms' THEN btrim(COALESCE(notify_phone, '')) <> ''
+    ELSE btrim(COALESCE(email, '')) <> ''
+  END
+  FROM artists WHERE id = a_id;
+$$ LANGUAGE sql STABLE;
+
 -- ── Gallery photos ───────────────────────────────────────────────────
 -- Not artworks. These are the studio shots, the hands-at-work pictures,
 -- the detail crops — the things that make a roster feel like people

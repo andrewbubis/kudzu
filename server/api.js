@@ -32,7 +32,11 @@ const publicArtist = (a) => ({
                  String(a.bio || '').trim() && String(a.cv || '').trim() &&
                  !a.admin_hidden),
   adminHidden: !!a.admin_hidden,
-  stripeConnected: !!a.stripe_account
+  stripeConnected: !!a.stripe_account,
+  // Internal only — how Kudzu reaches them about a sale or a message.
+  // Deliberately absent from the public artist endpoint below.
+  notifyChannel: a.notify_channel || 'email',
+  notifyPhone: a.notify_phone || ''
 });
 
 const publicWork = (w) => ({
@@ -196,6 +200,26 @@ router.patch('/me', auth.requireArtist, async (req, res) => {
   // There is no approval gate any more: a page is public as soon as the
   // profile is complete. `adminHidden` is the emergency brake — abuse, a
   // departure, a legal problem — and only an admin can pull it.
+  // How they want to hear about sales and messages. Never shown publicly.
+  const body = req.body || {};
+  if (Object.prototype.hasOwnProperty.call(body, 'notifyChannel')) {
+    const ch = String(body.notifyChannel);
+    if (ch !== 'email' && ch !== 'sms') {
+      return res.status(400).json({ error: 'bad_notify_channel' });
+    }
+    sets.push(`notify_channel = $${sets.length + 1}`);
+    vals.push(ch);
+  }
+  if (Object.prototype.hasOwnProperty.call(body, 'notifyPhone')) {
+    // Digits, spaces, and the usual punctuation. Not a validator — just a
+    // guard against someone pasting an essay into the field.
+    const raw = String(body.notifyPhone || '').trim().slice(0, 32);
+    if (raw && !/^[0-9+()\-.\s]{7,32}$/.test(raw)) {
+      return res.status(400).json({ error: 'bad_phone' });
+    }
+    sets.push(`notify_phone = $${sets.length + 1}`);
+    vals.push(raw || null);
+  }
   if (Object.prototype.hasOwnProperty.call(req.body || {}, 'adminHidden')) {
     if (!req.artist.is_admin) return res.status(403).json({ error: 'admin_only' });
     sets.push(`admin_hidden = $${sets.length + 1}`);
@@ -737,6 +761,28 @@ router.patch('/admin/artists/:id', auth.requireArtist, auth.requireAdmin, async 
     ({ sets, vals } = buildProfileSets(req.body));
   } catch (err) {
     return res.status(400).json({ error: err.code || 'bad_request' });
+  }
+  // Same notification fields as an artist can set on themselves — useful
+  // when someone gives Kudzu a number over the phone and can't be
+  // bothered to log in and type it.
+  const body = req.body || {};
+  if (Object.prototype.hasOwnProperty.call(body, 'notifyChannel')) {
+    const ch = String(body.notifyChannel);
+    if (ch !== 'email' && ch !== 'sms') {
+      return res.status(400).json({ error: 'bad_notify_channel' });
+    }
+    sets.push(`notify_channel = $${sets.length + 1}`);
+    vals.push(ch);
+  }
+  if (Object.prototype.hasOwnProperty.call(body, 'notifyPhone')) {
+    // Digits, spaces, and the usual punctuation. Not a validator — just a
+    // guard against someone pasting an essay into the field.
+    const raw = String(body.notifyPhone || '').trim().slice(0, 32);
+    if (raw && !/^[0-9+()\-.\s]{7,32}$/.test(raw)) {
+      return res.status(400).json({ error: 'bad_phone' });
+    }
+    sets.push(`notify_phone = $${sets.length + 1}`);
+    vals.push(raw || null);
   }
   // The override, applied to somebody else's page. Pulling it down does
   // not touch a thing they own — clear the flag and the page returns

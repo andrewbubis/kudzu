@@ -161,6 +161,55 @@
       $('sWorksCountry').value = me.worksCountry || '';
       $('sLink').value = me.link || '';
 
+      // ── Notifications ─────────────────────────────────────────────
+      // Internal only. An artist who never logs in still needs to hear
+      // that a piece sold, and this is the only place we learn how.
+      if ($('nEmail')) {
+        var channel = me.notifyChannel === 'sms' ? 'sms' : 'email';
+        $('nEmailAddr').textContent = me.email || 'your account email';
+        $('nEmail').checked = channel === 'email';
+        $('nSms').checked = channel === 'sms';
+        $('sPhone').value = me.notifyPhone || '';
+        $('nPhoneRow').hidden = channel !== 'sms';
+
+        [$('nEmail'), $('nSms')].forEach(function (radio) {
+          radio.addEventListener('change', function () {
+            $('nPhoneRow').hidden = !$('nSms').checked;
+            if ($('nSms').checked) $('sPhone').focus();
+          });
+        });
+
+        $('saveNotify').addEventListener('click', async function () {
+          var btn = this, note = $('notifyNote');
+          var wantsSms = $('nSms').checked;
+          var phone = $('sPhone').value.trim();
+          note.style.color = '#555'; note.textContent = '';
+
+          if (wantsSms && !phone) {
+            note.style.color = '#b3261e';
+            note.textContent = 'Add a number so we can text you.';
+            return;
+          }
+          btn.disabled = true;
+          try {
+            await api('/me', {
+              method: 'PATCH',
+              body: JSON.stringify({
+                notifyChannel: wantsSms ? 'sms' : 'email',
+                notifyPhone: phone
+              })
+            });
+            note.textContent = 'Saved ✓';
+          } catch (e) {
+            note.style.color = '#b3261e';
+            note.textContent = (e && e.body && e.body.error) === 'bad_phone'
+              ? 'That number doesn’t look right.'
+              : 'Could not save that. Try again.';
+          }
+          btn.disabled = false;
+        });
+      }
+
       $('saveSettings').addEventListener('click', async function () {
         var btn = this, note = $('saveNote');
         btn.disabled = true; note.textContent = '';

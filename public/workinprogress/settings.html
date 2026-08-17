@@ -68,6 +68,34 @@
     <span id="saveNote" style="margin-left:11px;color:#555;"></span>
   </section>
 
+  <!-- Internal only. Never appears on the artist's public page — a
+       collector reaches them through their links, not their inbox. -->
+  <section class="acct-panel" style="margin-bottom:34px;">
+    <h2 style="font-size:13px;color:#888;margin:0 0 4px;">notifications</h2>
+    <p style="margin:0 0 14px;color:#666;">
+      How should we reach you when something sells, or when someone asks about a piece?
+      We won't use this for anything else, and it never shows on your page.
+    </p>
+
+    <label style="display:flex;align-items:center;gap:10px;margin-bottom:9px;cursor:pointer;">
+      <input type="radio" name="notifyChannel" value="email" id="nEmail" style="width:17px;height:17px;">
+      <span>Email me at <b id="nEmailAddr">your account email</b></span>
+    </label>
+    <label style="display:flex;align-items:center;gap:10px;margin-bottom:12px;cursor:pointer;">
+      <input type="radio" name="notifyChannel" value="sms" id="nSms" style="width:17px;height:17px;">
+      <span>Text me</span>
+    </label>
+
+    <div id="nPhoneRow" hidden style="margin-bottom:16px;">
+      <label for="sPhone">mobile number</label>
+      <input id="sPhone" type="tel" placeholder="(615) 555-0134" autocomplete="tel"
+             style="width:100%;padding:9px 11px;border:1px solid #e2e2e2;font:inherit;">
+    </div>
+
+    <button class="acct-btn" type="button" id="saveNotify">Save</button>
+    <span id="notifyNote" style="margin-left:11px;color:#555;"></span>
+  </section>
+
   <section class="acct-panel">
     <h2 style="font-size:13px;color:#888;margin:0 0 10px;">payouts</h2>
     <p id="payoutState" style="margin:0 0 12px;">Checking\u2026</p>
