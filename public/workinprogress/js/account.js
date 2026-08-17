@@ -4,14 +4,14 @@
    Talks to the API under /api/*. While the backend is still being built
    those calls 404, so the page falls back to a local demo state and
    keeps working — you can click through the whole flow and judge the
-   layout. Nothing here trusts the browser: the eight-work limit, file
+   layout. Nothing here trusts the browser: the ten-work limit, file
    size, and ownership are all re-checked on the server.
    ───────────────────────────────────────────────────────────────────── */
 (function () {
   'use strict';
 
-  var MAX_PUBLISHED = 8;
-  var MAX_FILE_MB = 12;
+  var MAX_PUBLISHED = 10;
+  var MAX_FILE_MB = 25;
 
   var state = { me: null, works: [], books: [], photos: [], live: false };
 
@@ -316,7 +316,7 @@
     var gaps = profileGaps();
     add.textContent = gaps.length
       ? 'finish your profile to add work'
-      : (published.length >= MAX_PUBLISHED ? 'eight live — no free slots' : '+ upload a work');
+      : (published.length >= MAX_PUBLISHED ? 'ten live — no free slots' : '+ upload a work');
     add.disabled = (published.length >= MAX_PUBLISHED && drafts.length > 0) || gaps.length > 0;
     add.title = gaps.length ? 'Still to do: ' + gaps.join(', ') : '';
     add.addEventListener('click', function () {
@@ -481,7 +481,7 @@
         // say what it is rather than "try again".
         var msgs = {
           publish_limit_reached:
-            'You have eight works live, which is the limit.\n\n' +
+            'You have ten works live, which is the limit.\n\n' +
             'Remove one to make room for this piece.',
           shipping_missing:
             'This piece needs its packed weight and box size before it can go up.',

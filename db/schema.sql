@@ -33,8 +33,8 @@ CREATE TABLE IF NOT EXISTS artists (
 );
 
 -- ── Artworks ─────────────────────────────────────────────────────────
--- status: 'draft'     — not visible publicly, does NOT count toward the 6
---         'published' — visible, counts toward the 6
+-- status: 'draft'     — not visible publicly, does NOT count toward the 10
+--         'published' — visible, counts toward the 10
 --         'sold'      — sold through the site, shown under the Sold tab
 CREATE TABLE IF NOT EXISTS artworks (
   id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -80,7 +80,7 @@ ALTER TABLE artworks ADD COLUMN IF NOT EXISTS ship_depth_in  numeric(6,2);
 
 -- Two rules, enforced here rather than in the app so no bug can slip past:
 --
---   1. At most 8 PUBLISHED works per artist. Drafts are unlimited.
+--   1. At most 10 PUBLISHED works per artist.
 --   2. Nothing gets published at all until the artist has connected
 --      their own Stripe account. Priced or not — if they can't be paid,
 --      their work doesn't go up. Drafts are always allowed, so they can
@@ -101,7 +101,7 @@ BEGIN
      WHERE artist_id = NEW.artist_id
        AND status = 'published'
        AND id <> NEW.id;
-    IF n >= 8 THEN
+    IF n >= 10 THEN
       RAISE EXCEPTION 'publish_limit_reached';
     END IF;
   END IF;
@@ -277,7 +277,7 @@ CREATE TRIGGER artworks_requirements
   FOR EACH ROW EXECUTE FUNCTION enforce_artwork_requirements();
 
 -- ── Books ────────────────────────────────────────────────────────────
--- Zines, catalogues, monographs. No eight-item cap — that limit is for
+-- Zines, catalogues, monographs. No ten-item cap — that limit is for
 -- original works only.
 CREATE TABLE IF NOT EXISTS books (
   id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -366,3 +366,32 @@ CREATE TABLE IF NOT EXISTS sessions (
 
 CREATE INDEX IF NOT EXISTS sessions_artist_idx ON sessions (artist_id);
 CREATE INDEX IF NOT EXISTS sessions_expiry_idx ON sessions (expires_at);
+
+
+-- ── One-off data fixes ───────────────────────────────────────────────
+-- schema.sql runs on every boot, so anything that changes data rather
+-- than shape needs a marker or it repeats forever.
+CREATE TABLE IF NOT EXISTS kudzu_migrations (
+  name       text PRIMARY KEY,
+  applied_at timestamptz NOT NULL DEFAULT now()
+);
+
+-- Removing the publish button left existing drafts stranded: there is no
+-- longer any control that could bring one out. Put up every draft that
+-- would pass today's rules — complete packed figures, a finished profile
+-- behind it, and room under the cap. Anything failing those stays a draft
+-- and is left alone.
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM kudzu_migrations WHERE name = 'publish_stranded_drafts') THEN
+    UPDATE artworks w
+       SET status = 'published', updated_at = now()
+     WHERE w.status = 'draft'
+       AND kudzu_has_ship_figures(w)
+       AND kudzu_profile_ready(w.artist_id)
+       AND (SELECT count(*) FROM artworks o
+             WHERE o.artist_id = w.artist_id AND o.status = 'published') < 10;
+
+    INSERT INTO kudzu_migrations (name) VALUES ('publish_stranded_drafts');
+  END IF;
+END $$;

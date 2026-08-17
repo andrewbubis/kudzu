@@ -41,7 +41,7 @@ migration step, but a syntax error in it will stop the server from starting.
 
 ## Business rules (enforced in the database, not just the UI)
 
-- At most **8 published** works per artist; drafts unlimited.
+- At most **10 published** works per artist.
 - Nothing publishes unless the artist has **connected Stripe**. Disconnecting
   Stripe drops all their published work back to draft.
 - No artwork can be **inserted** until the profile is complete: Stripe, profile

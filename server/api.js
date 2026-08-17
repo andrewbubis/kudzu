@@ -1,7 +1,7 @@
 // The account API. Everything under /api.
 //
 // Rule followed throughout: the browser is never trusted. Ownership,
-// the eight-work limit, file type and size are all re-checked here even
+// the ten-work limit, file type and size are all re-checked here even
 // though the page checks them too.
 
 const express = require('express');
@@ -402,8 +402,8 @@ router.post('/works', auth.requireArtist, storage.upload.single('image'), async 
     const { rows: n } = await db.query(
       `SELECT count(*)::int AS live FROM artworks
         WHERE artist_id = $1 AND status = 'published'`, [req.artist.id]);
-    if (n[0].live >= 8) {
-      return res.status(409).json({ error: 'publish_limit_reached', max: 8 });
+    if (n[0].live >= 10) {
+      return res.status(409).json({ error: 'publish_limit_reached', max: 10 });
     }
   } catch (err) {
     return res.status(500).json({ error: 'server_error' });
