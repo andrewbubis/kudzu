@@ -8,6 +8,7 @@ const express = require('express');
 const db = require('./db');
 const auth = require('./auth');
 const storage = require('./storage');
+const mail = require('./mail');
 
 const router = express.Router();
 
@@ -582,17 +583,18 @@ router.post('/inquiries', async (req, res) => {
     // Resolve the artist from their slug so the browser can't post an
     // enquiry into someone else's inbox by guessing ids.
     const { rows: ar } = await db.query(
-      'SELECT id FROM artists WHERE slug = $1 AND kudzu_artist_public(id)',
+      `SELECT id, name, email, notify_channel, notify_phone
+         FROM artists WHERE slug = $1 AND kudzu_artist_public(id)`,
       [String(b.artistSlug || '')]);
     if (!ar[0]) return res.status(404).json({ error: 'artist_not_found' });
 
     // Same for the artwork — it must belong to that artist.
-    let artworkId = null;
+    let artworkId = null, workTitle = null;
     if (b.workId) {
       const { rows: wr } = await db.query(
-        'SELECT id FROM artworks WHERE id = $1 AND artist_id = $2',
+        'SELECT id, title FROM artworks WHERE id = $1 AND artist_id = $2',
         [b.workId, ar[0].id]);
-      if (wr[0]) artworkId = wr[0].id;
+      if (wr[0]) { artworkId = wr[0].id; workTitle = wr[0].title; }
     }
 
     await db.query(
@@ -600,7 +602,18 @@ router.post('/inquiries', async (req, res) => {
        VALUES ($1,$2,$3,$4,$5)`,
       [ar[0].id, artworkId, name, email, message]);
 
+    // Answer the collector immediately; the message is already saved.
+    // Sending happens after, and a mail failure must never turn a stored
+    // enquiry into an error the visitor sees.
     res.status(201).json({ ok: true });
+
+    mail.inquiryReceived({
+      artist: ar[0],
+      from: { name, email },
+      message,
+      workTitle
+    }).catch((err) => console.error('inquiry notification failed:', err.message));
+    return;
   } catch (err) {
     console.error('inquiry failed:', err.message);
     res.status(500).json({ error: 'server_error' });

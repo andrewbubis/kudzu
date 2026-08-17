@@ -1,0 +1,149 @@
+// Notifications to artists — sales, and collectors asking about work.
+//
+// Two things worth knowing:
+//
+//  · Nothing here is ever fatal. If RESEND_API_KEY is missing, or Resend
+//    is having a bad day, we log it and carry on. A collector's enquiry
+//    is already safely in the database by the time we try to send; losing
+//    the notification must never lose the message, and a failed sale
+//    email must never fail the sale.
+//
+//  · An artist's email is never exposed publicly, so these are the only
+//    way they hear anything. That's also why the reply-to is set to the
+//    collector — the artist hits reply and it just works, without either
+//    of them being handed the other's address by the website.
+
+const KEY = () => process.env.RESEND_API_KEY;
+const FROM = () => process.env.MAIL_FROM || 'Kudzu Arts <notifications@send.kudzuarts.com>';
+const BASE = () => (process.env.PUBLIC_BASE_URL || '').replace(/\/+$/, '');
+
+function isConfigured() { return !!KEY(); }
+
+const esc = (s) => String(s == null ? '' : s)
+  .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  .replace(/"/g, '&quot;');
+
+// House style: paper, a serif, and no marketing furniture. These are
+// notes between people, not campaigns.
+function wrap(title, bodyHtml, footNote) {
+  return `<!doctype html><html><body style="margin:0;padding:0;background:#f4f2ec;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f2ec;padding:28px 14px;">
+    <tr><td align="center">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+             style="max-width:540px;background:#ffffff;border:1px solid #e2e2e2;">
+        <tr><td style="padding:30px 30px 22px;font-family:Georgia,'Times New Roman',serif;color:#211c2a;">
+          <p style="margin:0 0 22px;font-size:11px;letter-spacing:0.22em;text-transform:uppercase;color:#5f5a2c;">Kudzu Arts</p>
+          <h1 style="margin:0 0 18px;font-size:24px;font-weight:400;line-height:1.2;">${title}</h1>
+          ${bodyHtml}
+        </td></tr>
+        <tr><td style="padding:0 30px 28px;font-family:Georgia,serif;font-size:12px;color:#8a8072;">
+          ${footNote || ''}
+        </td></tr>
+      </table>
+    </td></tr>
+  </table></body></html>`;
+}
+
+async function send({ to, subject, html, replyTo, text }) {
+  if (!isConfigured()) {
+    console.log('mail off (no RESEND_API_KEY) — would have sent:', subject, '→', to);
+    return { sent: false, reason: 'not_configured' };
+  }
+  if (!to) {
+    console.log('mail skipped — no address for:', subject);
+    return { sent: false, reason: 'no_address' };
+  }
+  try {
+    const body = { from: FROM(), to: [to], subject, html };
+    if (text) body.text = text;
+    if (replyTo) body.reply_to = replyTo;
+
+    const res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${KEY()}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(body)
+    });
+    if (!res.ok) {
+      const detail = await res.text().catch(() => '');
+      console.error('resend rejected:', res.status, detail.slice(0, 300));
+      return { sent: false, reason: 'rejected' };
+    }
+    return { sent: true };
+  } catch (err) {
+    console.error('mail send failed:', err.message);
+    return { sent: false, reason: 'error' };
+  }
+}
+
+// Where to reach an artist. SMS is stored but not wired to a provider
+// yet — say so in the log rather than pretending it went out.
+function addressFor(artist) {
+  if (!artist) return null;
+  if (artist.notify_channel === 'sms') {
+    console.log('artist prefers SMS but no texting provider is configured — falling back to email:',
+      artist.email);
+  }
+  return artist.email || null;
+}
+
+// ── Someone asked about a piece ──────────────────────────────────────
+async function inquiryReceived({ artist, from, message, workTitle }) {
+  const about = workTitle ? `about ${workTitle}` : 'about your work';
+  return send({
+    to: addressFor(artist),
+    subject: `${from.name} asked ${about}`,
+    // Reply goes straight to the collector, not to us.
+    replyTo: from.email,
+    text: `${from.name} <${from.email}> wrote:\n\n${message}\n\nReply to this email to answer them directly.`,
+    html: wrap(
+      `${esc(from.name)} asked ${esc(about)}.`,
+      `<p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#544c5e;">
+         They left this message:</p>
+       <div style="margin:0 0 20px;padding:16px 18px;background:#f4f2ec;border-left:2px solid #8a8f43;
+                   font-size:15px;line-height:1.6;color:#211c2a;white-space:pre-wrap;">${esc(message)}</div>
+       <p style="margin:0;font-size:15px;line-height:1.6;color:#544c5e;">
+         Just hit reply — it goes straight to ${esc(from.name)} at
+         <a href="mailto:${esc(from.email)}" style="color:#5f5a2c;">${esc(from.email)}</a>.
+         They can't see your address unless you write back.</p>`,
+      'Sent because someone used the contact form on your Kudzu Arts page.'
+    )
+  });
+}
+
+// ── A piece sold ─────────────────────────────────────────────────────
+async function workSold({ artist, workTitle, amountCents, currency }) {
+  const money = amountCents == null ? null :
+    new Intl.NumberFormat('en-US', {
+      style: 'currency', currency: (currency || 'usd').toUpperCase(),
+      maximumFractionDigits: 0
+    }).format(amountCents / 100);
+
+  const title = workTitle ? `${workTitle} sold.` : 'One of your works sold.';
+  const profile = BASE() ? `${BASE()}/workinprogress/sales.html` : null;
+
+  return send({
+    to: addressFor(artist),
+    subject: workTitle ? `${workTitle} sold` : 'Your work sold',
+    text: `${title}${money ? ' ' + money : ''}\n\nYour payout is on its way from Stripe. ` +
+          `Check your Kudzu sales page for the buyer's shipping address, and post it with the ` +
+          `packed weight and box size you recorded.`,
+    html: wrap(
+      esc(title),
+      `${money ? `<p style="margin:0 0 16px;font-size:26px;color:#211c2a;">${esc(money)}</p>` : ''}
+       <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#544c5e;">
+         Your share is already on its way to your bank through Stripe — nothing to invoice, nothing to chase.</p>
+       <p style="margin:0 0 20px;font-size:15px;line-height:1.6;color:#544c5e;">
+         Next: the buyer's shipping address is on your sales page. Pack it to the weight and box size
+         you recorded when you uploaded it, and send it off.</p>
+       ${profile ? `<p style="margin:0;"><a href="${esc(profile)}"
+          style="display:inline-block;padding:12px 22px;background:#8a8f43;color:#ffffff;
+                 text-decoration:none;font-size:14px;">See the order</a></p>` : ''}`,
+      'Sent because a work on your Kudzu Arts page sold.'
+    )
+  });
+}
+
+module.exports = { isConfigured, send, inquiryReceived, workSold };

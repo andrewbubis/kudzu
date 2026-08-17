@@ -14,6 +14,7 @@ const db = require('./server/db');
 const auth = require('./server/auth');
 const oauth = require('./server/oauth');
 const api = require('./server/api');
+const mail = require('./server/mail');
 const storage = require('./server/storage');
 const commerce = require('./server/commerce');
 const lumaprints = require('./server/lumaprints');
@@ -156,5 +157,6 @@ async function bootstrapFirstAdmin() {
     if (!oauth.isConfigured('google')) console.log('kudzu · Google sign-in off (no GOOGLE_CLIENT_ID)');
     if (!commerce.isConfigured()) console.log('kudzu · selling off (no STRIPE_SECRET_KEY)');
     if (!lumaprints.isConfigured()) console.log('kudzu · print fulfilment off (no Lumaprints keys)');
+    if (!mail.isConfigured()) console.log('kudzu · artist notifications off (no RESEND_API_KEY)');
   });
 })();

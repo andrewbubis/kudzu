@@ -11,6 +11,7 @@ const express = require('express');
 const db = require('./db');
 const auth = require('./auth');
 const lumaprints = require('./lumaprints');
+const mail = require('./mail');
 const { SHIPPING_COUNTRIES } = require('./shipping-countries');
 
 const router = express.Router();
@@ -314,10 +315,27 @@ async function fulfil(session) {
   const md = session.metadata || {};
 
   if (md.kind === 'original' && md.workId) {
-    await db.query(
+    const { rows } = await db.query(
       `UPDATE artworks SET status = 'sold', sold_at = now(), updated_at = now()
-        WHERE id = $1 AND status <> 'sold'`, [md.workId]);
+        WHERE id = $1 AND status <> 'sold'
+    RETURNING title, artist_id`, [md.workId]);
     console.log('marked sold:', md.workId, 'session', session.id);
+
+    // Only on the transition — Stripe retries webhooks, and an artist
+    // should not be told twice that the same piece sold.
+    if (rows[0]) {
+      const { rows: ar } = await db.query(
+        'SELECT id, name, email, notify_channel, notify_phone FROM artists WHERE id = $1',
+        [rows[0].artist_id]);
+      if (ar[0]) {
+        mail.workSold({
+          artist: ar[0],
+          workTitle: rows[0].title,
+          amountCents: session.amount_total,
+          currency: session.currency
+        }).catch((err) => console.error('sale notification failed:', err.message));
+      }
+    }
     return;
   }
 
