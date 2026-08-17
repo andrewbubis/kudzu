@@ -168,6 +168,12 @@ section { position: relative; padding-block: clamp(72px, 9vw, 128px); }
 .vine-corner.br { bottom: 0; right: 0; transform: scale(-1,-1); }
 .vine-corner.bl { bottom: 0; left: 0; transform: scaleY(-1); }
 .vine-divider { width: 100%; max-width: 1100px; height: 64px; margin: 0 auto; background: url("../img/vine-hand.png") center/contain no-repeat; opacity: 0.7; }
+/* A vine that runs the full width of the page, edge to edge, and stays
+   put. Used across the top of the gallery and print shop, where the
+   swaying edge decals were crowding the work. Tiles horizontally so it
+   fills any screen width instead of stretching. */
+.vine-band { width: 100%; height: clamp(56px, 6vw, 92px); background: url("../img/vine-hand.png") left center / auto 100% repeat-x; opacity: 0.85; pointer-events: none; }
+@media (max-width: 560px) { .vine-band { height: 46px; } }
 .sprig { width: 104px; height: 60px; background: url("../img/vine-hand-sprig.png") center/contain no-repeat; margin: 0 auto 6px; }
 .sprig.gold { background-image: url("../img/vine-hand-sprig-gold.png"); }
 

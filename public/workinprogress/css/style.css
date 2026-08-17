@@ -312,6 +312,22 @@ section > .wrap { position: relative; z-index: 1; }
 }
 .artist-card:hover .name, .artist-card:focus-visible .name { opacity: 1; }
 .artist-card.slot { cursor: default; }
+
+/* Empty seats on the roster. Deliberately quiet — they hold the shape of
+   the grid so one artist doesn't sit alone on a wide page, and they read
+   as room still to fill rather than as anything missing or broken. */
+.artist-card.ghost {
+  background: var(--paper-2, #f2ede2); cursor: default;
+  border: 1px solid rgba(20, 17, 12, 0.06);
+}
+.artist-card.ghost::after {
+  content: ""; position: absolute; left: 50%; top: 50%;
+  width: 18px; height: 18px; margin: -9px 0 0 -9px;
+  background: url("../img/vine-sprig.svg") center/contain no-repeat;
+  opacity: 0.16;
+}
+.artist-card.ghost:hover .art { transform: none; }
+
 @media (prefers-reduced-motion: reduce) {
   .artist-card .art, .artist-card .name { transition: none; }
   .artist-card:hover .art { transform: none; }

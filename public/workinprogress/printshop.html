@@ -17,26 +17,6 @@
 <meta property="og:description" content="Limited-edition and open-edition prints from the Kudzu Arts roster — assorted sizes and materials, from $40. Signed editions available.">
 <noscript><style>.reveal{opacity:1 !important;transform:none !important;}</style></noscript>
 
-<style>
-  /* ── Full-page right vine ─────────────────────────────────────── */
-  .vine-tall-right {
-    position: absolute;
-    right: 0;
-    top: 0;
-    width: 200px;
-    height: calc(100% - 3in);
-    background: url("img/vine-hand-right.png") top center / 100% auto repeat-y;
-    pointer-events: none;
-    z-index: 5;
-    opacity: 0.88;
-    transform-origin: top right;
-    animation: vine-sway 6s ease-in-out infinite;
-    animation-delay: -3s;
-  }
-  @media (max-width: 860px) { .vine-tall-right { width: 120px; opacity: 0.7; } }
-  @media (max-width: 560px) { .vine-tall-right { width: 80px; opacity: 0.6; } }
-  @media (prefers-reduced-motion: reduce) { .vine-tall-right { animation: none; } }
-</style>
 </head>
 <body style="position:relative;">
 <header class="site-header">
@@ -51,8 +31,10 @@
   <button class="nav-toggle" type="button" aria-expanded="false">Menu</button>
 </header>
 
-<!-- Full-page swinging vine fixed to right edge, spanning all sections -->
-<div class="vine-tall-right" aria-hidden="true"></div>
+<!-- One vine across the top, matching the gallery. The full-height
+     swinging vine that used to hang down the right edge is gone — it ran
+     the length of every section and competed with the prints. -->
+<div class="vine-band" aria-hidden="true"></div>
 
 <section class="press-hero">
   <div class="wrap">
@@ -60,17 +42,13 @@
       <div class="press-copy reveal">
         <p class="eyebrow">The Print Shop</p>
         <h1 class="cardinal">Ink, paper,<br><span class="ital">and a little overgrowth.</span></h1>
-        <p class="lede">Original art shouldn't need a collector's budget. We put work from the roster on your wall — open-edition prints that ship fast, and signed, numbered editions for the ones you want to keep forever. A share of every print funds free workshops.</p>
       </div>
     </div>
   </div>
 </section>
 
 <section id="prints" style="padding-top: clamp(28px,3.5vw,48px);">
-  <!-- Corner vine above Available Now heading -->
-  <div class="vine-corner tl" aria-hidden="true"></div>
   <div class="wrap">
-    <div class="sec-head"><div><span class="num">Available now</span><h2>Prints from the <em>roster.</em></h2></div></div>
     <div class="prints-grid">
       <a href="print-ian-patrick-cato.html" class="print reveal">
         <div class="pframe"><img src="img/ian-patrick-cato-pinned.jpg" alt="Current Simulation print — Ian Patrick Cato"></div>

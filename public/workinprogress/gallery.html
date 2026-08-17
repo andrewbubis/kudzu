@@ -16,6 +16,13 @@
 <meta property="og:title" content="Virtual Gallery · Kudzu Arts">
 <meta property="og:description" content="A curated viewing room of original works for sale, exclusively through Kudzu Arts. Click any piece to view it in full.">
 <noscript><style>.reveal{opacity:1 !important;transform:none !important;}</style></noscript>
+<style>
+  /* White throughout on this page only. The tan band above the wall read
+     as a gap rather than a background, and a gallery wall shows truer
+     against white than against paper. */
+  body, .site-header, .page-head { background: #fff; }
+  .page-head { padding-block: clamp(20px,2.5vw,32px) clamp(14px,2vw,22px); }
+</style>
 </head>
 <body>
 <header class="site-header">
@@ -30,8 +37,12 @@
   <button class="nav-toggle" type="button" aria-expanded="false">Menu</button>
 </header>
 
+<!-- The vine runs the full width here instead of hanging down one side.
+     It sits still: the wall below is meant to be walked, and a swaying
+     decal above it fought the horizontal movement. -->
+<div class="vine-band" aria-hidden="true"></div>
+
 <section class="page-head">
-  <div class="vine-edge right"></div>
   <div class="wrap" style="max-width:var(--maxw);">
     <p class="eyebrow" style="font-size:20px;letter-spacing:0.04em;text-transform:none;">Virtual Gallery · original works exclusive to Kudzu</p>
   </div>
