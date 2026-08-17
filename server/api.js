@@ -558,7 +558,7 @@ router.post('/inquiries', async (req, res) => {
     // Resolve the artist from their slug so the browser can't post an
     // enquiry into someone else's inbox by guessing ids.
     const { rows: ar } = await db.query(
-      'SELECT id FROM artists WHERE slug =  AND kudzu_artist_public(id)',
+      'SELECT id FROM artists WHERE slug = $1 AND kudzu_artist_public(id)',
       [String(b.artistSlug || '')]);
     if (!ar[0]) return res.status(404).json({ error: 'artist_not_found' });
 
@@ -811,7 +811,7 @@ router.get('/works', async (req, res) => {
 router.get('/artists/:slug', async (req, res) => {
   try {
     const { rows } = await db.query(
-      'SELECT * FROM artists WHERE slug =  AND kudzu_artist_public(id)', [req.params.slug]);
+      'SELECT * FROM artists WHERE slug = $1 AND kudzu_artist_public(id)', [req.params.slug]);
     if (!rows[0]) return res.status(404).json({ error: 'not_found' });
     const artist = rows[0];
     const [works, books, photos] = await Promise.all([
