@@ -201,8 +201,21 @@ router.patch('/me', auth.requireArtist, async (req, res) => {
   // There is no approval gate any more: a page is public as soon as the
   // profile is complete. `adminHidden` is the emergency brake — abuse, a
   // departure, a legal problem — and only an admin can pull it.
-  // How they want to hear about sales and messages. Never shown publicly.
+  // Their email is their login as well as where notifications go, so it
+  // is handled here rather than in the shared profile whitelist — an
+  // admin fixing a typo on someone's page has no business changing the
+  // address they sign in with.
   const body = req.body || {};
+  if (Object.prototype.hasOwnProperty.call(body, 'email')) {
+    const next = String(body.email || '').trim().toLowerCase().slice(0, 200);
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(next)) {
+      return res.status(400).json({ error: 'bad_email' });
+    }
+    sets.push(`email = $${sets.length + 1}`);
+    vals.push(next);
+  }
+
+  // How they want to hear about sales and messages. Never shown publicly.
   if (Object.prototype.hasOwnProperty.call(body, 'notifyChannel')) {
     const ch = String(body.notifyChannel);
     if (ch !== 'email' && ch !== 'sms') {
@@ -235,6 +248,11 @@ router.patch('/me', auth.requireArtist, async (req, res) => {
         WHERE id = $${vals.length} RETURNING *`, vals);
     res.json({ artist: publicArtist(rows[0]) });
   } catch (err) {
+    // Email is UNIQUE — say so plainly instead of a 500 the artist can't
+    // act on. 23505 is Postgres for a unique-constraint violation.
+    if (err.code === '23505') {
+      return res.status(409).json({ error: 'email_taken' });
+    }
     console.error('profile update failed:', err.message);
     res.status(500).json({ error: 'server_error' });
   }

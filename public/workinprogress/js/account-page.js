@@ -160,6 +160,7 @@
       $('sWorksCity').value = me.worksCity || '';
       $('sWorksCountry').value = me.worksCountry || '';
       $('sLink').value = me.link || '';
+      if ($('sEmail')) $('sEmail').value = me.email || '';
 
       // ── Notifications ─────────────────────────────────────────────
       // Internal only. An artist who never logs in still needs to hear
@@ -222,7 +223,8 @@
               bornCountry: $('sBornCountry').value.trim(),
               worksCity: $('sWorksCity').value.trim(),
               worksCountry: $('sWorksCountry').value.trim(),
-              link: $('sLink').value.trim()
+              link: $('sLink').value.trim(),
+              email: $('sEmail') ? $('sEmail').value.trim() : undefined
             })
           });
           // Straight back to the profile so they can see the change land,
@@ -231,10 +233,15 @@
           location.href = 'profile.html';
           return;
         } catch (e) {
-          note.textContent = 'Could not save — try again.';
+          // Email is the one field here that can fail for a reason worth
+          // naming — it's their login, and it has to be unique.
+          note.textContent =
+            e.status === 409 ? 'That email is already on another account.'
+          : e.status === 400 ? 'Check the email address — it doesn’t look right.'
+          : 'Could not save — try again.';
           note.style.color = '#b3261e';
           btn.disabled = false;
-          setTimeout(function () { note.textContent = ''; }, 3200);
+          setTimeout(function () { note.textContent = ''; }, 4500);
         }
       });
 
