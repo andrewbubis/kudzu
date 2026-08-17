@@ -249,6 +249,16 @@
 }
 .wframe img { display: block; width: 100%; height: auto; }
 .wframe:hover { transform: translateY(-7px) scale(1.03); box-shadow: 0 32px 54px rgba(33,28,42,0.36), 0 4px 12px rgba(33,28,42,0.22); z-index: 6; }
+/* An empty spot on the wall. Keeps the room the right length to walk
+   while the roster is small — reads as a hanging space waiting for work,
+   not as a picture that failed to load. */
+.wframe-ghost {
+  width: 10%; aspect-ratio: 4 / 5;
+  background: rgba(255,255,255,0.045);
+  border: 1px dashed rgba(255,255,255,0.16);
+  box-shadow: none; pointer-events: none;
+}
+.wframe-ghost:hover { transform: none; box-shadow: none; }
 .frame-black  { border: 6px solid #1c1826; }
 .frame-walnut { border: 7px solid #5a4632; }
 .frame-oak    { border: 7px solid #b99b6b; }

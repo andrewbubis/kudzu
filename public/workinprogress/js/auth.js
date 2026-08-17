@@ -11,7 +11,7 @@
   function set(k, v) { localStorage.setItem(k, JSON.stringify(v)); }
 
   // Roster artists can sign in with <slug>@kudzuarts.com / kudzu2026 (demo seeds).
-  var SLUGS = ['alan-chin', 'ben-quinn', 'brandon-donahue-shipp', 'daniel-herr', 'ellie-caudill', 'evan-christof-seeling', 'hans-wendel', 'ian-patrick-cato', 'isis-cahuas', 'jennie-lawless', 'katya-labowe-stoll', 'marta-lee', 'michael-haight', 'mike-chattem', 'talia-ceravolo', 'wyatt-mills'];
+  var SLUGS = ['alan-chin', 'ben-quinn', 'daniel-herr', 'ellie-caudill', 'evan-christof-seeling', 'hans-wendel', 'ian-patrick-cato', 'isis-cahuas', 'katya-labowe-stoll', 'marta-lee', 'mike-chattem', 'talia-ceravolo', 'wyatt-mills'];
   var ROSTER = {};
   SLUGS.forEach(function (s) {
     var name = s.split('-').map(function (w) { return w.charAt(0).toUpperCase() + w.slice(1); }).join(' ');

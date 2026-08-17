@@ -263,6 +263,12 @@ section { position: relative; padding-block: clamp(72px, 9vw, 128px); }
   opacity: 0; transition: opacity .3s ease; pointer-events: none;
 }
 .tile:hover .name, .tile:focus-visible .name { opacity: 1; }
+/* Empty seat in the home-page roster row — holds the four-across rhythm
+   while the roster is still short. Quiet on purpose. */
+.tile.ghost-tile {
+  aspect-ratio: 4 / 5; background: var(--paper-2);
+  border: 1px solid rgba(20,17,12,0.06); pointer-events: none;
+}
 .tile.slot { cursor: default; }
 @media (prefers-reduced-motion: reduce) {
   .tile .frame .art, .tile .name { transition: none; }
