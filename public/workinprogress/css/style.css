@@ -306,6 +306,18 @@ section > .wrap { position: relative; z-index: 1; }
 }
 .link-arrow:hover { color: var(--gold); }
 
+/* ── Vine bands ───────────────────────────────────────────────────
+   A vine that runs the full width of the page and stays put. Lives in
+   both stylesheets because artists.html loads this file while the rest
+   of the site loads v3.css — keep the two in step. */
+.vine-band {
+  width: 100%; height: clamp(56px, 6vw, 92px);
+  background: url("../img/vine-hand.png") left center / auto 100% repeat-x;
+  opacity: 0.85; pointer-events: none;
+}
+.vine-band.tall { height: clamp(74px, 8vw, 118px); }
+@media (max-width: 560px) { .vine-band { height: 46px; } .vine-band.tall { height: 60px; } }
+
 /* ── Artist grid ──────────────────────────────────────────────── */
 .artist-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--line); }
 .artist-card {
