@@ -177,6 +177,25 @@ RETURNS boolean AS $$
      AND NOT COALESCE((SELECT admin_hidden FROM artists WHERE id = a_id), false);
 $$ LANGUAGE sql STABLE;
 
+-- ── Gallery photos ───────────────────────────────────────────────────
+-- Not artworks. These are the studio shots, the hands-at-work pictures,
+-- the detail crops — the things that make a roster feel like people
+-- rather than a catalogue. They carry no price and no shipping figures,
+-- so none of the artwork rules apply to them.
+--
+-- They surface twice: on the artist's own page, and in the pool the rest
+-- of the site cycles through. An artist who adds more simply appears in
+-- more places, which is the whole incentive.
+CREATE TABLE IF NOT EXISTS artist_photos (
+  id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  artist_id   uuid NOT NULL REFERENCES artists(id) ON DELETE CASCADE,
+  image_path  text NOT NULL,
+  caption     text,
+  position    int  NOT NULL DEFAULT 0,
+  created_at  timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS artist_photos_idx ON artist_photos (artist_id, position);
+
 -- ── Shipping figures ─────────────────────────────────────────────────
 -- The artist ships the work themselves, so the packed parcel has to be
 -- described before the piece exists — all four figures, each positive.

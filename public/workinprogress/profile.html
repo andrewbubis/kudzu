@@ -40,6 +40,29 @@
   <button class="nav-toggle" type="button" aria-expanded="false">Menu</button>
 </header>
 
+<!-- First-run welcome ─────────────────────────────────────────────
+     Shown once, when someone lands here for the first time after
+     redeeming an invite. It exists because the four requirements are
+     enforced hard — an artist who doesn't know about them just finds a
+     dead upload button and no explanation. -->
+<div class="hello-veil" id="helloVeil" hidden>
+  <div class="hello" role="dialog" aria-modal="true" aria-labelledby="helloTitle">
+    <button class="hello-x" type="button" id="helloClose" aria-label="Close">×</button>
+    <p class="hello-eyebrow">Welcome</p>
+    <h2 id="helloTitle">Hello — and welcome<br><span class="ital">to Kudzu Arts.</span></h2>
+    <p class="hello-lede">This is your page. You build it, you decide what goes on it, and nobody has to approve you.</p>
+    <p class="hello-lede">Four things first, and then you can start adding work:</p>
+    <ol class="hello-list">
+      <li><b>A photo of you.</b> Collectors meet the person before the work.</li>
+      <li><b>A bio.</b> Whatever you want it to say.</li>
+      <li><b>A C.V.</b> Same — shows, press, teaching, however you keep it.</li>
+      <li><b>Your Stripe account.</b> This is how you get paid. Money goes straight to your bank when something sells; it never sits with us.</li>
+    </ol>
+    <p class="hello-lede">Once those are done, upload as much as you like. Each piece needs its packed weight and box size — you'll be shipping it yourself, and a parcel nobody can measure is one nobody can buy. Finished work goes live straight away. Anything you're not ready to show, keep as a draft.</p>
+    <button class="acct-btn big" type="button" id="helloGo">Let's get started</button>
+  </div>
+</div>
+
 <main class="acct">
 
   <!-- Identity ─────────────────────────────────────────────────── -->
@@ -66,7 +89,9 @@
   <!-- Onboarding checklist ─────────────────────────────────────── -->
   <section class="acct-todo" id="todo" aria-label="Getting started">
     <button class="x" type="button" id="todoClose" aria-label="Dismiss">×</button>
-    <h2>start selling your work</h2>
+    <h2>start selling your work
+      <a href="#" id="helloAgain" style="float:right;font-style:normal;font-size:12px;color:#2b2bd6;">how does this work?</a>
+    </h2>
     <ul>
       <li data-step="stripe">to list and sell work on Kudzu you need to connect your bank account through Stripe <span class="tick"></span>
         <button class="acct-btn" type="button" id="connectBtn"
@@ -83,6 +108,8 @@
     <button class="acct-tab" role="tab" aria-selected="true"  data-tab="work">work</button>
     <button class="acct-tab" role="tab" aria-selected="false" data-tab="sold">sold</button>
     <button class="acct-tab" role="tab" aria-selected="false" data-tab="books">books</button>
+    <button class="acct-tab" role="tab" aria-selected="false" data-tab="photos"
+            title="Photos of you in your studio and detail shots of your work — we cycle these through the site">gallery photos</button>
     <button class="acct-tab" role="tab" aria-selected="false" data-tab="bio">bio</button>
     <button class="acct-tab" role="tab" aria-selected="false" data-tab="cv">c.v.</button>
   </div>
@@ -95,7 +122,7 @@
       <button type="button" id="reorderBtn">reorder</button>
     </div>
     <div class="right">
-      <span class="count" id="pubCount">published (0/6)</span>
+      <span class="count" id="pubCount">published (0/8)</span>
       <span class="count off" id="draftCount">drafts (0)</span>
     </div>
   </div>
@@ -121,6 +148,27 @@
   </div>
   <div class="acct-grid" id="booksGrid" role="tabpanel" hidden></div>
   <p class="acct-empty" id="booksEmpty" hidden>No books yet. Add zines, catalogues, monographs, or anything in print.</p>
+
+  <!-- Gallery photos ───────────────────────────────────────────────
+       Not artworks: no price, no shipping, none of the publishing rules.
+       These are the studio and detail shots the rest of the site cycles
+       through, which is why the copy leans on what they're for. -->
+  <section id="photosPanel" role="tabpanel" hidden>
+    <div class="acct-bar">
+      <div class="left">
+        <button type="button" id="photoAddBtn" title="Add other photos of you in your studio space, and detail shots of your work. We cycle these through the site — the more you add, the more people see you.">add photos</button>
+      </div>
+      <div class="right">
+        <span class="count" id="photoCount">photos (0/12)</span>
+      </div>
+    </div>
+    <p class="acct-empty" id="photoHint" style="font-style:normal;padding:0 0 14px;color:#666;">
+      Add other photos of you in your studio space, and detail shots of your work.
+      We cycle these through the site — the more you add, the more people see you.
+    </p>
+    <input type="file" id="photoGalleryInput" accept="image/*" multiple hidden>
+    <div class="acct-grid" id="photoGrid"></div>
+  </section>
 
   <!-- Bio ──────────────────────────────────────────────────────── -->
   <section class="acct-panel" id="bioPanel" role="tabpanel" hidden>

@@ -73,6 +73,41 @@
 .acct-share { background: none; border: 0; color: var(--a-soft); font-size: 15px; padding: 4px; }
 
 /* ── Onboarding checklist ──────────────────────────────────────────── */
+/* ── First-run welcome ─────────────────────────────────────────────
+   Deliberately calm: no confetti, no progress bar. It's a note from a
+   person, and it only ever appears once. */
+.hello-veil {
+  position: fixed; inset: 0; z-index: 200;
+  background: rgba(20, 17, 12, 0.55);
+  display: flex; align-items: center; justify-content: center;
+  padding: 24px; overflow-y: auto;
+}
+.hello-veil[hidden] { display: none; }
+.hello {
+  position: relative; background: #fff; max-width: 540px; width: 100%;
+  padding: clamp(26px, 4vw, 42px); border: 1px solid #e2e2e2;
+  box-shadow: 0 30px 70px rgba(20, 17, 12, 0.28);
+}
+.hello-x {
+  position: absolute; top: 10px; right: 12px; background: none; border: 0;
+  font-size: 24px; line-height: 1; color: #999; cursor: pointer; padding: 4px 8px;
+}
+.hello-x:hover { color: #111; }
+.hello-eyebrow {
+  font-family: var(--sans); font-size: 11px; letter-spacing: 0.18em;
+  text-transform: uppercase; color: var(--olive, #6b7355); margin: 0 0 10px;
+}
+.hello h2 {
+  font-family: var(--serif, Georgia, serif); font-weight: 400;
+  font-size: clamp(26px, 4vw, 36px); line-height: 1.08; margin: 0 0 18px; color: #111;
+}
+.hello h2 .ital { font-style: italic; color: var(--olive, #6b7355); }
+.hello-lede { margin: 0 0 14px; color: #444; line-height: 1.55; }
+.hello-list { margin: 0 0 18px; padding-left: 20px; color: #444; line-height: 1.5; }
+.hello-list li { margin-bottom: 9px; }
+.hello-list b { color: #111; font-weight: 600; }
+.hello .acct-btn.big { width: 100%; padding: 13px; font-size: 14px; margin-top: 4px; }
+
 .acct-todo {
   position: relative; margin: 26px 0 0;
   background: var(--a-panel); border: 1px solid #dae2f5;

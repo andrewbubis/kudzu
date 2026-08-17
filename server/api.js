@@ -139,14 +139,16 @@ router.post('/auth/signup', async (req, res) => {
 // ── Me ───────────────────────────────────────────────────────────────
 router.get('/me', auth.requireArtist, async (req, res) => {
   try {
-    const [works, books] = await Promise.all([
+    const [works, books, photos] = await Promise.all([
       db.query('SELECT * FROM artworks WHERE artist_id = $1 ORDER BY position, created_at', [req.artist.id]),
-      db.query('SELECT * FROM books    WHERE artist_id = $1 ORDER BY position, created_at', [req.artist.id])
+      db.query('SELECT * FROM books    WHERE artist_id = $1 ORDER BY position, created_at', [req.artist.id]),
+      db.query('SELECT * FROM artist_photos WHERE artist_id = $1 ORDER BY position, created_at', [req.artist.id])
     ]);
     res.json({
       artist: publicArtist(req.artist),
       works: works.rows.map(publicWork),
-      books: books.rows.map(publicBook)
+      books: books.rows.map(publicBook),
+      photos: photos.rows.map(publicPhoto)
     });
   } catch (err) {
     console.error('me failed:', err.message);
@@ -225,6 +227,80 @@ router.post('/me/photo', auth.requireArtist, storage.upload.single('photo'), asy
   } catch (err) {
     console.error('photo upload failed:', err.message);
     res.status(400).json({ error: 'bad_image' });
+  }
+});
+
+// ── Gallery photos ───────────────────────────────────────────────────
+// Studio shots and detail crops. Capped so a profile stays a profile.
+const MAX_GALLERY_PHOTOS = 12;
+
+const publicPhoto = (p) => ({
+  id: p.id, image: p.image_path, caption: p.caption || '', position: p.position
+});
+
+router.post('/me/photos', auth.requireArtist, storage.upload.single('photo'), async (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'no_file' });
+  let saved;
+  try {
+    const { rows: count } = await db.query(
+      'SELECT count(*)::int AS n FROM artist_photos WHERE artist_id = $1', [req.artist.id]);
+    if (count[0].n >= MAX_GALLERY_PHOTOS) {
+      return res.status(409).json({ error: 'photo_limit_reached', max: MAX_GALLERY_PHOTOS });
+    }
+    saved = await storage.store(req.file.buffer, req.artist.id, 'photo');
+  } catch (err) {
+    return res.status(400).json({ error: 'bad_image' });
+  }
+  try {
+    const caption = req.body && req.body.caption
+      ? String(req.body.caption).trim().slice(0, 200) : null;
+    const { rows } = await db.query(
+      `INSERT INTO artist_photos (artist_id, image_path, caption, position)
+       VALUES ($1,$2,$3,
+               COALESCE((SELECT max(position)+1 FROM artist_photos WHERE artist_id = $1), 0))
+       RETURNING *`, [req.artist.id, saved.path, caption]);
+    res.status(201).json(publicPhoto(rows[0]));
+  } catch (err) {
+    storage.remove(saved.path);
+    console.error('gallery photo insert failed:', err.message);
+    res.status(500).json({ error: 'server_error' });
+  }
+});
+
+router.delete('/me/photos/:id', auth.requireArtist, async (req, res) => {
+  try {
+    const { rows } = await db.query(
+      'DELETE FROM artist_photos WHERE id = $1 AND artist_id = $2 RETURNING image_path',
+      [req.params.id, req.artist.id]);
+    if (!rows[0]) return res.status(404).json({ error: 'not_found' });
+    storage.remove(rows[0].image_path);
+    res.status(204).end();
+  } catch (err) {
+    res.status(500).json({ error: 'server_error' });
+  }
+});
+
+// The site-wide pool. Only from artists whose pages are public, so a
+// half-built profile never leaks a photo onto the home page. Shuffled in
+// the database so every visit cycles differently.
+router.get('/photos', async (req, res) => {
+  const limit = Math.min(parseInt(req.query.limit, 10) || 24, 60);
+  try {
+    const { rows } = await db.query(
+      `SELECT p.image_path, p.caption, a.name AS artist_name, a.slug AS artist_slug
+         FROM artist_photos p
+         JOIN artists a ON a.id = p.artist_id
+        WHERE kudzu_artist_public(a.id)
+     ORDER BY random()
+        LIMIT $1`, [limit]);
+    res.json({
+      photos: rows.map((r) => ({
+        image: r.image_path, caption: r.caption || '',
+        artist: r.artist_name, slug: r.artist_slug
+      }))
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'server_error' });
   }
 });
 
@@ -738,11 +814,13 @@ router.get('/artists/:slug', async (req, res) => {
       'SELECT * FROM artists WHERE slug =  AND kudzu_artist_public(id)', [req.params.slug]);
     if (!rows[0]) return res.status(404).json({ error: 'not_found' });
     const artist = rows[0];
-    const [works, books] = await Promise.all([
+    const [works, books, photos] = await Promise.all([
       db.query(`SELECT * FROM artworks WHERE artist_id = $1
                   AND status IN ('published','sold') ORDER BY position`, [artist.id]),
       db.query(`SELECT * FROM books WHERE artist_id = $1
-                  AND status IN ('published','sold') ORDER BY position`, [artist.id])
+                  AND status IN ('published','sold') ORDER BY position`, [artist.id]),
+      db.query(`SELECT * FROM artist_photos WHERE artist_id = $1
+                ORDER BY position, created_at`, [artist.id])
     ]);
     res.json({
       artist: {
@@ -752,7 +830,8 @@ router.get('/artists/:slug', async (req, res) => {
         worksCountry: artist.works_country, link: artist.link_url
       },
       works: works.rows.map(publicWork),
-      books: books.rows.map(publicBook)
+      books: books.rows.map(publicBook),
+      photos: photos.rows.map(publicPhoto)
     });
   } catch (err) {
     res.status(500).json({ error: 'server_error' });

@@ -13,7 +13,7 @@
   var MAX_PUBLISHED = 8;
   var MAX_FILE_MB = 12;
 
-  var state = { me: null, works: [], books: [], live: false };
+  var state = { me: null, works: [], books: [], photos: [], live: false };
 
   // ── API helper ────────────────────────────────────────────────────
   async function api(path, opts) {
@@ -35,7 +35,7 @@
       me: { name: 'your name', bornYear: null, bornCountry: null,
             worksCity: null, worksCountry: null, link: null,
             photo: null, bio: '', cv: '', stripeConnected: false },
-      works: [], books: []
+      works: [], books: [], photos: []
     };
   }
 
@@ -566,11 +566,122 @@
     });
   });
 
+  // ── First-run welcome ─────────────────────────────────────────────
+  // Once per browser, and only for someone who hasn't finished setting up.
+  // Somebody with a complete profile has clearly worked it out already.
+  var HELLO_KEY = 'kudzu.hello.seen';
+
+  function openHello() {
+    var veil = $('helloVeil');
+    if (!veil) return;
+    veil.hidden = false;
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeHello() {
+    var veil = $('helloVeil');
+    if (!veil) return;
+    veil.hidden = true;
+    document.body.style.overflow = '';
+    try { localStorage.setItem(HELLO_KEY, '1'); } catch (e) {}
+  }
+
+  function maybeHello() {
+    if (!$('helloVeil')) return;
+    var seen;
+    try { seen = localStorage.getItem(HELLO_KEY); } catch (e) { seen = '1'; }
+    if (!seen && profileGaps().length) openHello();
+  }
+
+  if ($('helloClose')) $('helloClose').addEventListener('click', closeHello);
+  if ($('helloGo')) $('helloGo').addEventListener('click', closeHello);
+  if ($('helloVeil')) {
+    $('helloVeil').addEventListener('click', function (e) {
+      if (e.target === this) closeHello();
+    });
+  }
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && $('helloVeil') && !$('helloVeil').hidden) closeHello();
+  });
+  // A way back to it, since it's easy to close before reading.
+  if ($('helloAgain')) {
+    $('helloAgain').addEventListener('click', function (e) { e.preventDefault(); openHello(); });
+  }
+
+  // ── Gallery photos ────────────────────────────────────────────────
+  // Studio shots and detail crops, not artworks — no price, no shipping,
+  // none of the publishing rules. They feed the artist's own page and the
+  // pool the rest of the site cycles through.
+  var MAX_PHOTOS = 12;
+
+  function renderPhotos() {
+    var grid = $('photoGrid');
+    if (!grid) return;
+    grid.innerHTML = '';
+    state.photos.forEach(function (p) {
+      var el = document.createElement('figure');
+      el.className = 'work';
+      el.innerHTML =
+        '<button class="kill" type="button" aria-label="Remove this photo">×</button>' +
+        '<div class="shot"><img src="' + esc(p.image) + '" alt=""></div>';
+      el.querySelector('.kill').addEventListener('click', async function () {
+        if (!confirm('Remove this photo?')) return;
+        try {
+          if (state.live) await api('/me/photos/' + p.id, { method: 'DELETE' });
+          state.photos = state.photos.filter(function (x) { return x.id !== p.id; });
+          renderPhotos();
+        } catch (e) { alert('Could not remove that photo.'); }
+      });
+      grid.appendChild(el);
+    });
+
+    $('photoCount').textContent = 'photos (' + state.photos.length + '/' + MAX_PHOTOS + ')';
+    $('photoHint').hidden = state.photos.length > 0;
+    $('photoAddBtn').disabled = state.photos.length >= MAX_PHOTOS;
+    $('photoAddBtn').textContent = state.photos.length >= MAX_PHOTOS ? 'twelve is the limit' : 'add photos';
+  }
+
+  if ($('photoAddBtn')) {
+    $('photoAddBtn').addEventListener('click', function () { $('photoGalleryInput').click(); });
+  }
+
+  if ($('photoGalleryInput')) {
+    $('photoGalleryInput').addEventListener('change', async function () {
+      var files = Array.prototype.slice.call(this.files || []);
+      this.value = '';
+      for (var i = 0; i < files.length; i++) {
+        if (state.photos.length >= MAX_PHOTOS) {
+          alert('Twelve photos is the limit. Remove one to add another.');
+          break;
+        }
+        var f = files[i];
+        if (f.size > MAX_FILE_MB * 1048576) {
+          alert('“' + f.name + '” is over ' + MAX_FILE_MB + 'MB. Try a smaller version.');
+          continue;
+        }
+        if (state.live) {
+          var fd = new FormData();
+          fd.append('photo', f);
+          try {
+            var saved = await fetch('/api/me/photos', {
+              method: 'POST', body: fd, credentials: 'same-origin'
+            }).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); });
+            state.photos.push(saved);
+          } catch (e) { alert('Could not upload “' + f.name + '”.'); }
+        } else {
+          state.photos.push({ id: 'tmp-' + Date.now() + '-' + i, image: URL.createObjectURL(f) });
+        }
+        renderPhotos();
+      }
+    });
+  }
+
   // ── Tabs ──────────────────────────────────────────────────────────
   var panels = {
     work: ['workGrid', 'workEmpty', 'workBar'],
     sold: ['soldGrid', 'soldEmpty'],
     books: ['booksGrid', 'booksEmpty', 'booksBar'],
+    photos: ['photosPanel'],
     bio:  ['bioPanel'],
     cv:   ['cvPanel']
   };
@@ -584,6 +695,7 @@
       });
       if (tab.dataset.tab === 'work') renderWorks();
       if (tab.dataset.tab === 'books') renderBooks();
+      if (tab.dataset.tab === 'photos') renderPhotos();
       if (tab.dataset.tab === 'sold') $('soldEmpty').hidden = state.works.some(function (w) { return w.status === 'sold'; });
     });
   });
@@ -609,14 +721,17 @@
   (async function boot() {
     try {
       var data = await api('/me');
-      state.me = data.artist; state.works = data.works || []; state.books = data.books || []; state.live = true;
+      state.me = data.artist; state.works = data.works || []; state.books = data.books || [];
+      state.photos = data.photos || []; state.live = true;
     } catch (e) {
       if (e.status === 401) { location.href = 'login.html'; return; }
-      var d = demo(); state.me = d.me; state.works = d.works; state.books = d.books; state.live = false;
+      var d = demo(); state.me = d.me; state.works = d.works; state.books = d.books;
+      state.photos = d.photos || []; state.live = false;
       console.info('Kudzu: backend not reachable — running in demo mode.');
     }
     render();
     refreshConnect();
+    maybeHello();
 
     // Coming back from Stripe's onboarding — re-check and tidy the URL.
     if (/[?&]connected=1/.test(location.search)) {
