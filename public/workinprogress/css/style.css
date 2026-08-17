@@ -605,3 +605,21 @@ section > .wrap { position: relative; z-index: 1; }
   .services-grid { grid-template-columns: 1fr; }
   .shop-grid { grid-template-columns: 1fr; }
 }
+
+/* ── Footer brand lockup ──────────────────────────────────────────
+   The K and the Instagram mark, side by side at the same weight. The
+   Instagram link used to be a small outlined button buried in the
+   Connect column; at this size it reads as part of the identity rather
+   than as a link someone forgot to style. Green matches the K. */
+.footer-lockup { display: flex; align-items: center; gap: clamp(16px, 2.4vw, 34px); margin-bottom: 20px; flex-wrap: wrap; }
+.footer-lockup .brand { gap: 14px; }
+.footer-lockup .mark { height: clamp(58px, 6.5vw, 84px); width: auto; margin: 0; }
+.footer-lockup .word { font-size: clamp(27px, 2.8vw, 36px); }
+.footer-ig-big { display: inline-flex; align-items: center; transition: transform .2s, opacity .2s; }
+.footer-ig-big svg { width: clamp(58px, 6.5vw, 84px); height: clamp(58px, 6.5vw, 84px); display: block; }
+.footer-ig-big:hover { transform: translateY(-2px); opacity: 0.8; }
+@media (max-width: 560px) {
+  .footer-lockup .mark, .footer-ig-big svg { height: 52px; width: auto; }
+  .footer-ig-big svg { width: 52px; }
+}
+.footer-ig-big { color: var(--olive-bg); }
