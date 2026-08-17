@@ -50,8 +50,10 @@
       menu.className = 'nav-cta nav-auth-menu';
       menu.dataset.open = 'false';
       menu.innerHTML =
+        // Their own name, spelled the way they spell it. Lowercasing it
+        // turned Ian into ian, which just looks like a typo in the nav.
         '<button type="button" aria-haspopup="true" aria-expanded="false">' +
-          esc((me.name || 'account').split(' ')[0].toLowerCase()) +
+          esc((me.name || 'Account').split(' ')[0]) +
         '</button>' +
         '<ul>' +
           '<li><a href="profile.html">me</a></li>' +
