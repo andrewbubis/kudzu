@@ -151,7 +151,7 @@ section { position: relative; padding-block: clamp(72px, 9vw, 128px); }
 /* The signed-in account menu sits right after the nav links. Without a
    gap its button crowds straight into "Contact" and reads as another nav
    item rather than a separate control. */
-.nav-auth-menu { position: relative; margin-left: clamp(18px, 2.6vw, 40px); }
+.nav-auth-menu { position: relative; margin-left: clamp(34px, 4.5vw, 68px); }
 .nav-auth-menu > button {
   background: none; border: 0; font: inherit; cursor: pointer;
   padding: 7px 14px; border: 1px solid var(--line); color: var(--ink);
