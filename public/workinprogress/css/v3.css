@@ -457,10 +457,13 @@ section { position: relative; padding-block: clamp(72px, 9vw, 128px); }
 .footer-lockup .mark { height: clamp(58px, 6.5vw, 84px); width: auto; margin: 0; }
 .footer-lockup .word { font-size: clamp(27px, 2.8vw, 36px); }
 .footer-ig-big { display: inline-flex; align-items: center; transition: transform .2s, opacity .2s; }
-.footer-ig-big svg { width: clamp(58px, 6.5vw, 84px); height: clamp(58px, 6.5vw, 84px); display: block; }
+/* A touch larger than the K on purpose — the icon is a thin outline
+   against the K's solid painted mass, so matching them pixel for pixel
+   made it read smaller than it is. */
+.footer-ig-big svg { width: clamp(68px, 7.6vw, 98px); height: clamp(68px, 7.6vw, 98px); display: block; }
 .footer-ig-big:hover { transform: translateY(-2px); opacity: 0.8; }
 @media (max-width: 560px) {
-  .footer-lockup .mark, .footer-ig-big svg { height: 52px; width: auto; }
-  .footer-ig-big svg { width: 52px; }
+  .footer-lockup .mark { height: 52px; width: auto; }
+  .footer-ig-big svg { width: 60px; height: 60px; }
 }
 .footer-ig-big { color: var(--olive-br); }
