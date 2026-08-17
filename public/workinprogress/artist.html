@@ -68,20 +68,34 @@
     <p class="ap-bio" id="apBio"></p>
 
     <section class="ap-enquire" id="apEnquire" hidden>
-      <h2>Enquire about this artist's work</h2>
+      <p class="eyebrow">Get in touch</p>
+      <h2>Ask about <span class="ital">the work.</span></h2>
+      <p class="ap-enq-lede">Messages go straight to the artist. They'll reply to you directly.</p>
       <p class="note" id="apEnqNote" hidden></p>
+
       <form id="apEnqForm" novalidate>
-        <label for="eqName">your name</label>
-        <input id="eqName" type="text" autocomplete="name" required>
+        <!-- Name and email side by side: they're short, and stacking them
+             made the form look longer and more of an ask than it is. -->
+        <div class="ap-enq-row">
+          <div class="ap-field">
+            <label for="eqName">Your name</label>
+            <input id="eqName" type="text" autocomplete="name" required placeholder="Jane Ellis">
+          </div>
+          <div class="ap-field">
+            <label for="eqEmail">Email</label>
+            <input id="eqEmail" type="email" autocomplete="email" required placeholder="jane@example.com">
+          </div>
+        </div>
 
-        <label for="eqEmail">email</label>
-        <input id="eqEmail" type="email" autocomplete="email" required>
+        <div class="ap-field">
+          <label for="eqMsg">Message</label>
+          <textarea id="eqMsg" rows="7" required
+            placeholder="A piece you're drawn to, a commission, a question about availability."></textarea>
+        </div>
 
-        <label for="eqMsg">message</label>
-        <textarea id="eqMsg" rows="4" required
-          placeholder="A piece you're drawn to, a commission, a question about availability."></textarea>
-
-        <button class="btn btn-clay" type="submit" id="eqSend">Send</button>
+        <div class="ap-enq-send">
+          <button class="btn btn-clay btn-lg" type="submit" id="eqSend">Send message</button>
+        </div>
       </form>
     </section>
   </div>

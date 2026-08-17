@@ -441,3 +441,81 @@
   font-style: normal;
   color: var(--olive);
 }
+
+/* ── Artist page: enquiry form ─────────────────────────────────────
+   This had no styling at all — bare labels and browser-default inputs
+   stacked one on top of the next, which read as a support ticket rather
+   than as writing to a person about their work.
+
+   The room to write is the point. A collector asking about a $5,000
+   painting is composing a paragraph, not filling in a field, so the
+   message box is deliberately the largest thing here. */
+.ap-enquire {
+  margin-top: clamp(48px, 6vw, 88px);
+  padding-top: clamp(34px, 4.5vw, 56px);
+  border-top: 1px solid var(--line);
+  max-width: 660px;
+}
+.ap-enquire h2 {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: clamp(30px, 3.6vw, 46px);
+  line-height: 1.05;
+  margin: 14px 0 0;
+  color: var(--ink);
+}
+.ap-enq-lede {
+  font-family: var(--serif);
+  font-size: 16px;
+  color: var(--ink-soft);
+  margin: 14px 0 clamp(26px, 3vw, 38px);
+}
+
+.ap-enquire .note {
+  margin: 0 0 22px; padding: 13px 16px;
+  background: #f2faf5; border: 1px solid #bfe0cd; color: #1f7a45;
+  font-family: var(--serif); font-size: 15px;
+}
+.ap-enquire .note[hidden] { display: none; }
+
+/* Short fields share a line; the message gets the page to itself. */
+.ap-enq-row { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(16px, 2vw, 26px); }
+@media (max-width: 620px) { .ap-enq-row { grid-template-columns: 1fr; } }
+
+.ap-field { display: block; margin-bottom: clamp(20px, 2.4vw, 30px); }
+.ap-field label {
+  display: block; margin-bottom: 9px;
+  font-family: var(--sans); font-size: 11px; font-weight: 600;
+  letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-mute);
+}
+.ap-field input,
+.ap-field textarea {
+  width: 100%;
+  padding: 15px 17px;
+  font-family: var(--serif);
+  font-size: 17px;
+  line-height: 1.55;
+  color: var(--ink);
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 0;
+  outline: none;
+  transition: border-color .2s, box-shadow .2s;
+  -webkit-appearance: none;
+}
+.ap-field textarea {
+  min-height: 190px;
+  resize: vertical;
+  display: block;
+}
+.ap-field input::placeholder,
+.ap-field textarea::placeholder { color: #b3ada4; font-style: italic; }
+.ap-field input:focus,
+.ap-field textarea:focus {
+  border-color: var(--clay);
+  box-shadow: 0 0 0 3px rgba(138, 143, 67, 0.13);
+}
+
+.ap-enq-send { margin-top: clamp(6px, 1vw, 12px); }
+.ap-enq-send .btn { width: 100%; justify-content: center; }
+@media (min-width: 621px) { .ap-enq-send .btn { width: auto; min-width: 220px; } }
