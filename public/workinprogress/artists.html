@@ -14,7 +14,15 @@
 <meta property="og:title" content="Artists · Kudzu Arts">
 <meta property="og:description" content="The artists of Kudzu Arts, working across Nashville, Los Angeles, Austin, Miami, and Savannah.">
 <noscript><style>.reveal{opacity:1 !important;transform:none !important;}</style></noscript>
-<style>.artist-grid { gap: clamp(24px,3.5vw,52px) !important; background: transparent !important; }</style>
+<style>
+  .artist-grid { gap: clamp(24px,3.5vw,52px) !important; background: transparent !important; }
+  /* White the whole way down. The tan ran from the top bar to the top of
+     the images and read as an unfinished band rather than a background. */
+  body, .site-header, .page-head { background: #fff; }
+  .page-head { padding-block: clamp(18px,2.5vw,30px) clamp(16px,2.2vw,26px); }
+  /* Smaller than the site default — this is a label, not a hero. */
+  .page-head h1 { font-size: clamp(32px,4.4vw,58px); margin: 0; }
+</style>
 </head>
 <body >
 <header class="site-header">
@@ -32,9 +40,12 @@
 <!-- The roster copy that used to sit here now closes the page instead.
      It explained the grid before anyone had seen it; below the work it
      reads as a note rather than a preamble. -->
+<!-- Vine across the top instead of climbing one side — the single right-hand
+     vine left the header lopsided. -->
+<div class="vine-band" aria-hidden="true"></div>
+
 <section class="page-head">
-  <div class="vine-climb right"></div>
-  <div class="wrap"><p class="eyebrow">The Artists</p><h1>A growing <span class="ital">roster.</span></h1></div>
+  <div class="wrap"><h1>A growing <span class="ital">roster.</span></h1></div>
 </section>
 
 <section style="padding-top:0;" class="artist-area">
@@ -58,7 +69,9 @@
     </div>
   </div>
 </section>
-<div class="vine-divider" aria-hidden="true"></div>
+<!-- Full width and heavier than the old centred divider, which stopped
+     short of both edges and read as a stray sprig. -->
+<div class="vine-band tall" aria-hidden="true"></div>
 <section class="on-forest reveal" style="text-align:center;">
   <div class="wrap" style="max-width:680px;">
     <div class="sprig gold" aria-hidden="true"></div>

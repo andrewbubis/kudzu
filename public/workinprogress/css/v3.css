@@ -173,7 +173,30 @@ section { position: relative; padding-block: clamp(72px, 9vw, 128px); }
    swaying edge decals were crowding the work. Tiles horizontally so it
    fills any screen width instead of stretching. */
 .vine-band { width: 100%; height: clamp(56px, 6vw, 92px); background: url("../img/vine-hand.png") left center / auto 100% repeat-x; opacity: 0.85; pointer-events: none; }
-@media (max-width: 560px) { .vine-band { height: 46px; } }
+.vine-band.tall { height: clamp(74px, 8vw, 118px); }
+@media (max-width: 560px) { .vine-band { height: 46px; } .vine-band.tall { height: 60px; } }
+
+/* Vine around all four walls of a section rather than dabbed in two
+   corners. One pseudo-element carrying four background layers — top and
+   bottom tile across, the sides tile down — so it grows around whatever
+   height the section ends up being. */
+.vine-frame { position: relative; }
+.vine-frame > * { position: relative; z-index: 1; }
+.vine-frame::before {
+  content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 0;
+  opacity: 0.5;
+  background:
+    url("../img/vine-hand.png")       top    left / auto 58px repeat-x,
+    url("../img/vine-hand.png")       bottom left / auto 58px repeat-x,
+    url("../img/vine-hand-left.png")  left   top  / 58px auto repeat-y,
+    url("../img/vine-hand-right.png") right  top  / 58px auto repeat-y;
+}
+@media (max-width: 760px) {
+  .vine-frame::before {
+    background-size: auto 40px, auto 40px, 40px auto, 40px auto;
+    opacity: 0.38;
+  }
+}
 .sprig { width: 104px; height: 60px; background: url("../img/vine-hand-sprig.png") center/contain no-repeat; margin: 0 auto 6px; }
 .sprig.gold { background-image: url("../img/vine-hand-sprig-gold.png"); }
 
