@@ -24,9 +24,15 @@
   /* The frame threw a warm drop shadow that haloed the print. A print
      should sit on the page, not glow off it. */
   .print .pframe { box-shadow: none; border: 1px solid var(--line); padding: 6%; }
-  /* Show the whole image. It was filling a fixed box, so whichever edge
-     didn't fit got cut off. */
+  /* Show the whole image, in whatever shape it actually is. It was
+     filling a fixed box, so whichever edge didn't fit got cut off — the
+     one place on the site where cropping is unacceptable, since this is
+     the thing being bought. */
   .print .pframe img { width: 100%; height: auto; object-fit: contain; }
+  /* Mixed portrait and landscape prints sit at different heights. Anchor
+     them to the top of the row so the frames line up along their tops
+     instead of floating to different baselines. */
+  .prints-grid { align-items: start; }
 </style>
 </head>
 <body style="position:relative;">

@@ -293,10 +293,17 @@ section > .wrap { position: relative; z-index: 1; }
   position: relative; display: block; aspect-ratio: 1 / 1; overflow: hidden;
   background: var(--plum); cursor: pointer; text-decoration: none; color: inherit;
 }
+/* Cropped to fill the square, deliberately. Fitting the whole image
+   inside instead would leave a different-sized white gap on every tile —
+   thick bars beside a portrait, thick bars above a landscape — and that
+   unevenness reads as images failing to load rather than as a grid.
+   These are doorways to an artist's page, not the work being sold; the
+   place where cropping is unacceptable is the print shop, and that one
+   shows every image whole. Anchored slightly high so faces survive. */
 .artist-card .art {
   display: block; position: absolute; inset: 0; width: 100%; height: 100%;
   aspect-ratio: auto; margin: 0;
-  background-size: cover; background-position: center; background-repeat: no-repeat;
+  background-size: cover; background-position: center 35%; background-repeat: no-repeat;
   transition: transform .5s ease;
 }
 .artist-card:hover .art { transform: scale(1.06); }
