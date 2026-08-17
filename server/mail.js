@@ -14,7 +14,11 @@
 //    of them being handed the other's address by the website.
 
 const KEY = () => process.env.RESEND_API_KEY;
-const FROM = () => process.env.MAIL_FROM || 'Kudzu Arts <notifications@send.kudzuarts.com>';
+// The domain registered in Resend is kudzuarts.com — the `send`
+// subdomain only carries the SPF and MX records Resend asks for, and is
+// not itself a sending domain. Using it here got a 403 back:
+// "The send.kudzuarts.com domain is not verified."
+const FROM = () => process.env.MAIL_FROM || 'Kudzu Arts <notifications@kudzuarts.com>';
 const BASE = () => (process.env.PUBLIC_BASE_URL || '').replace(/\/+$/, '');
 
 function isConfigured() { return !!KEY(); }
