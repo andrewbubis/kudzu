@@ -220,13 +220,12 @@
         '<div class="r"><span>' + esc(w.year || '') + '</span><span>' + money(w.priceCents, w.currency) + '</span></div>' +
         '<div class="m">' + esc(w.medium || '') + '</div>' +
         (opts.toggle ?
+          // A state, not a switch. Uploading a finished piece puts it up;
+          // there is nothing left to approve, so there's no button here.
           '<div class="pub-row">' +
             '<span class="pub-state' + (w.status === 'published' ? ' is-live' : '') + '">' +
               (w.status === 'published' ? 'Live' : 'Draft') +
             '</span>' +
-            '<button class="acct-btn ghost pub-toggle" type="button">' +
-              (w.status === 'published' ? 'Unpublish' : 'Publish') +
-            '</button>' +
           '</div>' +
           // Without packed weight and box size we can't quote freight, so
           // the piece can't ship. Called out on the card rather than
@@ -246,9 +245,6 @@
 
     var kill = el.querySelector('.kill');
     if (kill) kill.addEventListener('click', function () { removeWork(w); });
-
-    var pub = el.querySelector('.pub-toggle');
-    if (pub) pub.addEventListener('click', function () { toggleWorkStatus(w, pub); });
 
     var ship = el.querySelector('.ship-edit');
     if (ship) ship.addEventListener('click', function () { editShipping(w); });
@@ -300,38 +296,6 @@
     }
   }
 
-  // A piece uploads as a draft. This is the only way it goes live —
-  // the server re-checks the same two rules either way: Stripe has to
-  // be connected, and at most eight published works per artist.
-  async function toggleWorkStatus(w, btn) {
-    var next = w.status === 'published' ? 'draft' : 'published';
-    var original = btn.textContent;
-    btn.disabled = true;
-    btn.textContent = next === 'published' ? 'Publishing…' : 'Unpublishing…';
-    try {
-      if (state.live) {
-        var updated = await api('/works/' + w.id, {
-          method: 'PATCH', body: JSON.stringify({ status: next })
-        });
-        w.status = updated.status;
-      } else {
-        w.status = next;
-      }
-      renderWorks();
-    } catch (e) {
-      var code = e && e.body && e.body.error;
-      var msgs = {
-        stripe_not_connected: 'Connect Stripe before publishing work.',
-        publish_limit_reached: 'You already have eight live — move one to draft first.',
-        shipping_missing: 'This piece needs its packed weight and box size before it can go live.\n\n' +
-                          'Use the “Add” link under the piece to fill them in.',
-        profile_incomplete: 'Finish your profile first — photo, bio, C.V., and Stripe.'
-      };
-      alert((code && msgs[code]) || 'Could not update that piece. Try again.');
-      btn.disabled = false;
-      btn.textContent = original;
-    }
-  }
 
   function renderWorks() {
     var live = state.works.filter(function (w) { return w.status !== 'sold'; });
@@ -503,9 +467,30 @@
       }
       try {
         var saved = await fetch('/api/works', { method: 'POST', body: fd, credentials: 'same-origin' })
-          .then(function (r) { if (!r.ok) throw new Error(); return r.json(); });
+          .then(async function (r) {
+            if (!r.ok) {
+              var b = null;
+              try { b = await r.json(); } catch (err) {}
+              throw Object.assign(new Error('failed'), { code: b && b.error });
+            }
+            return r.json();
+          });
         work = saved;
-      } catch (e) { alert('Upload failed. Try again.'); return; }
+      } catch (e) {
+        // The cap is the one refusal an artist can actually act on, so
+        // say what it is rather than "try again".
+        var msgs = {
+          publish_limit_reached:
+            'You have eight works live, which is the limit.\n\n' +
+            'Remove one to make room for this piece.',
+          shipping_missing:
+            'This piece needs its packed weight and box size before it can go up.',
+          profile_incomplete:
+            'Finish your profile first — photo, bio, C.V., and Stripe.'
+        };
+        alert((e && msgs[e.code]) || 'Upload failed. Try again.');
+        return;
+      }
     }
 
     state.works.push(work);

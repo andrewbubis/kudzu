@@ -394,6 +394,21 @@ router.post('/works', auth.requireArtist, storage.upload.single('image'), async 
     return res.status(400).json({ error: 'shipping_missing' });
   }
 
+  // Uploading publishes, so the cap has to be checked here rather than at
+  // a publish step that no longer exists. Refuse plainly instead of
+  // accepting the piece and hiding it as a draft the artist has no way to
+  // bring out.
+  try {
+    const { rows: n } = await db.query(
+      `SELECT count(*)::int AS live FROM artworks
+        WHERE artist_id = $1 AND status = 'published'`, [req.artist.id]);
+    if (n[0].live >= 8) {
+      return res.status(409).json({ error: 'publish_limit_reached', max: 8 });
+    }
+  } catch (err) {
+    return res.status(500).json({ error: 'server_error' });
+  }
+
   let saved;
   try {
     saved = await storage.store(req.file.buffer, req.artist.id, 'work');
@@ -409,14 +424,13 @@ router.post('/works', auth.requireArtist, storage.upload.single('image'), async 
           ship_weight_oz, ship_length_in, ship_width_in, ship_depth_in,
           status, position)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,
-               -- A finished work goes straight up. Nothing waits on an
-               -- approval that no longer exists, and by this point the
-               -- profile and the packed figures are already accounted for.
-               -- Past the cap it lands as a draft rather than failing the
-               -- upload outright — the artist keeps the piece either way.
-               CASE WHEN (SELECT count(*) FROM artworks
-                           WHERE artist_id = $1 AND status = 'published') < 8
-                    THEN 'published' ELSE 'draft' END,
+               -- A finished work goes straight up. There is no publish
+               -- step and no button for one: uploading a piece with all
+               -- its details is the act of putting it out. Being over the
+               -- cap is refused before we reach here, so this is always
+               -- 'published' — spelled out rather than defaulted, so the
+               -- intent survives the next person reading it.
+               'published',
                COALESCE((SELECT max(position)+1 FROM artworks WHERE artist_id = $1), 0))
        RETURNING *`,
       [req.artist.id, f.title, f.year, f.medium, f.dimensions, f.priceCents,
