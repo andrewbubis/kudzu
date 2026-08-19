@@ -368,6 +368,114 @@ CREATE INDEX IF NOT EXISTS sessions_artist_idx ON sessions (artist_id);
 CREATE INDEX IF NOT EXISTS sessions_expiry_idx ON sessions (expires_at);
 
 
+-- ── Agreements ───────────────────────────────────────────────────────
+-- The consignment agreement an artist signs, and every version of it.
+--
+-- Versioned deliberately. When the document is revised, an artist stays
+-- bound to the text they actually read — nobody is retroactively held to
+-- terms they never saw. Asking them to sign a new version is a new row,
+-- not an edit to an old one.
+CREATE TABLE IF NOT EXISTS agreement_versions (
+  version     text PRIMARY KEY,           -- e.g. 'v3-2026-08'
+  title       text NOT NULL,
+  body        text NOT NULL,              -- the full text, markdown
+  effective   date NOT NULL DEFAULT current_date,
+  is_current  boolean NOT NULL DEFAULT false,
+  created_at  timestamptz NOT NULL DEFAULT now()
+);
+
+-- Only one version can be the one we ask new artists to sign.
+CREATE UNIQUE INDEX IF NOT EXISTS agreement_one_current
+  ON agreement_versions (is_current) WHERE is_current;
+
+CREATE TABLE IF NOT EXISTS agreement_signatures (
+  id           uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  artist_id    uuid NOT NULL REFERENCES artists(id) ON DELETE CASCADE,
+  version      text NOT NULL REFERENCES agreement_versions(version),
+
+  -- Typed by the artist at signing. Their legal name and address are
+  -- what makes the agreement binding, and are collected here rather than
+  -- at signup — a contract needs them, an account doesn't.
+  legal_name   text NOT NULL,
+  address      text NOT NULL,
+
+  signed_at    timestamptz NOT NULL DEFAULT now(),
+  ip           text,
+  user_agent   text,
+
+  UNIQUE (artist_id, version)
+);
+
+CREATE INDEX IF NOT EXISTS agreement_sig_artist_idx
+  ON agreement_signatures (artist_id, signed_at DESC);
+
+-- ── Bills of lading ──────────────────────────────────────────────────
+-- The record of a hand-to-hand delivery. A shipped work has the
+-- carrier's signature as independent proof; a local pickup has nothing
+-- unless we make it, and without proof of delivery a chargeback is
+-- simply lost.
+--
+-- Signed on two devices, not one. If both signatures came from the
+-- seller's phone, the first thing anyone contesting it would ask is
+-- whether the seller signed for the buyer. Two devices, two addresses,
+-- two timestamps answers that before it's asked.
+CREATE TABLE IF NOT EXISTS bills_of_lading (
+  id            uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  artwork_id    uuid REFERENCES artworks(id) ON DELETE SET NULL,
+  artist_id     uuid NOT NULL REFERENCES artists(id) ON DELETE CASCADE,
+
+  -- Copied at creation rather than joined later: this is a record of what
+  -- was agreed at the time, and it must not change if a title is edited
+  -- or a work is deleted afterwards.
+  work_title    text NOT NULL,
+  work_details  text,                      -- medium, year, dimensions
+  price_cents   int  NOT NULL,
+  currency      text NOT NULL DEFAULT 'usd',
+  condition     text,
+
+  buyer_name    text NOT NULL,
+  buyer_email   text NOT NULL,
+
+  -- Short code the buyer uses to join the signing on their own phone.
+  -- It identifies a session; it is not a secret that proves anything.
+  join_code     text NOT NULL UNIQUE,
+
+  artist_signed_at   timestamptz,
+  artist_signature   text,                 -- typed name
+  artist_ip          text,
+
+  buyer_signed_at    timestamptz,
+  buyer_signature    text,
+  buyer_ip           text,
+
+  -- Set when both have signed. Delivery is deemed to occur here, and
+  -- this is what releases the held payout.
+  completed_at  timestamptz,
+
+  stripe_session_id  text,
+  created_at    timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS bol_artist_idx ON bills_of_lading (artist_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS bol_code_idx   ON bills_of_lading (join_code);
+
+-- Both signatures present means the handoff is done. Enforced here so a
+-- half-signed document can never be treated as proof of delivery.
+CREATE OR REPLACE FUNCTION bol_mark_complete() RETURNS trigger AS $$
+BEGIN
+  IF NEW.artist_signed_at IS NOT NULL
+     AND NEW.buyer_signed_at IS NOT NULL
+     AND NEW.completed_at IS NULL THEN
+    NEW.completed_at := now();
+  END IF;
+  RETURN NEW;
+END $$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS bol_complete ON bills_of_lading;
+CREATE TRIGGER bol_complete
+  BEFORE INSERT OR UPDATE ON bills_of_lading
+  FOR EACH ROW EXECUTE FUNCTION bol_mark_complete();
+
 -- ── One-off data fixes ───────────────────────────────────────────────
 -- schema.sql runs on every boot, so anything that changes data rather
 -- than shape needs a marker or it repeats forever.

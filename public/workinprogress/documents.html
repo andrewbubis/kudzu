@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Documents · Kudzu Arts</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#fbfaf7">
+<link rel="icon" href="img/logo-k.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/v3.css">
+<link rel="stylesheet" href="css/account.css">
+<style>
+  .docs { max-width: 760px; }
+  .doc-card {
+    border: 1px solid #e2e2e2; background: #fff;
+    padding: clamp(20px, 3vw, 30px); margin-bottom: 18px;
+  }
+  .doc-card h2 {
+    font-family: var(--serif, Georgia, serif); font-weight: 400;
+    font-size: 21px; margin: 0 0 6px; color: #111;
+  }
+  .doc-meta { color: #888; font-size: 13px; margin: 0 0 16px; }
+  .doc-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+
+  .doc-state { display: inline-block; font-size: 11px; letter-spacing: .1em;
+               text-transform: uppercase; padding: 3px 9px; margin-left: 8px;
+               vertical-align: 2px; }
+  .doc-state.signed { color: #1f7a45; background: #f2faf5; border: 1px solid #bfe0cd; }
+  .doc-state.unsigned { color: #8a5a00; background: #fdf6e7; border: 1px solid #f0dcae; }
+
+  /* The agreement text itself. Long, and nobody reads it in a cramped
+     box — give it the width and leading of something meant to be read. */
+  .agreement-body {
+    max-height: 460px; overflow-y: auto;
+    border: 1px solid #e2e2e2; background: #fbfaf7;
+    padding: 22px 24px; margin-top: 16px;
+    font-family: var(--serif, Georgia, serif); font-size: 15px; line-height: 1.65;
+    color: #333; white-space: pre-wrap;
+  }
+
+  .sign-form { margin-top: 20px; padding-top: 20px; border-top: 1px solid #e2e2e2; }
+  .sign-form label { display: block; margin-bottom: 7px; font-family: var(--sans);
+                     font-size: 11px; font-weight: 600; letter-spacing: .14em;
+                     text-transform: uppercase; color: #888; }
+  .sign-form input, .sign-form textarea {
+    width: 100%; padding: 12px 14px; border: 1px solid #e2e2e2;
+    font-family: var(--serif, Georgia, serif); font-size: 16px; margin-bottom: 16px;
+    outline: none; transition: border-color .2s;
+  }
+  .sign-form input:focus, .sign-form textarea:focus { border-color: #8a8f43; }
+  .sign-note { color: #888; font-size: 13px; margin: -8px 0 18px; }
+
+  .bol-row {
+    display: flex; justify-content: space-between; align-items: baseline;
+    gap: 14px; padding: 14px 0; border-bottom: 1px solid #eee;
+  }
+  .bol-row:last-child { border-bottom: 0; }
+  .bol-row .t { color: #111; }
+  .bol-row .s { font-size: 12px; white-space: nowrap; }
+  .bol-row .s.done { color: #1f7a45; }
+  .bol-row .s.waiting { color: #8a5a00; }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <a href="index.html" class="brand"><img class="mark" src="img/logo-k.png" alt="" aria-hidden="true"><span class="word"><b>KUDZU</b><span class="arts">arts</span></span></a>
+  <nav class="nav" aria-label="Primary">
+    <a href="artists.html">Artists</a>
+    <a href="gallery.html">Virtual Gallery</a>
+    <a href="printshop.html">Print Shop</a>
+    <a href="contact.html">Contact</a>
+  </nav>
+  <div class="acct-menu" data-open="false" id="acctMenu">
+    <button type="button" aria-haspopup="true" aria-expanded="false" id="acctMenuBtn">
+      <span id="acctMenuName">account</span>
+    </button>
+    <ul>
+      <li><a href="profile.html">me</a></li>
+      <li id="adminInvite" hidden><a href="invites.html">send link</a></li>
+      <li id="stripeDash" hidden><a href="#" id="stripeDashLink">payouts</a></li>
+      <li><a href="sales.html">sales</a></li>
+      <li><a href="inquiries.html">inquiries</a></li>
+      <li><a href="documents.html">documents</a></li>
+      <li><a href="settings.html">settings</a></li>
+      <li class="sep"><a href="#" id="logoutLink">log out</a></li>
+    </ul>
+  </div>
+  <button class="nav-toggle" type="button" aria-expanded="false">Menu</button>
+</header>
+
+<main class="acct docs">
+  <h1 style="font-family:var(--serif);font-size:21px;margin:0 0 6px;">documents</h1>
+  <p class="sub" style="color:#888;margin:0 0 26px;">
+    Your agreement with Kudzu Arts, and a receipt for every work you've handed over.
+    Yours to read, download, or print at any time.
+  </p>
+
+  <!-- ── The consignment agreement ─────────────────────────────── -->
+  <section class="doc-card" id="agreementCard">
+    <h2>Consignment agreement <span class="doc-state" id="agState" hidden></span></h2>
+    <p class="doc-meta" id="agMeta">Loading…</p>
+
+    <div class="agreement-body" id="agBody" hidden></div>
+
+    <div class="doc-actions" id="agActions" hidden>
+      <button class="acct-btn ghost" type="button" id="agPrint">Print / save as PDF</button>
+    </div>
+
+    <!-- Only shown when they haven't signed the version in force. -->
+    <div class="sign-form" id="agSign" hidden>
+      <p style="margin:0 0 18px;color:#444;">
+        To sign, type your full legal name and address below. Typing your name and
+        pressing Sign has the same effect as signing on paper.
+      </p>
+
+      <label for="sgName">Full legal name</label>
+      <input id="sgName" type="text" autocomplete="name" placeholder="As it appears on official documents">
+
+      <label for="sgAddress">Address</label>
+      <textarea id="sgAddress" rows="3" autocomplete="street-address"
+        placeholder="Street, city, state, ZIP"></textarea>
+      <p class="sign-note">
+        Used only for this agreement. It never appears on your public page and is
+        never shown to buyers.
+      </p>
+
+      <button class="acct-btn big" type="button" id="sgSubmit">Sign agreement</button>
+      <span id="sgNote" style="margin-left:12px;color:#555;"></span>
+    </div>
+  </section>
+
+  <!-- ── Bills of lading ───────────────────────────────────────── -->
+  <section class="doc-card">
+    <h2>Delivery receipts</h2>
+    <p class="doc-meta">
+      A bill of lading is created for every local handoff. Both you and the buyer
+      sign it, on your own phones, and it's your proof the work changed hands.
+    </p>
+    <div id="bolList"><p class="acct-empty" id="bolEmpty">No handoffs yet.</p></div>
+  </section>
+</main>
+
+<script>
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c];
+    });
+  }
+  function money(cents, currency) {
+    if (cents == null) return '';
+    try {
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency', currency: (currency || 'usd').toUpperCase(),
+        maximumFractionDigits: 0
+      }).format(cents / 100);
+    } catch (e) { return '$' + Math.round(cents / 100); }
+  }
+  function when(iso) {
+    return new Date(iso).toLocaleDateString('en-US',
+      { month: 'long', day: 'numeric', year: 'numeric' });
+  }
+
+  async function api(path, opts) {
+    var res = await fetch('/api' + path, Object.assign({
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin'
+    }, opts || {}));
+    if (!res.ok) {
+      var body = null;
+      try { body = await res.json(); } catch (e) {}
+      throw Object.assign(new Error('failed'), { status: res.status, body: body });
+    }
+    return res.status === 204 ? null : res.json();
+  }
+
+  // ── Account menu ──────────────────────────────────────────────
+  var menu = $('acctMenu'), menuBtn = $('acctMenuBtn');
+  menuBtn.addEventListener('click', function (e) {
+    e.stopPropagation();
+    var open = menu.dataset.open === 'true';
+    menu.dataset.open = String(!open);
+  });
+  document.addEventListener('click', function () { menu.dataset.open = 'false'; });
+  $('logoutLink').addEventListener('click', async function (e) {
+    e.preventDefault();
+    try { await api('/auth/logout', { method: 'POST' }); } catch (err) {}
+    location.href = 'login.html';
+  });
+
+  // ── The agreement ─────────────────────────────────────────────
+  function renderAgreement(d) {
+    if (!d.current) {
+      $('agMeta').textContent =
+        'No agreement has been published yet. Nothing to sign — we’ll let you know when there is.';
+      return;
+    }
+
+    $('agBody').textContent = d.current.body;
+    $('agBody').hidden = false;
+    $('agActions').hidden = false;
+
+    var mine = d.signatures.filter(function (s) { return s.version === d.current.version; })[0];
+
+    if (mine) {
+      $('agState').textContent = 'signed';
+      $('agState').className = 'doc-state signed';
+      $('agState').hidden = false;
+      $('agMeta').textContent =
+        'Signed ' + when(mine.signedAt) + ' as ' + mine.legalName +
+        ' · version ' + d.current.version;
+    } else {
+      $('agState').textContent = 'not signed';
+      $('agState').className = 'doc-state unsigned';
+      $('agState').hidden = false;
+      $('agMeta').textContent =
+        d.signatures.length
+          ? 'A newer version is in force — please read and sign it. Version ' + d.current.version
+          : 'Version ' + d.current.version + ' · effective ' + when(d.current.effective);
+      $('agSign').hidden = false;
+    }
+  }
+
+  $('agPrint').addEventListener('click', function () { window.print(); });
+
+  $('sgSubmit').addEventListener('click', async function () {
+    var btn = this, note = $('sgNote');
+    var legalName = $('sgName').value.trim();
+    var address = $('sgAddress').value.trim();
+    note.style.color = '#555'; note.textContent = '';
+
+    if (legalName.length < 3) {
+      note.style.color = '#b3261e';
+      note.textContent = 'Please type your full legal name.';
+      return;
+    }
+    if (address.length < 8) {
+      note.style.color = '#b3261e';
+      note.textContent = 'Please add your address.';
+      return;
+    }
+
+    btn.disabled = true; btn.textContent = 'Signing…';
+    try {
+      await api('/agreement/sign', {
+        method: 'POST',
+        body: JSON.stringify({ legalName: legalName, address: address })
+      });
+      location.reload();
+    } catch (e) {
+      note.style.color = '#b3261e';
+      note.textContent = 'Could not sign that. Try again in a moment.';
+      btn.disabled = false; btn.textContent = 'Sign agreement';
+    }
+  });
+
+  // ── Delivery receipts ─────────────────────────────────────────
+  function renderBols(bols) {
+    var box = $('bolList');
+    if (!bols.length) return;
+    box.innerHTML = '';
+    bols.forEach(function (b) {
+      var done = !!b.completedAt;
+      var row = document.createElement('div');
+      row.className = 'bol-row';
+      row.innerHTML =
+        '<span class="t">' + esc(b.workTitle) +
+          ' <span style="color:#888;">· ' + esc(b.buyerName) + ' · ' +
+          money(b.priceCents, b.currency) + '</span></span>' +
+        '<span class="s ' + (done ? 'done' : 'waiting') + '">' +
+          (done ? 'signed ' + when(b.completedAt)
+                : (b.artistSignedAt ? 'waiting on buyer' : 'not signed yet')) +
+        '</span>';
+      box.appendChild(row);
+    });
+  }
+
+  (async function boot() {
+    try {
+      var me = await api('/me');
+      $('acctMenuName').textContent = (me.artist.name || 'account').split(' ')[0];
+      if (me.artist.isAdmin) $('adminInvite').hidden = false;
+      if (me.artist.stripeConnected) $('stripeDash').hidden = false;
+    } catch (e) {
+      if (e.status === 401) { location.href = 'login.html'; return; }
+    }
+
+    try { renderAgreement(await api('/agreement')); }
+    catch (e) { $('agMeta').textContent = 'Could not load your agreement.'; }
+
+    try { renderBols((await api('/bols')).bols || []); }
+    catch (e) { $('bolEmpty').textContent = 'Could not load your receipts.'; }
+  })();
+})();
+</script>
+</body>
+</html>

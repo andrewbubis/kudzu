@@ -60,6 +60,7 @@
           (me.isAdmin ? '<li><a href="invites.html">send link</a></li>' : '') +
           '<li><a href="sales.html">sales</a></li>' +
           '<li><a href="inquiries.html">inquiries</a></li>' +
+          '<li><a href="documents.html">documents</a></li>' +
           '<li><a href="settings.html">settings</a></li>' +
           '<li class="sep"><a href="#" data-logout>log out</a></li>' +
         '</ul>';

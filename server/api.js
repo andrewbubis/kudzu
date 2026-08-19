@@ -598,6 +598,96 @@ router.delete('/books/:id', auth.requireArtist, async (req, res) => {
   }
 });
 
+// ── Documents: the agreement ─────────────────────────────────────────
+// An artist should never have to email Kudzu asking what they agreed to.
+// Their contract and every delivery receipt live in their account.
+
+// The version we currently ask people to sign, plus whether this artist
+// has signed it. Public text — there is nothing secret in a contract you
+// are about to be asked to accept.
+router.get('/agreement', auth.requireArtist, async (req, res) => {
+  try {
+    const { rows: cur } = await db.query(
+      'SELECT * FROM agreement_versions WHERE is_current LIMIT 1');
+    const { rows: mine } = await db.query(
+      `SELECT version, legal_name, address, signed_at
+         FROM agreement_signatures WHERE artist_id = $1
+     ORDER BY signed_at DESC`, [req.artist.id]);
+
+    res.json({
+      current: cur[0] ? {
+        version: cur[0].version, title: cur[0].title,
+        body: cur[0].body, effective: cur[0].effective
+      } : null,
+      signatures: mine.map((s) => ({
+        version: s.version, legalName: s.legal_name,
+        address: s.address, signedAt: s.signed_at
+      })),
+      // Have they signed the version currently in force?
+      signedCurrent: !!(cur[0] && mine.some((s) => s.version === cur[0].version))
+    });
+  } catch (err) {
+    console.error('agreement fetch failed:', err.message);
+    res.status(500).json({ error: 'server_error' });
+  }
+});
+
+router.post('/agreement/sign', auth.requireArtist, async (req, res) => {
+  const b = req.body || {};
+  const legalName = String(b.legalName || '').trim().slice(0, 200);
+  const address = String(b.address || '').trim().slice(0, 500);
+
+  if (legalName.length < 3) return res.status(400).json({ error: 'name_required' });
+  if (address.length < 8) return res.status(400).json({ error: 'address_required' });
+
+  try {
+    const { rows: cur } = await db.query(
+      'SELECT version FROM agreement_versions WHERE is_current LIMIT 1');
+    if (!cur[0]) return res.status(503).json({ error: 'no_agreement' });
+
+    await db.query(
+      `INSERT INTO agreement_signatures
+         (artist_id, version, legal_name, address, ip, user_agent)
+       VALUES ($1,$2,$3,$4,$5,$6)
+       ON CONFLICT (artist_id, version) DO NOTHING`,
+      [req.artist.id, cur[0].version, legalName, address,
+       req.headers['x-forwarded-for'] || req.ip || null,
+       String(req.headers['user-agent'] || '').slice(0, 400)]);
+
+    res.status(201).json({ ok: true, version: cur[0].version });
+  } catch (err) {
+    console.error('agreement sign failed:', err.message);
+    res.status(500).json({ error: 'server_error' });
+  }
+});
+
+// ── Documents: bills of lading ───────────────────────────────────────
+const publicBol = (b) => ({
+  id: b.id,
+  workTitle: b.work_title,
+  workDetails: b.work_details || '',
+  priceCents: b.price_cents,
+  currency: b.currency,
+  condition: b.condition || '',
+  buyerName: b.buyer_name,
+  joinCode: b.join_code,
+  artistSignedAt: b.artist_signed_at,
+  buyerSignedAt: b.buyer_signed_at,
+  completedAt: b.completed_at,
+  createdAt: b.created_at
+});
+
+router.get('/bols', auth.requireArtist, async (req, res) => {
+  try {
+    const { rows } = await db.query(
+      `SELECT * FROM bills_of_lading WHERE artist_id = $1
+    ORDER BY created_at DESC LIMIT 200`, [req.artist.id]);
+    res.json({ bols: rows.map(publicBol) });
+  } catch (err) {
+    res.status(500).json({ error: 'server_error' });
+  }
+});
+
 // ── Enquiries ────────────────────────────────────────────────────────
 // Public: a collector asks an artist about a piece.
 router.post('/inquiries', async (req, res) => {
