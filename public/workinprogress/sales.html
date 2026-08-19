@@ -45,6 +45,13 @@
 
   <h1 style="font-family:var(--serif);font-size:21px;margin:0 0 6px;">sales</h1>
   <p class="sub" style="color:#888;margin:0 0 26px;">Work sold through Kudzu. Payouts land in your bank via Stripe.</p>
+  <!-- Pickups needing a signature come first: this is the thing an
+       artist opens their phone to find while standing with the buyer. -->
+  <section id="handoffs" hidden style="margin-bottom:30px;">
+    <h2 style="font-size:13px;color:#888;margin:0 0 10px;">to hand over</h2>
+    <div id="handoffList"></div>
+  </section>
+
   <div class="acct-grid" id="soldGrid"></div>
   <p class="acct-empty" id="soldEmpty" hidden>No sales yet.</p>
   <p class="acct-empty" id="soldNote" hidden style="font-style:normal;color:#555;">

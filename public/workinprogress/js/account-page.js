@@ -107,6 +107,33 @@
       if ($('soldNote')) $('soldNote').hidden = !me.stripeConnected;
     }
 
+    // Pickups waiting to be signed for. The artist is standing in front
+    // of the buyer when they look at this, so it's at the top of the page
+    // and one tap from the QR code.
+    if ($('handoffs')) {
+      try {
+        var bols = (await api('/bols')).bols || [];
+        var open = bols.filter(function (b) { return !b.completedAt; });
+        if (open.length) {
+          $('handoffs').hidden = false;
+          open.forEach(function (b) {
+            var row = document.createElement('div');
+            row.style.cssText =
+              'display:flex;justify-content:space-between;align-items:center;gap:14px;' +
+              'padding:14px 16px;border:1px solid #e2e2e2;background:#fff;margin-bottom:8px;';
+            row.innerHTML =
+              '<span><b>' + esc(b.workTitle) + '</b>' +
+                '<span style="color:#888;"> · ' + esc(b.buyerName) + '</span>' +
+                '<span style="display:block;color:#888;font-size:12px;margin-top:2px;">' +
+                  (b.artistSignedAt ? 'Waiting on the buyer to sign' : 'Not signed yet') +
+                '</span></span>' +
+              '<a class="acct-btn" href="handoff.html?id=' + encodeURIComponent(b.id) + '">Hand it over</a>';
+            $('handoffList').appendChild(row);
+          });
+        }
+      } catch (e) { /* leave the section hidden */ }
+    }
+
     // Enquiries
     if ($('inqList')) {
       try {
