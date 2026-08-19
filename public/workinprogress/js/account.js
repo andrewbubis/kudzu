@@ -246,7 +246,7 @@
             '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:#555;">' +
               '<input type="checkbox" class="pickup-ok"' + (w.pickupOk ? ' checked' : '') +
                 ' style="width:16px;height:16px;">' +
-              'Buyer can collect this in person' +
+              'Available for local pickup' +
             '</label>' +
           '</div>'
         : '') +
@@ -268,7 +268,11 @@
         w.pickupOk = on;
       } catch (e) {
         this.checked = !on;
-        alert('Could not change that. Try again.');
+        alert((e && e.body && e.body.error) === 'location_required'
+          ? 'Add the city you work in first — under Settings.\n\n' +
+            'A buyer choosing local pickup needs to know where they’re collecting from, ' +
+            'and that city is what they’ll see. Your address is never shown.'
+          : 'Could not change that. Try again.');
       }
     });
 

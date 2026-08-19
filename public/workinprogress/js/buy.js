@@ -6,10 +6,11 @@
    the other produces a bill of lading both parties sign in person — so
    the choice is made before checkout rather than buried inside it.
 
-   Pickup only appears when the artist has offered it on that particular
-   piece, and it always names the city. Somebody in Portland shouldn't be
-   able to pick "collect in person" from an artist in Nashville without
-   noticing, so the city is the label, not the fine print.
+   Local pickup only appears when the artist has offered it on that
+   particular piece AND has a location on their profile. The city comes
+   from that artist — Nashville, Los Angeles, wherever they actually are —
+   and it goes in the label rather than the fine print, because somebody
+   three states away shouldn't be able to choose it without noticing.
 
    Shared by the gallery grid and the artist page, which each used to
    call checkout directly.
@@ -22,7 +23,7 @@
     not_for_sale: 'This piece isn’t for sale.',
     artist_payout_not_set_up: 'This artist hasn’t finished setting up payouts yet.',
     payments_unavailable: 'Purchasing isn’t switched on yet.',
-    pickup_not_offered: 'This piece isn’t available for collection in person.',
+    pickup_not_offered: 'This piece isn’t available for local pickup.',
     backend_unavailable: 'Checkout is briefly unavailable. Try again in a moment.'
   };
 
@@ -79,7 +80,8 @@
   function buy(work, btn) {
     ensureStyle();
 
-    if (!work.pickupOk) {
+    var city = work.pickupCity || '';
+    if (!work.pickupOk || !city) {
       var original = btn ? btn.textContent : '';
       if (btn) { btn.disabled = true; btn.textContent = 'Opening checkout…'; }
       startCheckout(work, 'ship').catch(function (e) {
@@ -89,27 +91,28 @@
       return;
     }
 
-    var city = work.pickupCity || '';
     var veil = document.createElement('div');
     veil.className = 'kb-veil';
     veil.innerHTML =
       '<div class="kb-box" role="dialog" aria-modal="true">' +
-        '<h2>How would you like it?</h2>' +
+        '<h2>Delivery method</h2>' +
         '<p class="kb-sub">' + esc(work.title || 'This work') + '</p>' +
 
         '<label class="kb-opt sel" data-v="ship">' +
           '<input type="radio" name="kbDelivery" value="ship" checked>' +
-          '<span class="kb-t">Ship it to me</span>' +
-          '<span class="kb-d">Packed and posted by the artist, signature required on delivery. ' +
-            'You’ll enter your address at checkout.</span>' +
+          '<span class="kb-t">Shipping</span>' +
+          '<span class="kb-d">Packed and posted by the artist, insured and signature required ' +
+            'on delivery. You’ll enter your address at checkout.</span>' +
         '</label>' +
 
+        // The artist's own city, from their profile — never a fixed one.
+        // Pickup is not offered at all unless they've set a location, so
+        // this label always names somewhere.
         '<label class="kb-opt" data-v="pickup">' +
           '<input type="radio" name="kbDelivery" value="pickup">' +
-          '<span class="kb-t">Collect in person' + (city ? ' — ' + esc(city) : '') + '</span>' +
-          '<span class="kb-d">' +
-            (city ? 'Only if you can get to ' + esc(city) + '. ' : '') +
-            'You’ll arrange a time with the artist directly. ' +
+          '<span class="kb-t">Local pickup — ' + esc(city) + '</span>' +
+          '<span class="kb-d">Collect from the artist in ' + esc(city) + '. ' +
+            'You’ll arrange a time between you; no shipping cost. ' +
             'You both sign for it when you meet, and that’s what releases their payment.</span>' +
         '</label>' +
 

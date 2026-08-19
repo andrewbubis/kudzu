@@ -199,7 +199,8 @@ router.post('/checkout/work/:id', async (req, res) => {
 
   try {
     const { rows } = await db.query(
-      `SELECT w.*, a.name AS artist_name, a.stripe_account
+      `SELECT w.*, a.name AS artist_name, a.stripe_account,
+              a.works_city, a.works_country
          FROM artworks w JOIN artists a ON a.id = w.artist_id
         WHERE w.id = $1`, [req.params.id]);
     const work = rows[0];
@@ -223,9 +224,13 @@ router.post('/checkout/work/:id', async (req, res) => {
     // Local pickup, if the buyer asked for it and the artist offers it on
     // this piece. The two paths differ in one important way, and it is
     // the only place Kudzu ever touches an artist's money.
+    // Pickup needs two things: the artist offered it on this piece, and
+    // they have a location. Checked here as well as in the browser,
+    // because the browser is never trusted.
     const wantsPickup = String((req.body || {}).delivery || '') === 'pickup';
-    const isPickup = wantsPickup && work.pickup_ok;
-    if (wantsPickup && !work.pickup_ok) {
+    const hasLocation = !!String(work.works_city || '').trim();
+    const isPickup = wantsPickup && work.pickup_ok && hasLocation;
+    if (wantsPickup && !isPickup) {
       return res.status(409).json({ error: 'pickup_not_offered' });
     }
 

@@ -496,7 +496,15 @@ router.patch('/works/:id', auth.requireArtist, async (req, res) => {
         v = positiveNumber(v, key === 'shipWeightOz' ? 4000 : 200);
         if (key === 'shipWeightOz' && v != null) v = Math.round(v);
       }
-      if (key === 'pickupOk') v = !!v;
+      if (key === 'pickupOk') {
+        v = !!v;
+        // A pickup option with no location is unanswerable for a buyer —
+        // collect from where? Refuse it until the artist says where they
+        // work, which is the same field their public page already uses.
+        if (v && !String(req.artist.works_city || '').trim()) {
+          return res.status(409).json({ error: 'location_required' });
+        }
+      }
       sets.push(`${col} = $${sets.length + 1}`);
       vals.push(v);
     }
