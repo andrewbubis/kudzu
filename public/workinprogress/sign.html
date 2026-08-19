@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Confirm you received the work · Kudzu Arts</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="img/logo-k.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap" rel="stylesheet">
+<style>
+  /* Deliberately standalone — a buyer is a stranger on a phone who has
+     never seen this site before and will never log in. No nav, no
+     account menu, nothing to explore. One thing to do. */
+  :root {
+    --ink: #211c2a; --soft: #544c5e; --mute: #8a8072;
+    --olive: #5f5a2c; --green: #8a8f43; --line: rgba(33,28,42,0.16);
+    --serif: "EB Garamond", Georgia, "Times New Roman", serif;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: #f4f2ec; color: var(--ink);
+    font-family: var(--serif); line-height: 1.55; -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 480px; margin: 0 auto; padding: 26px 18px 60px; }
+
+  .top { text-align: center; margin-bottom: 26px; }
+  .top img { width: 92px; height: auto; margin: 0 auto 8px; display: block; }
+  .top .word { font-size: 21px; letter-spacing: 0.05em; }
+  .top .word .arts { font-size: 10px; letter-spacing: 0.28em; color: var(--olive); margin-left: 4px; }
+
+  .card { background: #fff; border: 1px solid #e2e2e2; padding: 24px; margin-bottom: 16px; }
+  h1 { font-weight: 400; font-size: 25px; line-height: 1.15; margin: 0 0 10px; }
+  .lede { color: var(--soft); margin: 0 0 20px; }
+
+  .work { font-size: 20px; margin: 0 0 3px; }
+  .meta { color: var(--mute); font-size: 14px; margin: 0; }
+  .price { font-size: 30px; margin: 14px 0 0; }
+  .from { color: var(--mute); font-size: 14px; margin: 12px 0 0; }
+
+  .terms {
+    font-size: 13px; line-height: 1.6; color: var(--soft);
+    background: #fbfaf7; border-left: 2px solid var(--green);
+    padding: 14px 15px; margin: 0 0 20px;
+  }
+
+  label { display: block; font-size: 12px; letter-spacing: .1em; text-transform: uppercase;
+          color: var(--mute); margin-bottom: 8px; }
+  input {
+    width: 100%; padding: 15px 16px; border: 1px solid #e2e2e2;
+    font-family: var(--serif); font-size: 19px; outline: none; background: #fff;
+  }
+  input:focus { border-color: var(--green); }
+
+  button {
+    width: 100%; margin-top: 16px; padding: 17px;
+    font-family: var(--serif); font-size: 17px;
+    background: var(--green); color: #fff; border: 0; cursor: pointer;
+  }
+  button:disabled { opacity: .5; cursor: default; }
+
+  .note { margin-top: 12px; color: #b3261e; font-size: 14px; min-height: 20px; }
+
+  .done { text-align: center; padding: 34px 22px; background: #f2faf5;
+          border: 1px solid #bfe0cd; color: #1f7a45; }
+  .done b { display: block; font-size: 23px; font-weight: 400; margin-bottom: 8px; }
+
+  .msg { text-align: center; color: var(--soft); padding: 50px 20px; }
+  .foot { text-align: center; color: var(--mute); font-size: 12px; margin-top: 24px; line-height: 1.6; }
+
+  .code-entry { text-align: center; }
+  .code-entry input {
+    text-align: center; font-size: 26px; letter-spacing: .2em; text-transform: uppercase;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="top">
+    <img src="img/logo-k.png" alt="Kudzu Arts">
+    <div class="word">KUDZU<span class="arts">arts</span></div>
+  </div>
+
+  <!-- No code in the URL: they typed the address by hand. -->
+  <div class="card code-entry" id="codeBox" hidden>
+    <h1>Enter your code</h1>
+    <p class="lede">The artist has it on their screen.</p>
+    <input id="codeIn" type="text" autocapitalize="characters" autocomplete="off"
+           placeholder="ABC123" maxlength="8">
+    <button type="button" id="codeGo">Continue</button>
+  </div>
+
+  <div id="content" hidden>
+    <div class="card">
+      <h1>Confirm you received this work</h1>
+      <p class="lede">Signing records that the piece changed hands, and releases payment to the artist.</p>
+
+      <p class="work" id="sWork">—</p>
+      <p class="meta" id="sMeta"></p>
+      <p class="price" id="sPrice">—</p>
+      <p class="from">From <b id="sArtist">—</b></p>
+      <p class="meta" id="sCondition" style="margin-top:10px;"></p>
+    </div>
+
+    <div class="card">
+      <p class="terms">
+        By signing, you confirm you have received the work described above in the
+        condition stated. Title passes to you on signature. Copyright and all
+        reproduction rights remain with the artist. You'll be emailed a copy.
+      </p>
+
+      <label for="sSig">Type your full name to sign</label>
+      <input id="sSig" type="text" autocomplete="name" placeholder="Your full name">
+      <button type="button" id="signBtn">Sign — I've received this work</button>
+      <p class="note" id="note"></p>
+    </div>
+  </div>
+
+  <div class="done" id="doneBox" hidden>
+    <b>Signed. Thank you.</b>
+    The artist has been paid, and a copy is on its way to your email.
+  </div>
+
+  <p class="msg" id="msg">Loading…</p>
+
+  <p class="foot">
+    Kudzu Arts LLC · Nashville, Tennessee<br>
+    Questions about this sale? <a href="mailto:info@kudzuarts.com" style="color:var(--olive);">info@kudzuarts.com</a>
+  </p>
+
+</div>
+
+<script>
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+  var code = (new URLSearchParams(location.search).get('c') || '').toUpperCase();
+
+  function money(cents, currency) {
+    if (cents == null) return '—';
+    try {
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency', currency: (currency || 'usd').toUpperCase(),
+        maximumFractionDigits: 0
+      }).format(cents / 100);
+    } catch (e) { return '$' + Math.round(cents / 100); }
+  }
+
+  function show(el) { $('msg').hidden = true; el.hidden = false; }
+
+  function render(b) {
+    if (b.buyerSignedAt) { show($('doneBox')); return; }
+
+    $('sWork').textContent = b.workTitle;
+    $('sMeta').textContent = b.workDetails || '';
+    $('sPrice').textContent = money(b.priceCents, b.currency);
+    $('sArtist').textContent = b.artistName;
+    if (b.condition) $('sCondition').textContent = 'Condition: ' + b.condition;
+    show($('content'));
+  }
+
+  async function load(c) {
+    var res = await fetch('/api/handoff/' + encodeURIComponent(c));
+    if (res.status === 404) throw new Error('That code doesn’t match anything. Check it with the artist.');
+    if (!res.ok) throw new Error('Something went wrong. Try again in a moment.');
+    return res.json();
+  }
+
+  $('signBtn').addEventListener('click', async function () {
+    var btn = this, note = $('note');
+    var sig = $('sSig').value.trim();
+    note.textContent = '';
+    if (sig.length < 3) { note.textContent = 'Please type your full name.'; return; }
+
+    btn.disabled = true; btn.textContent = 'Signing…';
+    try {
+      var res = await fetch('/api/handoff/' + encodeURIComponent(code) + '/sign', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ signature: sig })
+      });
+      if (!res.ok) throw new Error();
+      $('content').hidden = true;
+      show($('doneBox'));
+    } catch (e) {
+      note.textContent = 'Could not sign. Try again.';
+      btn.disabled = false; btn.textContent = 'Sign — I’ve received this work';
+    }
+  });
+
+  $('codeGo').addEventListener('click', function () {
+    var c = $('codeIn').value.trim().toUpperCase();
+    if (c) location.search = '?c=' + encodeURIComponent(c);
+  });
+  $('codeIn').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') $('codeGo').click();
+  });
+
+  (async function boot() {
+    if (!code) { show($('codeBox')); return; }
+    try { render(await load(code)); }
+    catch (e) { $('msg').textContent = e.message; }
+  })();
+})();
+</script>
+</body>
+</html>

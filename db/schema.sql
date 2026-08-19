@@ -73,6 +73,12 @@ CREATE INDEX IF NOT EXISTS artworks_artist_idx
 -- columns in the CREATE above. Nullable on purpose: works uploaded
 -- before this existed have no figures, and we'd rather show "shipping
 -- quoted separately" than invent a weight and undercharge the artist.
+-- Whether the artist will hand this piece over in person. Off by default:
+-- an artist in Los Angeles shouldn't be offering Nashville pickup, and
+-- pickup is the path that needs a signed document, so it should be a
+-- deliberate choice rather than something everyone gets by accident.
+ALTER TABLE artworks ADD COLUMN IF NOT EXISTS pickup_ok boolean NOT NULL DEFAULT false;
+
 ALTER TABLE artworks ADD COLUMN IF NOT EXISTS ship_weight_oz int;
 ALTER TABLE artworks ADD COLUMN IF NOT EXISTS ship_length_in numeric(6,2);
 ALTER TABLE artworks ADD COLUMN IF NOT EXISTS ship_width_in  numeric(6,2);
@@ -453,6 +459,16 @@ CREATE TABLE IF NOT EXISTS bills_of_lading (
   completed_at  timestamptz,
 
   stripe_session_id  text,
+
+  -- The money. For a pickup sale the payment lands in Kudzu's Stripe
+  -- balance rather than going straight to the artist, and sits there
+  -- until both signatures exist. `payout_transfer_id` is Stripe's id for
+  -- the transfer that released it — its presence is what stops a retry
+  -- from paying twice.
+  payout_cents        int,
+  payout_transfer_id  text,
+  payout_released_at  timestamptz,
+
   created_at    timestamptz NOT NULL DEFAULT now()
 );
 

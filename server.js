@@ -66,6 +66,14 @@ app.use('/api', commerce.router);
 app.use('/api', api);
 
 // ── Pages ────────────────────────────────────────────────────────────
+// A buyer standing in a studio types this off the artist's screen, so it
+// has to be short enough to get right first time. Anything longer than
+// kudzuarts.com/sign and people mistype it.
+app.get('/sign', (req, res) => {
+  const q = req.query.c ? `?c=${encodeURIComponent(req.query.c)}` : '';
+  res.redirect(302, `/workinprogress/sign.html${q}`);
+});
+
 // Pretty URLs: /about → public/about.html
 app.use((req, res, next) => {
   if (req.method !== 'GET' && req.method !== 'HEAD') return next();

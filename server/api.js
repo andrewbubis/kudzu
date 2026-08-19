@@ -677,6 +677,176 @@ const publicBol = (b) => ({
   createdAt: b.created_at
 });
 
+// ── The handoff ──────────────────────────────────────────────────────
+// An artist and a buyer standing in a room together, signing the same
+// document on two different phones.
+//
+// The join code is not a password. It identifies a signing session, and
+// it's meant to be read off a screen or scanned from a QR by someone
+// standing right there. What makes the record hold up is that the two
+// signatures arrive from two devices with two addresses, not that the
+// code was secret.
+
+// Unambiguous alphabet: no O/0, no I/1, no S/5. This gets read aloud
+// across a table when a camera won't focus.
+const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRTUVWXYZ2346789';
+function makeJoinCode() {
+  const bytes = require('crypto').randomBytes(6);
+  return Array.from(bytes).map((b) => CODE_ALPHABET[b % CODE_ALPHABET.length]).join('');
+}
+
+// Start one. Called by the artist when they're with the buyer.
+router.post('/handoffs', auth.requireArtist, async (req, res) => {
+  const b = req.body || {};
+  const buyerName = String(b.buyerName || '').trim().slice(0, 200);
+  const buyerEmail = String(b.buyerEmail || '').trim().toLowerCase().slice(0, 200);
+  const condition = String(b.condition || '').trim().slice(0, 500) || null;
+
+  if (!buyerName) return res.status(400).json({ error: 'buyer_name_required' });
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(buyerEmail)) {
+    return res.status(400).json({ error: 'bad_email' });
+  }
+
+  try {
+    // The work must belong to them. Price and title are read from the
+    // database, never from the browser — otherwise the document could be
+    // written to say anything.
+    const { rows: w } = await db.query(
+      'SELECT * FROM artworks WHERE id = $1 AND artist_id = $2',
+      [b.workId, req.artist.id]);
+    if (!w[0]) return res.status(404).json({ error: 'work_not_found' });
+
+    const work = w[0];
+    const details = [work.medium, work.year, work.dimensions].filter(Boolean).join(' · ');
+
+    const { rows } = await db.query(
+      `INSERT INTO bills_of_lading
+         (artwork_id, artist_id, work_title, work_details, price_cents, currency,
+          condition, buyer_name, buyer_email, join_code, stripe_session_id, payout_cents)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
+       RETURNING *`,
+      [work.id, req.artist.id, work.title, details || null,
+       work.price_cents || 0, work.currency || 'usd',
+       condition, buyerName, buyerEmail, makeJoinCode(),
+       b.stripeSessionId || null, b.payoutCents || null]);
+
+    res.status(201).json(publicBol(rows[0]));
+  } catch (err) {
+    console.error('handoff create failed:', err.message);
+    res.status(500).json({ error: 'server_error' });
+  }
+});
+
+// The artist signs their side.
+router.post('/handoffs/:id/sign', auth.requireArtist, async (req, res) => {
+  const signature = String((req.body || {}).signature || '').trim().slice(0, 200);
+  if (signature.length < 3) return res.status(400).json({ error: 'signature_required' });
+
+  try {
+    const { rows } = await db.query(
+      `UPDATE bills_of_lading
+          SET artist_signed_at = COALESCE(artist_signed_at, now()),
+              artist_signature = COALESCE(artist_signature, $1),
+              artist_ip = COALESCE(artist_ip, $2)
+        WHERE id = $3 AND artist_id = $4
+    RETURNING *`,
+      [signature, req.headers['x-forwarded-for'] || req.ip || null,
+       req.params.id, req.artist.id]);
+    if (!rows[0]) return res.status(404).json({ error: 'not_found' });
+
+    await releaseIfComplete(rows[0]);
+    res.json(publicBol(rows[0]));
+  } catch (err) {
+    console.error('artist sign failed:', err.message);
+    res.status(500).json({ error: 'server_error' });
+  }
+});
+
+// ── The buyer's side — no account, no login ──────────────────────────
+// A buyer is a stranger with a phone. Everything they need is reachable
+// with the code they were just shown.
+
+// What they see before signing. Deliberately excludes anything that
+// isn't on the document itself.
+router.get('/handoff/:code', async (req, res) => {
+  try {
+    const { rows } = await db.query(
+      `SELECT b.*, a.name AS artist_name
+         FROM bills_of_lading b
+         JOIN artists a ON a.id = b.artist_id
+        WHERE b.join_code = $1`, [String(req.params.code || '').toUpperCase()]);
+    if (!rows[0]) return res.status(404).json({ error: 'not_found' });
+
+    const b = rows[0];
+    res.json({
+      id: b.id,
+      workTitle: b.work_title,
+      workDetails: b.work_details || '',
+      priceCents: b.price_cents,
+      currency: b.currency,
+      condition: b.condition || '',
+      artistName: b.artist_name,
+      buyerName: b.buyer_name,
+      artistSignedAt: b.artist_signed_at,
+      artistSignature: b.artist_signature,
+      buyerSignedAt: b.buyer_signed_at,
+      buyerSignature: b.buyer_signature,
+      completedAt: b.completed_at,
+      createdAt: b.created_at
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'server_error' });
+  }
+});
+
+router.post('/handoff/:code/sign', async (req, res) => {
+  const signature = String((req.body || {}).signature || '').trim().slice(0, 200);
+  if (signature.length < 3) return res.status(400).json({ error: 'signature_required' });
+
+  try {
+    const { rows } = await db.query(
+      `UPDATE bills_of_lading
+          SET buyer_signed_at = COALESCE(buyer_signed_at, now()),
+              buyer_signature = COALESCE(buyer_signature, $1),
+              buyer_ip = COALESCE(buyer_ip, $2)
+        WHERE join_code = $3
+    RETURNING *`,
+      [signature, req.headers['x-forwarded-for'] || req.ip || null,
+       String(req.params.code || '').toUpperCase()]);
+    if (!rows[0]) return res.status(404).json({ error: 'not_found' });
+
+    await releaseIfComplete(rows[0]);
+    res.json({ ok: true, completedAt: rows[0].completed_at });
+  } catch (err) {
+    console.error('buyer sign failed:', err.message);
+    res.status(500).json({ error: 'server_error' });
+  }
+});
+
+// Both signed → release the money. Guarded by payout_transfer_id so a
+// double-submit or a retry can never pay an artist twice.
+async function releaseIfComplete(bol) {
+  if (!bol.completed_at) return;
+  if (bol.payout_transfer_id) return;
+  if (!bol.payout_cents || bol.payout_cents <= 0) return;
+
+  try {
+    const commerce = require('./commerce');
+    const out = await commerce.releasePickupPayout(bol);
+    if (out && out.id) {
+      await db.query(
+        `UPDATE bills_of_lading
+            SET payout_transfer_id = $1, payout_released_at = now()
+          WHERE id = $2 AND payout_transfer_id IS NULL`,
+        [out.id, bol.id]);
+    }
+  } catch (err) {
+    // The signatures are what matter and they're already saved. A failed
+    // transfer is recoverable by hand; a lost signature is not.
+    console.error('pickup payout release failed for', bol.id, '—', err.message);
+  }
+}
+
 // A single document. The artist who owns it can always read it; a buyer
 // reaches their copy through the signing link instead, since they have no
 // account here.

@@ -383,4 +383,35 @@ async function fulfilPrint(session) {
   console.log('lumaprints order', result.orderNumber, 'for session', session.id);
 }
 
-module.exports = { router, webhookHandler, isConfigured };
+// ── Releasing a held pickup payout ───────────────────────────────────
+// Shipped sales never come through here: those are destination charges
+// and the artist is paid at checkout. This is only the local-pickup path,
+// where the money sat in Kudzu's balance waiting for two signatures on a
+// bill of lading.
+//
+// Called once, when the second signature lands. The caller records the
+// returned transfer id and won't call again for the same document.
+async function releasePickupPayout(bol) {
+  if (!stripe) throw new Error('payments_unavailable');
+
+  const { rows } = await db.query(
+    'SELECT stripe_account FROM artists WHERE id = $1', [bol.artist_id]);
+  const acct = rows[0] && rows[0].stripe_account;
+  if (!acct) throw new Error('artist_not_connected');
+
+  return stripe.transfers.create({
+    amount: bol.payout_cents,
+    currency: bol.currency || 'usd',
+    destination: acct,
+    // Stripe rejects a duplicate idempotency key, so a retry that races
+    // the database update still can't pay twice.
+    transfer_group: `bol_${bol.id}`,
+    metadata: {
+      kudzu_bol_id: String(bol.id),
+      kudzu_work: bol.work_title,
+      delivery: 'local_pickup'
+    }
+  }, { idempotencyKey: `bol_payout_${bol.id}` });
+}
+
+module.exports = { router, webhookHandler, isConfigured, releasePickupPayout };
