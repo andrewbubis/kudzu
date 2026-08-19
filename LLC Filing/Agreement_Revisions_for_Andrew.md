@@ -45,34 +45,24 @@ transfers on successful payment — Kudzu Arts never holds it. All original work
 ship **signature-required**: a one-of-a-kind work cannot be left on a doorstep,
 and the carrier's signature record is independent proof of delivery.
 
-**Local pickup.** The buyer pays in full at checkout. Kudzu Arts holds the funds
-until a **signed Bill of Lading** is filed for the handoff, then releases the
-Artist's 75% in full.
+**Local pickup.** The buyer pays in full at checkout and the Artist is paid
+immediately, exactly as with a shipped work. At the handoff both parties sign a
+Bill of Lading, which is emailed to each of them and kept in the Artist's
+account.
 
-### Why a Bill of Lading, and why the hold
+### Why a Bill of Lading, and why not a hold
 
-The distinction between the two paths isn't arbitrary. A shipped work produces a
-carrier's signature record — independent proof of delivery that neither party
-controls. **A hand-to-hand sale produces nothing at all**, and that gap is worth
-being precise about.
+A shipped work produces a carrier's signature — independent proof of delivery
+that neither party controls. A hand-to-hand sale produces nothing, and the Bill
+of Lading fills that gap. It matters most for a **chargeback**: a buyer who pays
+by card, collects the work, then disputes the charge weeks later. Documented
+proof of delivery is what reverses that, and this is it.
 
-The risk that actually costs money is not an argument between artist and buyer.
-It's a **chargeback**: the buyer pays by card, collects the work, and disputes
-the charge with their bank weeks or months later. Stripe reclaims the funds
-automatically, and the only thing that reverses it is documented proof of
-delivery. For shipped work the carrier record does that job. For a local handoff,
-a Bill of Lading signed by both parties is the equivalent — and it is the form of
-evidence card networks actually accept.
-
-**Note this carefully:** holding funds does *not* protect against chargebacks. A
-hold lasts days; a dispute can arrive months later. The hold exists for a
-different and more practical reason — **if payout were automatic, most people
-would never bother filing the paperwork.** Tying release to the signed Bill of
-Lading is what makes the document reliably exist. The BOL is the protection; the
-hold is what makes the protection happen.
-
-Kudzu Arts holds pickup funds solely as a stakeholder pending that document,
-transfers them in full on receipt, and takes only its 25% share.
+An earlier version of this proposal had Kudzu hold pickup payments until the
+document was signed. **That is dropped.** It made Kudzu a custodian of artist
+money, and it punished the wrong person — a buyer who simply never turned up
+would leave the Artist holding both the work and an unpaid balance. A sale is a
+sale. Kudzu never holds an artist's money on either route.
 
 ---
 
@@ -128,12 +118,14 @@ no defined moment when the work is considered delivered.
 **Change to.** Name the two delivery paths explicitly and attach the evidence
 each one produces.
 
-**(a) Local pickup.** Buyer and Artist arrange the handoff directly. Kudzu Arts
-generates a pre-filled **Bill of Lading** for the sale — work title, artist,
-buyer, price, order number, date, condition line, and signature blocks for both
-parties. The Artist prints it, **both parties sign at the handoff**, the buyer
-keeps a copy, and the Artist files a photograph of the signed document to the
-order. Filing it releases payment. Delivery is deemed to occur on signature.
+**(a) Local pickup.** Buyer and Artist arrange the handoff directly — the Artist
+chooses where, and their address is never published. Kudzu Arts generates a
+**Bill of Lading** for the sale: work title, artist, buyer, price, order number,
+date, condition line, and signature blocks for both parties. **Both parties sign
+at the handoff, each on their own phone**, or on paper if they prefer; the buyer
+keeps a copy, and both signatures are recorded against the order. Delivery is
+deemed to occur on signature. Payment is not contingent on it — the Artist was
+paid at purchase.
 
 **(b) Shipping.** As currently drafted, plus: all original works ship
 **signature-required and insured for the Retail Price**, and the tracking number
@@ -204,7 +196,7 @@ retroactively bound to terms they never saw.
 | Section | Change |
 |---|---|
 | 1 | Drop the works table — the agreement covers everything uploaded to the site |
-| 2 | Stripe, not ACH/check/Venmo. Shipped: payout on payment. Local pickup: Kudzu holds funds until a signed Bill of Lading is filed. |
+| 2 | Stripe, not ACH/check/Venmo. Artist paid immediately on both routes; Kudzu never holds funds. Local pickup adds a signed Bill of Lading as the record of delivery. |
 | 4 | **New:** two named delivery paths — local pickup with a signed Bill of Lading, or shipping signature-required and insured. No work changes hands without one of the two records. |
 | 3.1 | Exclusivity lasts while a work is listed, not to a fixed date. Artist may remove work at any time. |
 | 3.5 | **New:** good-faith clause — if a removed work sells within 6 months to a buyer who found it here, bring the sale back through Kudzu |

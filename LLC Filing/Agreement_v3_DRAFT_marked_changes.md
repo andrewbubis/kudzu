@@ -17,9 +17,8 @@
 > 1. **§1** — the fixed works table is gone; the agreement covers everything
 >    uploaded to the site
 > 2. **§2** — Stripe replaces ACH/check/Venmo; two different payout timings
-> 3. **§2/§4** — local pickup requires a signed Bill of Lading, and Kudzu holds
->    funds until it's filed *(this is the one with real operational consequences
->    — see the note)*
+> 3. **§2/§4** — local pickup produces a signed Bill of Lading as the record of
+>    delivery. Payment is immediate on both routes; Kudzu never holds funds.
 > 4. **§3.1** — exclusivity runs while a work is listed, not to a fixed date
 > 5. **§3.5** — new good-faith clause on removal
 > 6. **§5** — the per-work signed Condition Report is gone
@@ -108,38 +107,23 @@ the Artist has nothing to chase.
 75% transfers upon successful payment. Kudzu Arts does not hold these funds at
 any point.
 
-2.3 **Local pickup.** The buyer pays in full at the time of purchase. Kudzu Arts
-holds the funds as stakeholder until a Bill of Lading signed by both the Artist
-and the buyer is filed against the order (Section 4.2(a)), whereupon the Artist's
-75% is released in full. If no signed Bill of Lading is filed within seven (7)
-days of the handoff date, funds release automatically to the Artist.
+2.3 **Local pickup.** The buyer pays in full at the time of purchase and the
+Artist's 75% transfers immediately, exactly as with a shipped Work. At the
+handoff the Parties sign a Bill of Lading recording the delivery; this is a
+record, not a condition of payment.
 
 2.4 **Statements.** Kudzu Arts shall provide a sales statement for any month in
 which a sale occurs.
 
-> **>>> NOTE FOR ANDREW — the one with real consequences**
+>>> **NOTE — an earlier draft of this had Kudzu holding pickup funds until the
+> Bill of Lading was signed. That is gone.** It made Kudzu a custodian of artist
+> money, and it punished the wrong person: if a buyer simply never turned up, the
+> Artist would be sitting on both the work and an unpaid balance, through no
+> fault of their own. A sale is a sale. The Artist is paid at purchase on both
+> routes, and Kudzu never holds their money at any point.
 >
-> §2.3 means **Kudzu Arts holds artist funds temporarily.** Until now the
-> architecture deliberately avoided this: money went straight from buyer to
-> artist and Kudzu's commission was skimmed in transit, which kept Kudzu clear of
-> holding anyone's money. Local pickup changes that for a few days per sale.
->
-> The reasoning is worth understanding, because it isn't the obvious one:
->
-> - **The expensive risk is a chargeback**, not a disagreement. A buyer pays by
->   card, collects the work, then disputes the charge weeks or months later.
->   Stripe reclaims the money automatically, and only documented proof of delivery
->   reverses it. Shipping produces that proof via the carrier's signature. A
->   hand-to-hand sale produces nothing.
-> - **The hold does not protect against chargebacks.** A hold lasts days; a
->   dispute can land months later. So the hold is not the safeguard.
-> - **The hold exists to make the paperwork actually happen.** If payout were
->   automatic, most people would never file the Bill of Lading, and the first time
->   a dispute arrived there would be nothing to send Stripe. Tying release to the
->   signed document is what makes the document reliably exist.
->
-> Worth a word with whoever handles the books — funds passing through Kudzu's
-> Stripe balance appear differently from a pure application fee.
+> The Bill of Lading remains, as the record of delivery — which is what it was
+> always for.
 
 ---
 
@@ -216,8 +200,7 @@ Artist, the buyer, the Retail Price, the order number, the date, and the
 condition of the Work, with signature blocks for both parties. The Artist prints
 it; **both parties sign at the handoff**; the buyer keeps a copy; the Artist
 files a photograph or scan of the signed document against the order. Delivery is
-deemed to occur upon signature. Filing the signed document releases payment under
-Section 2.3.
+deemed to occur upon signature. Payment is not contingent on it.
 
 **(b) Shipping.** Where local pickup is impracticable, the Work ships to the
 buyer. All original Works ship **signature-required and insured for the Retail

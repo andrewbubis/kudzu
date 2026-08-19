@@ -234,16 +234,18 @@ router.post('/checkout/work/:id', async (req, res) => {
       return res.status(409).json({ error: 'pickup_not_offered' });
     }
 
-    // Shipped: the buyer's money goes straight to the artist's own Stripe
-    // account and Kudzu's commission is taken as an application fee on
-    // the way past. It never sits in a Kudzu balance.
+    // Both paths pay the artist the same way: the buyer's money goes
+    // straight to the artist's own Stripe account, and Kudzu's commission
+    // is taken as an application fee on the way past. Kudzu never holds
+    // an artist's money, on either route.
     //
-    // Pickup: no transfer here. A hand-to-hand sale leaves no carrier
-    // record, so the payment stays on the platform until both parties
-    // have signed a bill of lading, then it is transferred. Without that
-    // hold nobody would file the document, and the first chargeback would
-    // arrive with no proof of delivery to answer it.
-    const transfer = isPickup ? {} : {
+    // An earlier design held pickup payments until a bill of lading was
+    // signed. Dropped deliberately: it made Kudzu a custodian of artist
+    // funds, and it punished the artist when a buyer simply never turned
+    // up — they'd be sitting on the work AND waiting on the money. A sale
+    // is a sale. The bill of lading is still signed at the handoff, but
+    // as a legal record of delivery rather than a condition of payment.
+    const transfer = {
       transfer_data: { destination: work.stripe_account },
       application_fee_amount: Math.round(work.price_cents * commissionPct / 100)
     };
@@ -387,6 +389,8 @@ async function fulfil(session) {
              session.amount_total, session.currency || 'usd',
              cd.name || 'Buyer', cd.email || '',
              makeJoinCode(), session.id,
+             // Recorded on the document for reference. Payment already
+             // went to the artist at checkout; nothing here releases it.
              parseInt(md.payoutCents, 10) || null]);
         } catch (err) {
           console.error('could not open handoff for', md.workId, '—', err.message);
@@ -450,35 +454,4 @@ async function fulfilPrint(session) {
   console.log('lumaprints order', result.orderNumber, 'for session', session.id);
 }
 
-// ── Releasing a held pickup payout ───────────────────────────────────
-// Shipped sales never come through here: those are destination charges
-// and the artist is paid at checkout. This is only the local-pickup path,
-// where the money sat in Kudzu's balance waiting for two signatures on a
-// bill of lading.
-//
-// Called once, when the second signature lands. The caller records the
-// returned transfer id and won't call again for the same document.
-async function releasePickupPayout(bol) {
-  if (!stripe) throw new Error('payments_unavailable');
-
-  const { rows } = await db.query(
-    'SELECT stripe_account FROM artists WHERE id = $1', [bol.artist_id]);
-  const acct = rows[0] && rows[0].stripe_account;
-  if (!acct) throw new Error('artist_not_connected');
-
-  return stripe.transfers.create({
-    amount: bol.payout_cents,
-    currency: bol.currency || 'usd',
-    destination: acct,
-    // Stripe rejects a duplicate idempotency key, so a retry that races
-    // the database update still can't pay twice.
-    transfer_group: `bol_${bol.id}`,
-    metadata: {
-      kudzu_bol_id: String(bol.id),
-      kudzu_work: bol.work_title,
-      delivery: 'local_pickup'
-    }
-  }, { idempotencyKey: `bol_payout_${bol.id}` });
-}
-
-module.exports = { router, webhookHandler, isConfigured, releasePickupPayout };
+module.exports = { router, webhookHandler, isConfigured };

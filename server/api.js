@@ -835,35 +835,12 @@ router.post('/handoff/:code/sign', async (req, res) => {
   }
 });
 
-// Both signed → release the money. Guarded by payout_transfer_id so a
-// double-submit or a retry can never pay an artist twice.
+// Both signed → the record is complete. Nothing to release: the artist
+// was paid at checkout, on either delivery route. This exists to send the
+// receipt exactly once.
 async function releaseIfComplete(bol) {
   if (!bol.completed_at) return;
 
-  // The receipt goes out on the transition, and only once — the same
-  // guard the payout uses, so a second signature submission can't email
-  // anyone twice.
-  const first = !bol.payout_transfer_id && !bol.receipt_sent_at;
-
-  if (!bol.payout_transfer_id && bol.payout_cents > 0) {
-    try {
-      const commerce = require('./commerce');
-      const out = await commerce.releasePickupPayout(bol);
-      if (out && out.id) {
-        await db.query(
-          `UPDATE bills_of_lading
-              SET payout_transfer_id = $1, payout_released_at = now()
-            WHERE id = $2 AND payout_transfer_id IS NULL`,
-          [out.id, bol.id]);
-      }
-    } catch (err) {
-      // The signatures are what matter and they're already saved. A
-      // failed transfer is recoverable by hand; a lost signature is not.
-      console.error('pickup payout release failed for', bol.id, '—', err.message);
-    }
-  }
-
-  if (!first) return;
   try {
     const { rows } = await db.query(
       `SELECT b.*, a.name AS artist_name, a.email AS artist_email
@@ -871,10 +848,12 @@ async function releaseIfComplete(bol) {
         WHERE b.id = $1`, [bol.id]);
     if (!rows[0]) return;
 
+    // Claimed by whichever request gets here first, so a double-tap or a
+    // retry can't email two people twice.
     const { rowCount } = await db.query(
       `UPDATE bills_of_lading SET receipt_sent_at = now()
         WHERE id = $1 AND receipt_sent_at IS NULL`, [bol.id]);
-    if (!rowCount) return;   // somebody else already sent it
+    if (!rowCount) return;
 
     await mail.handoffSigned({ bol: rows[0], artistEmail: rows[0].artist_email });
   } catch (err) {

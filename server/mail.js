@@ -132,8 +132,8 @@ async function workSold({ artist, workTitle, amountCents, currency, isPickup }) 
     to: addressFor(artist),
     subject: workTitle ? `${workTitle} sold` : 'Your work sold',
     text: isPickup
-      ? `${title}${money ? ' ' + money : ''}\n\nLocal pickup — arrange a time with the buyer. ` +
-        `Open the handoff on your phone when you meet; you both sign and your share releases.`
+      ? `${title}${money ? ' ' + money : ''}\n\nPaid. Local pickup — arrange a time with the buyer. ` +
+        `Open the handoff on your phone when you meet so you both sign for it.`
       : `${title}${money ? ' ' + money : ''}\n\nYour payout is on its way from Stripe. ` +
         `Check your Kudzu sales page for the buyer's shipping address, and post it with the ` +
         `packed weight and box size you recorded.`,
@@ -145,8 +145,8 @@ async function workSold({ artist, workTitle, amountCents, currency, isPickup }) 
               This one is a <b>local pickup</b>. Arrange a time with the buyer directly —
               you decide where, and your address is never published.</p>
             <p style="margin:0 0 20px;font-size:15px;line-height:1.6;color:#544c5e;">
-              When you meet, open the handoff on your phone. They scan a code, you both
-              sign, and your share is released on the spot. The signed document is your
+              Your share has already been paid. When you meet, open the handoff on your
+              phone — they scan a code, you both sign, and the signed document is your
               proof the work changed hands.</p>`
          : `<p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#544c5e;">
               Your share is already on its way to your bank through Stripe — nothing to invoice, nothing to chase.</p>
@@ -230,11 +230,11 @@ async function handoffSigned({ bol, artistEmail }) {
     to: artistEmail,
     subject: `Signed — ${bol.work_title} handed over`,
     text: `${bol.buyer_name} signed for ${bol.work_title}. ${money}\n\n` +
-          `Your payout has been released. Reference ${ref}.`,
+          `Keep this as your proof of delivery. Reference ${ref}.`,
     html: wrap(
       `${esc(bol.buyer_name)} signed for it.`,
       `<p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#544c5e;">
-         The handoff is recorded and your share has been released to your bank.</p>
+         The handoff is recorded. Your share was paid at the time of purchase — nothing further to do.</p>
        ${details}
        <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#544c5e;">
          Keep this. If a buyer ever disputes a charge, a signed record of delivery is
