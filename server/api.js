@@ -54,6 +54,8 @@ const publicWork = (w) => ({
   height: w.image_h,
   status: w.status,
   position: w.position,
+  // Whether the artist will hand this one over in person.
+  pickupOk: !!w.pickup_ok,
   // Packed-for-shipping figures, used to quote freight at checkout.
   shipWeightOz: w.ship_weight_oz,
   shipLengthIn: w.ship_length_in == null ? null : Number(w.ship_length_in),
@@ -479,7 +481,8 @@ router.patch('/works/:id', auth.requireArtist, async (req, res) => {
                 dimensions: 'dimensions', priceCents: 'price_cents',
                 forSale: 'for_sale', status: 'status', position: 'position',
                 shipWeightOz: 'ship_weight_oz', shipLengthIn: 'ship_length_in',
-                shipWidthIn: 'ship_width_in', shipDepthIn: 'ship_depth_in' };
+                shipWidthIn: 'ship_width_in', shipDepthIn: 'ship_depth_in',
+                pickupOk: 'pickup_ok' };
   const SHIP_KEYS = ['shipWeightOz', 'shipLengthIn', 'shipWidthIn', 'shipDepthIn'];
   for (const [key, col] of Object.entries(map)) {
     if (Object.prototype.hasOwnProperty.call(body, key)) {
@@ -493,6 +496,7 @@ router.patch('/works/:id', auth.requireArtist, async (req, res) => {
         v = positiveNumber(v, key === 'shipWeightOz' ? 4000 : 200);
         if (key === 'shipWeightOz' && v != null) v = Math.round(v);
       }
+      if (key === 'pickupOk') v = !!v;
       sets.push(`${col} = $${sets.length + 1}`);
       vals.push(v);
     }
@@ -827,23 +831,46 @@ router.post('/handoff/:code/sign', async (req, res) => {
 // double-submit or a retry can never pay an artist twice.
 async function releaseIfComplete(bol) {
   if (!bol.completed_at) return;
-  if (bol.payout_transfer_id) return;
-  if (!bol.payout_cents || bol.payout_cents <= 0) return;
 
-  try {
-    const commerce = require('./commerce');
-    const out = await commerce.releasePickupPayout(bol);
-    if (out && out.id) {
-      await db.query(
-        `UPDATE bills_of_lading
-            SET payout_transfer_id = $1, payout_released_at = now()
-          WHERE id = $2 AND payout_transfer_id IS NULL`,
-        [out.id, bol.id]);
+  // The receipt goes out on the transition, and only once — the same
+  // guard the payout uses, so a second signature submission can't email
+  // anyone twice.
+  const first = !bol.payout_transfer_id && !bol.receipt_sent_at;
+
+  if (!bol.payout_transfer_id && bol.payout_cents > 0) {
+    try {
+      const commerce = require('./commerce');
+      const out = await commerce.releasePickupPayout(bol);
+      if (out && out.id) {
+        await db.query(
+          `UPDATE bills_of_lading
+              SET payout_transfer_id = $1, payout_released_at = now()
+            WHERE id = $2 AND payout_transfer_id IS NULL`,
+          [out.id, bol.id]);
+      }
+    } catch (err) {
+      // The signatures are what matter and they're already saved. A
+      // failed transfer is recoverable by hand; a lost signature is not.
+      console.error('pickup payout release failed for', bol.id, '—', err.message);
     }
+  }
+
+  if (!first) return;
+  try {
+    const { rows } = await db.query(
+      `SELECT b.*, a.name AS artist_name, a.email AS artist_email
+         FROM bills_of_lading b JOIN artists a ON a.id = b.artist_id
+        WHERE b.id = $1`, [bol.id]);
+    if (!rows[0]) return;
+
+    const { rowCount } = await db.query(
+      `UPDATE bills_of_lading SET receipt_sent_at = now()
+        WHERE id = $1 AND receipt_sent_at IS NULL`, [bol.id]);
+    if (!rowCount) return;   // somebody else already sent it
+
+    await mail.handoffSigned({ bol: rows[0], artistEmail: rows[0].artist_email });
   } catch (err) {
-    // The signatures are what matter and they're already saved. A failed
-    // transfer is recoverable by hand; a lost signature is not.
-    console.error('pickup payout release failed for', bol.id, '—', err.message);
+    console.error('handoff receipt failed for', bol.id, '—', err.message);
   }
 }
 

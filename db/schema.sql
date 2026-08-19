@@ -469,6 +469,10 @@ CREATE TABLE IF NOT EXISTS bills_of_lading (
   payout_transfer_id  text,
   payout_released_at  timestamptz,
 
+  -- Claimed by whichever request gets there first, so a double-submit
+  -- can't send two people two copies of the same receipt.
+  receipt_sent_at     timestamptz,
+
   created_at    timestamptz NOT NULL DEFAULT now()
 );
 

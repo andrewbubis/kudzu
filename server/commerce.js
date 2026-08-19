@@ -25,6 +25,14 @@ const BUTTONDOWN_API_BASE = 'https://api.buttondown.com/v1';
 
 const isConfigured = () => !!stripe;
 
+// Same alphabet as the artist-initiated handoff: no O/0, I/1 or S/5,
+// because this gets read aloud across a table.
+const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRTUVWXYZ2346789';
+function makeJoinCode() {
+  const bytes = require('crypto').randomBytes(6);
+  return Array.from(bytes).map((b) => CODE_ALPHABET[b % CODE_ALPHABET.length]).join('');
+}
+
 function baseUrl(req) {
   return process.env.PUBLIC_BASE_URL || `${req.protocol}://${req.get('host')}`;
 }
@@ -210,12 +218,27 @@ router.post('/checkout/work/:id', async (req, res) => {
     }
 
     const site = baseUrl(req);
-
-    // The buyer's money goes straight to the artist's own Stripe account.
-    // Kudzu's commission is taken as an application fee on the way past —
-    // it never sits in a Kudzu balance waiting to be forwarded.
     const commissionPct = Number(process.env.KUDZU_COMMISSION_PCT || 25);
-    const transfer = {
+
+    // Local pickup, if the buyer asked for it and the artist offers it on
+    // this piece. The two paths differ in one important way, and it is
+    // the only place Kudzu ever touches an artist's money.
+    const wantsPickup = String((req.body || {}).delivery || '') === 'pickup';
+    const isPickup = wantsPickup && work.pickup_ok;
+    if (wantsPickup && !work.pickup_ok) {
+      return res.status(409).json({ error: 'pickup_not_offered' });
+    }
+
+    // Shipped: the buyer's money goes straight to the artist's own Stripe
+    // account and Kudzu's commission is taken as an application fee on
+    // the way past. It never sits in a Kudzu balance.
+    //
+    // Pickup: no transfer here. A hand-to-hand sale leaves no carrier
+    // record, so the payment stays on the platform until both parties
+    // have signed a bill of lading, then it is transferred. Without that
+    // hold nobody would file the document, and the first chargeback would
+    // arrive with no proof of delivery to answer it.
+    const transfer = isPickup ? {} : {
       transfer_data: { destination: work.stripe_account },
       application_fee_amount: Math.round(work.price_cents * commissionPct / 100)
     };
@@ -243,14 +266,23 @@ router.post('/checkout/work/:id', async (req, res) => {
         }
       }],
       payment_intent_data: transfer,
-      shipping_address_collection: { allowed_countries: SHIPPING_COUNTRIES },
+      // Nothing to ship, so nothing to ask for. The artist's city is
+      // already on their page; exactly where to meet is arranged between
+      // the two of them, not published here.
+      ...(isPickup ? {} : {
+        shipping_address_collection: { allowed_countries: SHIPPING_COUNTRIES }
+      }),
       phone_number_collection: { enabled: true },
       success_url: `${site}/workinprogress/gallery.html?bought=${work.id}`,
       cancel_url: `${site}/workinprogress/piece-${work.id}.html`,
       metadata: {
         kind: 'original',
         workId: String(work.id),
-        artistId: String(work.artist_id)
+        artistId: String(work.artist_id),
+        delivery: isPickup ? 'pickup' : 'ship',
+        // Recorded now so the payout can't be recalculated later against
+        // a price that has since been edited.
+        payoutCents: String(work.price_cents - Math.round(work.price_cents * commissionPct / 100))
       }
     });
 
@@ -327,12 +359,42 @@ async function fulfil(session) {
       const { rows: ar } = await db.query(
         'SELECT id, name, email, notify_channel, notify_phone FROM artists WHERE id = $1',
         [rows[0].artist_id]);
+
+      // A pickup sale is not finished when the money arrives — it's
+      // finished when the work is in the buyer's hands and both have
+      // signed. Open the handoff now so the artist has a code ready
+      // before the buyer turns up.
+      if (md.delivery === 'pickup') {
+        try {
+          const details = await db.query(
+            'SELECT medium, year, dimensions FROM artworks WHERE id = $1', [md.workId]);
+          const d = details.rows[0] || {};
+          const cd = session.customer_details || {};
+
+          await db.query(
+            `INSERT INTO bills_of_lading
+               (artwork_id, artist_id, work_title, work_details, price_cents, currency,
+                buyer_name, buyer_email, join_code, stripe_session_id, payout_cents)
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+             ON CONFLICT DO NOTHING`,
+            [md.workId, rows[0].artist_id, rows[0].title,
+             [d.medium, d.year, d.dimensions].filter(Boolean).join(' · ') || null,
+             session.amount_total, session.currency || 'usd',
+             cd.name || 'Buyer', cd.email || '',
+             makeJoinCode(), session.id,
+             parseInt(md.payoutCents, 10) || null]);
+        } catch (err) {
+          console.error('could not open handoff for', md.workId, '—', err.message);
+        }
+      }
+
       if (ar[0]) {
         mail.workSold({
           artist: ar[0],
           workTitle: rows[0].title,
           amountCents: session.amount_total,
-          currency: session.currency
+          currency: session.currency,
+          isPickup: md.delivery === 'pickup'
         }).catch((err) => console.error('sale notification failed:', err.message));
       }
     }

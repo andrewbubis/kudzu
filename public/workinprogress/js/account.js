@@ -239,6 +239,15 @@
             '<button class="acct-btn ghost ship-edit" type="button">' +
               (w.shipWeightOz ? 'Edit' : 'Add') +
             '</button>' +
+          '</div>' +
+          // Local pickup is per piece, not per artist — you might hand
+          // over a small drawing but not a 7ft canvas.
+          '<div class="ship-row">' +
+            '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:#555;">' +
+              '<input type="checkbox" class="pickup-ok"' + (w.pickupOk ? ' checked' : '') +
+                ' style="width:16px;height:16px;">' +
+              'Buyer can collect this in person' +
+            '</label>' +
           '</div>'
         : '') +
       '</div>';
@@ -248,6 +257,20 @@
 
     var ship = el.querySelector('.ship-edit');
     if (ship) ship.addEventListener('click', function () { editShipping(w); });
+
+    var pickup = el.querySelector('.pickup-ok');
+    if (pickup) pickup.addEventListener('change', async function () {
+      var on = this.checked;
+      try {
+        if (state.live) await api('/works/' + w.id, {
+          method: 'PATCH', body: JSON.stringify({ pickupOk: on })
+        });
+        w.pickupOk = on;
+      } catch (e) {
+        this.checked = !on;
+        alert('Could not change that. Try again.');
+      }
+    });
 
     return el;
   }

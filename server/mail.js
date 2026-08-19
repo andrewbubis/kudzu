@@ -118,7 +118,7 @@ async function inquiryReceived({ artist, from, message, workTitle }) {
 }
 
 // ── A piece sold ─────────────────────────────────────────────────────
-async function workSold({ artist, workTitle, amountCents, currency }) {
+async function workSold({ artist, workTitle, amountCents, currency, isPickup }) {
   const money = amountCents == null ? null :
     new Intl.NumberFormat('en-US', {
       style: 'currency', currency: (currency || 'usd').toUpperCase(),
@@ -131,17 +131,28 @@ async function workSold({ artist, workTitle, amountCents, currency }) {
   return send({
     to: addressFor(artist),
     subject: workTitle ? `${workTitle} sold` : 'Your work sold',
-    text: `${title}${money ? ' ' + money : ''}\n\nYour payout is on its way from Stripe. ` +
-          `Check your Kudzu sales page for the buyer's shipping address, and post it with the ` +
-          `packed weight and box size you recorded.`,
+    text: isPickup
+      ? `${title}${money ? ' ' + money : ''}\n\nLocal pickup — arrange a time with the buyer. ` +
+        `Open the handoff on your phone when you meet; you both sign and your share releases.`
+      : `${title}${money ? ' ' + money : ''}\n\nYour payout is on its way from Stripe. ` +
+        `Check your Kudzu sales page for the buyer's shipping address, and post it with the ` +
+        `packed weight and box size you recorded.`,
     html: wrap(
       esc(title),
       `${money ? `<p style="margin:0 0 16px;font-size:26px;color:#211c2a;">${esc(money)}</p>` : ''}
-       <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#544c5e;">
-         Your share is already on its way to your bank through Stripe — nothing to invoice, nothing to chase.</p>
-       <p style="margin:0 0 20px;font-size:15px;line-height:1.6;color:#544c5e;">
-         Next: the buyer's shipping address is on your sales page. Pack it to the weight and box size
-         you recorded when you uploaded it, and send it off.</p>
+       ${isPickup
+         ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#544c5e;">
+              This one is a <b>local pickup</b>. Arrange a time with the buyer directly —
+              you decide where, and your address is never published.</p>
+            <p style="margin:0 0 20px;font-size:15px;line-height:1.6;color:#544c5e;">
+              When you meet, open the handoff on your phone. They scan a code, you both
+              sign, and your share is released on the spot. The signed document is your
+              proof the work changed hands.</p>`
+         : `<p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#544c5e;">
+              Your share is already on its way to your bank through Stripe — nothing to invoice, nothing to chase.</p>
+            <p style="margin:0 0 20px;font-size:15px;line-height:1.6;color:#544c5e;">
+              Next: the buyer's shipping address is on your sales page. Pack it to the weight and box size
+              you recorded when you uploaded it, and send it off. Ship signature-required.</p>`}
        ${profile ? `<p style="margin:0;"><a href="${esc(profile)}"
           style="display:inline-block;padding:12px 22px;background:#8a8f43;color:#ffffff;
                  text-decoration:none;font-size:14px;">See the order</a></p>` : ''}`,
@@ -150,4 +161,93 @@ async function workSold({ artist, workTitle, amountCents, currency }) {
   });
 }
 
-module.exports = { isConfigured, send, inquiryReceived, workSold };
+// ── The handoff is signed ────────────────────────────────────────────
+// Goes to both parties the moment the second signature lands. This is
+// the receipt — for the buyer it's proof of what they bought and from
+// whom, and for the artist it's the document that answers a chargeback
+// months later. Both get the same text, so neither can be told a
+// different story about what was agreed.
+function bolBlock(b, money) {
+  const line = (k, v) => v
+    ? `<tr><td style="padding:5px 0;color:#8a8072;font-size:13px;width:38%;">${esc(k)}</td>
+         <td style="padding:5px 0;color:#211c2a;font-size:14px;">${esc(v)}</td></tr>`
+    : '';
+  const at = (iso) => new Date(iso).toLocaleString('en-US', {
+    month: 'long', day: 'numeric', year: 'numeric',
+    hour: 'numeric', minute: '2-digit'
+  });
+
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+             style="margin:0 0 20px;padding:16px 18px;background:#f4f2ec;border-left:2px solid #8a8f43;">
+      ${line('Work', b.work_title)}
+      ${line('Details', b.work_details)}
+      ${line('Price', money)}
+      ${line('Condition', b.condition)}
+      ${line('Artist', b.artist_name)}
+      ${line('Buyer', b.buyer_name)}
+      ${line('Artist signed', b.artist_signed_at ? at(b.artist_signed_at) : null)}
+      ${line('Buyer signed', b.buyer_signed_at ? at(b.buyer_signed_at) : null)}
+      ${line('Reference', String(b.id).slice(0, 8).toUpperCase())}
+    </table>`;
+}
+
+async function handoffSigned({ bol, artistEmail }) {
+  const money = bol.price_cents == null ? '' :
+    new Intl.NumberFormat('en-US', {
+      style: 'currency', currency: (bol.currency || 'usd').toUpperCase(),
+      maximumFractionDigits: 0
+    }).format(bol.price_cents / 100);
+
+  const details = bolBlock(bol, money);
+  const docUrl = BASE() ? `${BASE()}/workinprogress/bol.html?id=${bol.id}` : null;
+  const ref = String(bol.id).slice(0, 8).toUpperCase();
+  const proof =
+    `<p style="margin:0;font-size:13px;line-height:1.6;color:#8a8072;">
+       Signed electronically by both parties on separate devices. Keep this email —
+       it is the record that this work changed hands.</p>`;
+
+  // The buyer has no account here, so this email is the only copy they
+  // will ever have. It has to stand on its own.
+  const toBuyer = send({
+    to: bol.buyer_email,
+    subject: `Receipt — ${bol.work_title}`,
+    text: `You received ${bol.work_title} from ${bol.artist_name}. ${money}\n\n` +
+          `Reference ${ref}. Signed by both parties. Copyright remains with the artist.`,
+    html: wrap(
+      `You received <span style="font-style:italic;">${esc(bol.work_title)}</span>.`,
+      `<p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#544c5e;">
+         Thank you — and congratulations. Here is your receipt.</p>
+       ${details}
+       <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#544c5e;">
+         Title to the work is yours. Copyright and reproduction rights stay with the
+         artist, as they do with any original artwork.</p>
+       ${proof}`,
+      'Kudzu Arts LLC · Nashville, Tennessee · kudzuarts.com'
+    )
+  });
+
+  const toArtist = send({
+    to: artistEmail,
+    subject: `Signed — ${bol.work_title} handed over`,
+    text: `${bol.buyer_name} signed for ${bol.work_title}. ${money}\n\n` +
+          `Your payout has been released. Reference ${ref}.`,
+    html: wrap(
+      `${esc(bol.buyer_name)} signed for it.`,
+      `<p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#544c5e;">
+         The handoff is recorded and your share has been released to your bank.</p>
+       ${details}
+       <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#544c5e;">
+         Keep this. If a buyer ever disputes a charge, a signed record of delivery is
+         what settles it — and this is that record.</p>
+       ${docUrl ? `<p style="margin:0 0 18px;"><a href="${esc(docUrl)}"
+          style="display:inline-block;padding:12px 22px;background:#8a8f43;color:#ffffff;
+                 text-decoration:none;font-size:14px;">View the document</a></p>` : ''}
+       ${proof}`,
+      'Also saved under Documents in your Kudzu Arts account.'
+    )
+  });
+
+  return Promise.all([toBuyer, toArtist]);
+}
+
+module.exports = { isConfigured, send, inquiryReceived, workSold, handoffSigned };
