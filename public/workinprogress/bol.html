@@ -95,11 +95,16 @@
 
   /* ── Signatures ─────────────────────────────────────────────────── */
   .bol-sigs { display: grid; grid-template-columns: 1fr 1fr; gap: 34px; margin-top: 30px; }
-  .bol-sig .rule { border-bottom: 1px solid var(--ink); height: 44px; margin-bottom: 7px; }
+  .bol-sig .rule { border-bottom: 1px solid var(--ink); height: 62px; margin-bottom: 7px;
+                   display: flex; align-items: flex-end; }
+  /* The mark they actually drew. Height-capped so a big scrawl and a
+     small one sit on the same line. */
+  .bol-sig .sig-img { max-height: 58px; max-width: 100%; width: auto; display: block; }
   .bol-sig .sig-name {
     font-family: "Cardinal Alternate", var(--serif); font-size: 25px;
     color: var(--ink); padding-bottom: 3px;
   }
+  .bol-sig .printed { font-size: 12px; color: var(--mute); margin-top: 2px; }
   .bol-sig .who {
     font-size: 11px; font-weight: 600; letter-spacing: 0.14em;
     text-transform: uppercase; color: var(--mute);
@@ -185,13 +190,15 @@
 
   <section class="bol-sigs">
     <div class="bol-sig">
-      <div class="rule"><span class="sig-name" id="bArtistSig"></span></div>
+      <div class="rule" id="bArtistRule"></div>
       <div class="who">Artist</div>
+      <div class="printed" id="bArtistName"></div>
       <div class="stamp" id="bArtistStamp">Not yet signed</div>
     </div>
     <div class="bol-sig">
-      <div class="rule"><span class="sig-name" id="bBuyerSig"></span></div>
+      <div class="rule" id="bBuyerRule"></div>
       <div class="who">Buyer</div>
+      <div class="printed" id="bBuyerName"></div>
       <div class="stamp" id="bBuyerStamp">Not yet signed</div>
     </div>
   </section>
@@ -251,14 +258,24 @@
       $('bArtist').textContent = b.artistName || '—';
       $('bBuyer').textContent = b.buyerName;
 
-      if (b.artistSignedAt) {
-        $('bArtistSig').textContent = b.artistSignature || '';
-        $('bArtistStamp').textContent = 'Signed ' + stamp(b.artistSignedAt);
+      // The drawn mark goes on the line; the printed name goes under it,
+      // because a signature nobody can read still needs to say who signed.
+      function placeSig(ruleId, nameId, stampId, img, name, at) {
+        if (!at) return;
+        if (img) {
+          var el = document.createElement('img');
+          el.className = 'sig-img';
+          el.src = img;
+          el.alt = name || 'signature';
+          $(ruleId).appendChild(el);
+        }
+        $(nameId).textContent = name || '';
+        $(stampId).textContent = 'Signed ' + stamp(at);
       }
-      if (b.buyerSignedAt) {
-        $('bBuyerSig').textContent = b.buyerSignature || '';
-        $('bBuyerStamp').textContent = 'Signed ' + stamp(b.buyerSignedAt);
-      }
+      placeSig('bArtistRule', 'bArtistName', 'bArtistStamp',
+               b.artistSignatureImg, b.artistSignature, b.artistSignedAt);
+      placeSig('bBuyerRule', 'bBuyerName', 'bBuyerStamp',
+               b.buyerSignatureImg, b.buyerSignature, b.buyerSignedAt);
 
       // What makes this stronger than a sheet of paper is the recorded
       // timestamp and the fact neither party can alter it afterwards.

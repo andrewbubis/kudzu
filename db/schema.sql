@@ -448,12 +448,17 @@ CREATE TABLE IF NOT EXISTS bills_of_lading (
   -- It identifies a session; it is not a secret that proves anything.
   join_code     text NOT NULL UNIQUE,
 
+  -- Two forms of each signature, and both matter. The drawn mark is what
+  -- a person actually made with their finger; the name is what makes the
+  -- document legible and searchable when nobody can read the scrawl.
   artist_signed_at   timestamptz,
-  artist_signature   text,                 -- typed name
+  artist_signature   text,                 -- printed name
+  artist_signature_img text,               -- PNG data URL of the drawn mark
   artist_ip          text,
 
   buyer_signed_at    timestamptz,
   buyer_signature    text,
+  buyer_signature_img text,
   buyer_ip           text,
 
   -- Set when both have signed. Delivery is deemed to occur here, and

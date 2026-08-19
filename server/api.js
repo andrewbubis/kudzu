@@ -749,21 +749,36 @@ router.post('/handoffs', auth.requireArtist, async (req, res) => {
   }
 });
 
+// A drawn signature arrives as a PNG data URL. Capped because it comes
+// from a browser and nothing from a browser is trusted — a real one is a
+// few kilobytes, so anything past 400KB is not a signature.
+const MAX_SIG_BYTES = 400 * 1024;
+function signatureImage(v) {
+  const s = String(v || '');
+  if (!s) return null;
+  if (!/^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(s)) return null;
+  if (s.length > MAX_SIG_BYTES) return null;
+  return s;
+}
+
 // The artist signs their side.
 router.post('/handoffs/:id/sign', auth.requireArtist, async (req, res) => {
   const signature = String((req.body || {}).signature || '').trim().slice(0, 200);
+  const drawn = signatureImage((req.body || {}).signatureImage);
   if (signature.length < 3) return res.status(400).json({ error: 'signature_required' });
+  if (!drawn) return res.status(400).json({ error: 'drawn_signature_required' });
 
   try {
     const { rows } = await db.query(
       `UPDATE bills_of_lading
           SET artist_signed_at = COALESCE(artist_signed_at, now()),
               artist_signature = COALESCE(artist_signature, $1),
+              artist_signature_img = COALESCE(artist_signature_img, $5),
               artist_ip = COALESCE(artist_ip, $2)
         WHERE id = $3 AND artist_id = $4
     RETURNING *`,
       [signature, req.headers['x-forwarded-for'] || req.ip || null,
-       req.params.id, req.artist.id]);
+       req.params.id, req.artist.id, drawn]);
     if (!rows[0]) return res.status(404).json({ error: 'not_found' });
 
     await releaseIfComplete(rows[0]);
@@ -813,18 +828,21 @@ router.get('/handoff/:code', async (req, res) => {
 
 router.post('/handoff/:code/sign', async (req, res) => {
   const signature = String((req.body || {}).signature || '').trim().slice(0, 200);
+  const drawn = signatureImage((req.body || {}).signatureImage);
   if (signature.length < 3) return res.status(400).json({ error: 'signature_required' });
+  if (!drawn) return res.status(400).json({ error: 'drawn_signature_required' });
 
   try {
     const { rows } = await db.query(
       `UPDATE bills_of_lading
           SET buyer_signed_at = COALESCE(buyer_signed_at, now()),
               buyer_signature = COALESCE(buyer_signature, $1),
+              buyer_signature_img = COALESCE(buyer_signature_img, $4),
               buyer_ip = COALESCE(buyer_ip, $2)
         WHERE join_code = $3
     RETURNING *`,
       [signature, req.headers['x-forwarded-for'] || req.ip || null,
-       String(req.params.code || '').toUpperCase()]);
+       String(req.params.code || '').toUpperCase(), drawn]);
     if (!rows[0]) return res.status(404).json({ error: 'not_found' });
 
     await releaseIfComplete(rows[0]);
@@ -877,6 +895,8 @@ router.get('/bols/:id', auth.requireArtist, async (req, res) => {
       artistName: rows[0].artist_name,
       artistSignature: rows[0].artist_signature,
       buyerSignature: rows[0].buyer_signature,
+      artistSignatureImg: rows[0].artist_signature_img,
+      buyerSignatureImg: rows[0].buyer_signature_img,
       // Needed by the handoff screen: the buyer signs on the artist's
       // phone through the public endpoint, keyed by this code.
       buyerEmail: rows[0].buyer_email

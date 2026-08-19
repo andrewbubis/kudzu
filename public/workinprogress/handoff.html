@@ -62,6 +62,28 @@
                font-weight: 400; color: #211c2a; margin-bottom: 4px; }
   .ho-pass span { color: #8a8072; font-size: 14px; }
 
+  /* The pad. Tall enough to sign at natural size with a finger — a
+     cramped box produces a cramped scrawl nobody would recognise. */
+  .sig-pad-wrap { position: relative; margin-top: 4px; }
+  .sig-pad {
+    display: block; width: 100%; height: 170px;
+    border: 1px solid #e2e2e2; background: #fff;
+    border-radius: 2px; cursor: crosshair;
+  }
+  .sig-pad-line {
+    position: absolute; left: 18px; right: 18px; bottom: 42px;
+    border-bottom: 1px solid #ddd; pointer-events: none;
+  }
+  .sig-pad-hint {
+    position: absolute; left: 0; right: 0; bottom: 18px; text-align: center;
+    color: #bbb; font-size: 13px; pointer-events: none;
+  }
+  .sig-pad-bar { display: flex; justify-content: space-between; align-items: center;
+                 margin-top: 8px; }
+  .sig-pad-bar .who { color: #888; font-size: 13px; }
+  .sig-clear { background: none; border: 0; font: inherit; font-size: 13px;
+               color: #8a8072; text-decoration: underline; cursor: pointer; padding: 4px 0; }
+
   .ho-done { text-align: center; padding: 28px 20px;
              background: #f2faf5; border: 1px solid #bfe0cd; color: #1f7a45; }
   .ho-done b { display: block; font-family: var(--serif); font-size: 22px;
@@ -104,8 +126,16 @@
         You're confirming you're releasing this work to the buyer named above, in the
         condition described. Copyright and reproduction rights stay with you.
       </p>
-      <label class="sig-label" for="mySig">Type your full name to sign</label>
-      <input class="sig-input" id="mySig" type="text" autocomplete="name" placeholder="Your full name">
+      <span class="sig-label">Sign with your finger</span>
+      <div class="sig-pad-wrap">
+        <canvas class="sig-pad" id="artistPad"></canvas>
+        <div class="sig-pad-line"></div>
+        <div class="sig-pad-hint" id="artistHint">Sign above</div>
+      </div>
+      <div class="sig-pad-bar">
+        <span class="who" id="artistWho">—</span>
+        <button class="sig-clear" type="button" id="artistClear">Clear</button>
+      </div>
       <button class="sig-go" type="button" id="artistSign">Sign</button>
       <p class="sig-note" id="artistNote"></p>
     </div>
@@ -124,8 +154,16 @@
         reproduction rights remain with the artist. A receipt will be emailed to you
         at <b id="buyerEmail">your email</b>.
       </p>
-      <label class="sig-label" for="theirSig">Buyer — type your full name to sign</label>
-      <input class="sig-input" id="theirSig" type="text" autocomplete="off" placeholder="Your full name">
+      <span class="sig-label">Sign with your finger</span>
+      <div class="sig-pad-wrap">
+        <canvas class="sig-pad" id="buyerPad"></canvas>
+        <div class="sig-pad-line"></div>
+        <div class="sig-pad-hint" id="buyerHint">Sign above</div>
+      </div>
+      <div class="sig-pad-bar">
+        <span class="who" id="buyerWho">—</span>
+        <button class="sig-clear" type="button" id="buyerClear">Clear</button>
+      </div>
       <button class="sig-go" type="button" id="buyerSign">Sign — I've received this work</button>
       <p class="sig-note" id="buyerNote"></p>
     </div>
@@ -143,12 +181,27 @@
   <p class="acct-empty" id="msg">Loading…</p>
 </main>
 
+<script src="js/signature-pad.js"></script>
 <script>
 (function () {
   'use strict';
   var $ = function (id) { return document.getElementById(id); };
   var id = new URLSearchParams(location.search).get('id');
   var joinCode = null;
+  var artistName = '', buyerName = '';
+  var artistPad = null, buyerPad = null;
+
+  // Both names are already known — the artist's from their account, the
+  // buyer's from checkout — so nobody types anything. They just sign.
+  function makePad(canvasId, hintId, clearId) {
+    var pad = KudzuSignature(document.getElementById(canvasId), {
+      onChange: function () {
+        document.getElementById(hintId).style.display = pad.isEmpty() ? '' : 'none';
+      }
+    });
+    document.getElementById(clearId).addEventListener('click', function () { pad.clear(); });
+    return pad;
+  }
 
   function money(cents, currency) {
     if (cents == null) return '—';
@@ -183,6 +236,10 @@
     $('hPrice').textContent = money(b.priceCents, b.currency);
     $('hBuyer').textContent = b.buyerName;
     $('passName').textContent = b.buyerName;
+    artistName = b.artistName || 'Artist';
+    buyerName = b.buyerName || 'Buyer';
+    if ($('artistWho')) $('artistWho').textContent = artistName;
+    if ($('buyerWho')) $('buyerWho').textContent = buyerName;
     if (b.buyerEmail) $('buyerEmail').textContent = b.buyerEmail;
     $('viewDoc').href = 'bol.html?id=' + encodeURIComponent(b.id);
 
@@ -213,16 +270,17 @@
 
   $('artistSign').addEventListener('click', async function () {
     var btn = this, note = $('artistNote');
-    var sig = $('mySig').value.trim();
     note.textContent = '';
-    if (sig.length < 3) { note.textContent = 'Type your full name.'; return; }
+    if (!artistPad || artistPad.isEmpty()) {
+      note.textContent = 'Sign in the box above.'; return;
+    }
 
     btn.disabled = true; btn.textContent = 'Signing…';
     try {
       render(await api('/handoffs/' + encodeURIComponent(id) + '/sign', {
-        method: 'POST', body: JSON.stringify({ signature: sig })
+        method: 'POST',
+        body: JSON.stringify({ signature: artistName, signatureImage: artistPad.toDataURL() })
       }));
-      $('theirSig').focus();
     } catch (e) {
       note.textContent = 'Could not sign. Try again.';
       btn.disabled = false; btn.textContent = 'Sign';
@@ -234,16 +292,17 @@
   // recorded is the buyer's signature and not the artist's login.
   $('buyerSign').addEventListener('click', async function () {
     var btn = this, note = $('buyerNote');
-    var sig = $('theirSig').value.trim();
     note.textContent = '';
-    if (sig.length < 3) { note.textContent = 'Please type your full name.'; return; }
+    if (!buyerPad || buyerPad.isEmpty()) {
+      note.textContent = 'Sign in the box above.'; return;
+    }
 
     btn.disabled = true; btn.textContent = 'Signing…';
     try {
       var res = await fetch('/api/handoff/' + encodeURIComponent(joinCode) + '/sign', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ signature: sig })
+        body: JSON.stringify({ signature: buyerName, signatureImage: buyerPad.toDataURL() })
       });
       if (!res.ok) throw new Error();
       render(await api('/bols/' + encodeURIComponent(id)));
@@ -255,8 +314,16 @@
 
   (async function boot() {
     if (!id) { $('msg').textContent = 'No handoff specified.'; return; }
-    try { render(await api('/bols/' + encodeURIComponent(id))); }
-    catch (e) { $('msg').textContent = 'Could not load this handoff.'; }
+    try {
+      render(await api('/bols/' + encodeURIComponent(id)));
+      // Built after render, so the canvases are on screen and size to
+      // their real width. A pad sized while hidden measures zero and
+      // draws nothing.
+      artistPad = makePad('artistPad', 'artistHint', 'artistClear');
+      buyerPad = makePad('buyerPad', 'buyerHint', 'buyerClear');
+    } catch (e) {
+      $('msg').textContent = 'Could not load this handoff.';
+    }
   })();
 })();
 </script>
