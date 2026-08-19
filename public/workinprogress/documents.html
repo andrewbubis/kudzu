@@ -271,9 +271,12 @@
       var row = document.createElement('div');
       row.className = 'bol-row';
       row.innerHTML =
-        '<span class="t">' + esc(b.workTitle) +
+        '<span class="t">' +
+          '<a href="bol.html?id=' + encodeURIComponent(b.id) + '" style="color:#111;">' +
+            esc(b.workTitle) + '</a>' +
           ' <span style="color:#888;">· ' + esc(b.buyerName) + ' · ' +
-          money(b.priceCents, b.currency) + '</span></span>' +
+            money(b.priceCents, b.currency) + '</span>' +
+        '</span>' +
         '<span class="s ' + (done ? 'done' : 'waiting') + '">' +
           (done ? 'signed ' + when(b.completedAt)
                 : (b.artistSignedAt ? 'waiting on buyer' : 'not signed yet')) +

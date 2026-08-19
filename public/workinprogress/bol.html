@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bill of Lading · Kudzu Arts</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="img/logo-k.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap" rel="stylesheet">
+<style>
+  /* ── Cardinal Alternate ───────────────────────────────────────────
+     The display face already used for the print shop headline. When Ian
+     draws the plant/stick lettering, swap the src here and the whole
+     document picks it up — nothing else references it. */
+  @font-face {
+    font-family: "Cardinal Alternate";
+    src: url("fonts/cardinal-alternate.woff2") format("woff2");
+    font-display: swap;
+  }
+
+  :root {
+    --ink: #211c2a;
+    --soft: #544c5e;
+    --mute: #8a8072;
+    --olive: #5f5a2c;
+    --green: #8a8f43;
+    --line: rgba(33, 28, 42, 0.18);
+    --serif: "EB Garamond", Georgia, "Times New Roman", serif;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: #f4f2ec; color: var(--ink);
+    font-family: var(--serif); line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Sized to US Letter so what's on screen is what prints. */
+  .sheet {
+    width: 8.5in; min-height: 11in; margin: 24px auto;
+    background: #fff; padding: 0.7in 0.75in 0.6in;
+    box-shadow: 0 20px 50px rgba(20, 17, 12, 0.16);
+  }
+
+  /* ── Masthead ───────────────────────────────────────────────────
+     The mark is the loudest thing on the page, on purpose. This is a
+     document that may be waved at a bank or a card network months later
+     — it should be obvious at a glance whose paper it is. */
+  .bol-head {
+    text-align: center;
+    padding-bottom: 22px; margin-bottom: 26px;
+    border-bottom: 2px solid var(--ink);
+  }
+  .bol-mark { width: 190px; height: auto; margin: 0 auto 10px; display: block; }
+  .bol-word {
+    font-family: "Cardinal Alternate", var(--serif);
+    font-size: 46px; letter-spacing: 0.06em; line-height: 1;
+    color: var(--ink); margin: 0;
+  }
+  .bol-word .arts {
+    font-family: var(--serif); font-size: 17px; letter-spacing: 0.3em;
+    text-transform: lowercase; color: var(--olive);
+    display: block; margin-top: 7px;
+  }
+  .bol-kind {
+    font-family: var(--serif); font-size: 13px; letter-spacing: 0.34em;
+    text-transform: uppercase; color: var(--mute); margin: 20px 0 0;
+  }
+
+  /* ── Body ───────────────────────────────────────────────────────── */
+  .bol-ref {
+    display: flex; justify-content: space-between; gap: 16px;
+    font-size: 13px; color: var(--mute); margin-bottom: 26px;
+  }
+
+  .bol-sec { margin-bottom: 24px; }
+  .bol-sec h2 {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.18em;
+    text-transform: uppercase; color: var(--olive);
+    margin: 0 0 10px; padding-bottom: 6px; border-bottom: 1px solid var(--line);
+  }
+  .bol-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 26px; }
+  .bol-field { font-size: 15px; }
+  .bol-field .k { color: var(--mute); font-size: 12px; display: block; }
+  .bol-field .v { color: var(--ink); }
+  .bol-price { font-size: 27px; color: var(--ink); }
+
+  .bol-terms {
+    font-size: 12.5px; line-height: 1.6; color: var(--soft);
+    background: #fbfaf7; border-left: 2px solid var(--green);
+    padding: 14px 16px; margin-bottom: 26px;
+  }
+
+  /* ── Signatures ─────────────────────────────────────────────────── */
+  .bol-sigs { display: grid; grid-template-columns: 1fr 1fr; gap: 34px; margin-top: 30px; }
+  .bol-sig .rule { border-bottom: 1px solid var(--ink); height: 44px; margin-bottom: 7px; }
+  .bol-sig .sig-name {
+    font-family: "Cardinal Alternate", var(--serif); font-size: 25px;
+    color: var(--ink); padding-bottom: 3px;
+  }
+  .bol-sig .who {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--mute);
+  }
+  .bol-sig .stamp { font-size: 11.5px; color: var(--mute); margin-top: 5px; line-height: 1.45; }
+
+  .bol-foot {
+    margin-top: 34px; padding-top: 14px; border-top: 1px solid var(--line);
+    font-size: 11px; color: var(--mute); text-align: center; line-height: 1.6;
+  }
+
+  .bol-actions { max-width: 8.5in; margin: 0 auto 40px; display: flex; gap: 10px; justify-content: center; }
+  .bol-actions button {
+    font-family: var(--serif); font-size: 14px; padding: 12px 26px;
+    background: var(--green); color: #fff; border: 0; cursor: pointer;
+  }
+  .bol-actions button.ghost { background: transparent; color: var(--ink); border: 1px solid var(--line); }
+
+  .bol-msg { max-width: 8.5in; margin: 40px auto; text-align: center; color: var(--soft); }
+
+  /* ── Print ──────────────────────────────────────────────────────── */
+  @media print {
+    body { background: #fff; }
+    .sheet { width: auto; min-height: 0; margin: 0; padding: 0.4in; box-shadow: none; }
+    .bol-actions { display: none; }
+    @page { size: letter; margin: 0.5in; }
+  }
+
+  @media (max-width: 8.9in) {
+    .sheet { width: auto; margin: 12px; padding: 26px 20px; }
+    .bol-grid, .bol-sigs { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="bol-msg" id="msg">Loading…</div>
+
+<article class="sheet" id="sheet" hidden>
+
+  <header class="bol-head">
+    <img class="bol-mark" src="img/logo-k.png" alt="Kudzu Arts">
+    <p class="bol-word">KUDZU<span class="arts">arts</span></p>
+    <p class="bol-kind">Bill of Lading · Receipt of Delivery</p>
+  </header>
+
+  <div class="bol-ref">
+    <span>No. <b id="bRef">—</b></span>
+    <span id="bDate">—</span>
+  </div>
+
+  <section class="bol-sec">
+    <h2>The work</h2>
+    <div class="bol-field" style="margin-bottom:10px;">
+      <span class="k">Title</span>
+      <span class="v" style="font-size:20px;" id="bTitle">—</span>
+    </div>
+    <div class="bol-grid">
+      <div class="bol-field"><span class="k">Details</span><span class="v" id="bDetails">—</span></div>
+      <div class="bol-field"><span class="k">Condition at handoff</span><span class="v" id="bCondition">As described at listing</span></div>
+    </div>
+    <div class="bol-field" style="margin-top:14px;">
+      <span class="k">Price paid</span>
+      <span class="bol-price" id="bPrice">—</span>
+    </div>
+  </section>
+
+  <section class="bol-sec">
+    <h2>Parties</h2>
+    <div class="bol-grid">
+      <div class="bol-field"><span class="k">Artist / releasing</span><span class="v" id="bArtist">—</span></div>
+      <div class="bol-field"><span class="k">Buyer / receiving</span><span class="v" id="bBuyer">—</span></div>
+    </div>
+  </section>
+
+  <p class="bol-terms">
+    By signing below, the buyer confirms receiving the work described above in the
+    condition stated, and the artist confirms releasing it. Payment has been made in
+    full through Kudzu Arts; signature releases the artist's share. Title passes to
+    the buyer on signature. Copyright and all reproduction rights remain with the
+    artist. Each party should keep a copy.
+  </p>
+
+  <section class="bol-sigs">
+    <div class="bol-sig">
+      <div class="rule"><span class="sig-name" id="bArtistSig"></span></div>
+      <div class="who">Artist</div>
+      <div class="stamp" id="bArtistStamp">Not yet signed</div>
+    </div>
+    <div class="bol-sig">
+      <div class="rule"><span class="sig-name" id="bBuyerSig"></span></div>
+      <div class="who">Buyer</div>
+      <div class="stamp" id="bBuyerStamp">Not yet signed</div>
+    </div>
+  </section>
+
+  <footer class="bol-foot">
+    Kudzu Arts LLC · Nashville, Tennessee · kudzuarts.com<br>
+    <span id="bVerify"></span>
+  </footer>
+
+</article>
+
+<div class="bol-actions" id="actions" hidden>
+  <button type="button" id="printBtn">Print / save as PDF</button>
+  <button type="button" class="ghost" onclick="history.back()">Back</button>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+  var id = new URLSearchParams(location.search).get('id');
+
+  function money(cents, currency) {
+    if (cents == null) return '—';
+    try {
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency', currency: (currency || 'usd').toUpperCase(),
+        maximumFractionDigits: 0
+      }).format(cents / 100);
+    } catch (e) { return '$' + Math.round(cents / 100); }
+  }
+  function stamp(iso) {
+    var d = new Date(iso);
+    return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) +
+           ' at ' + d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+  }
+
+  if (!id) { $('msg').textContent = 'No document specified.'; return; }
+
+  fetch('/api/bols/' + encodeURIComponent(id), { credentials: 'same-origin' })
+    .then(function (r) {
+      if (r.status === 401) throw new Error('Sign in to view this document.');
+      if (r.status === 404) throw new Error('That document could not be found.');
+      if (!r.ok) throw new Error('Could not load this document.');
+      return r.json();
+    })
+    .then(function (b) {
+      $('bRef').textContent = String(b.id).slice(0, 8).toUpperCase();
+      $('bDate').textContent = new Date(b.createdAt).toLocaleDateString('en-US',
+        { month: 'long', day: 'numeric', year: 'numeric' });
+
+      $('bTitle').textContent = b.workTitle;
+      $('bDetails').textContent = b.workDetails || '—';
+      if (b.condition) $('bCondition').textContent = b.condition;
+      $('bPrice').textContent = money(b.priceCents, b.currency);
+
+      $('bArtist').textContent = b.artistName || '—';
+      $('bBuyer').textContent = b.buyerName;
+
+      if (b.artistSignedAt) {
+        $('bArtistSig').textContent = b.artistSignature || '';
+        $('bArtistStamp').textContent = 'Signed ' + stamp(b.artistSignedAt);
+      }
+      if (b.buyerSignedAt) {
+        $('bBuyerSig').textContent = b.buyerSignature || '';
+        $('bBuyerStamp').textContent = 'Signed ' + stamp(b.buyerSignedAt);
+      }
+
+      // Signed on two devices, and the document says so. That fact is the
+      // whole reason this holds up better than a sheet of paper.
+      $('bVerify').textContent = b.completedAt
+        ? 'Signed electronically by both parties on separate devices · recorded ' + stamp(b.completedAt)
+        : 'Awaiting signature — not yet a completed record of delivery';
+
+      $('msg').hidden = true;
+      $('sheet').hidden = false;
+      $('actions').hidden = false;
+    })
+    .catch(function (e) { $('msg').textContent = e.message; });
+
+  $('printBtn').addEventListener('click', function () { window.print(); });
+})();
+</script>
+</body>
+</html>

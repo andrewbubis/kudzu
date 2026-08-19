@@ -677,6 +677,28 @@ const publicBol = (b) => ({
   createdAt: b.created_at
 });
 
+// A single document. The artist who owns it can always read it; a buyer
+// reaches their copy through the signing link instead, since they have no
+// account here.
+router.get('/bols/:id', auth.requireArtist, async (req, res) => {
+  try {
+    const { rows } = await db.query(
+      `SELECT b.*, a.name AS artist_name
+         FROM bills_of_lading b
+         JOIN artists a ON a.id = b.artist_id
+        WHERE b.id = $1 AND b.artist_id = $2`,
+      [req.params.id, req.artist.id]);
+    if (!rows[0]) return res.status(404).json({ error: 'not_found' });
+    res.json(Object.assign(publicBol(rows[0]), {
+      artistName: rows[0].artist_name,
+      artistSignature: rows[0].artist_signature,
+      buyerSignature: rows[0].buyer_signature
+    }));
+  } catch (err) {
+    res.status(500).json({ error: 'server_error' });
+  }
+});
+
 router.get('/bols', auth.requireArtist, async (req, res) => {
   try {
     const { rows } = await db.query(
