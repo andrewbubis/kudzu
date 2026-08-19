@@ -133,7 +133,7 @@ async function workSold({ artist, workTitle, amountCents, currency, isPickup }) 
     subject: workTitle ? `${workTitle} sold` : 'Your work sold',
     text: isPickup
       ? `${title}${money ? ' ' + money : ''}\n\nPaid. Local pickup — arrange a time with the buyer. ` +
-        `When you meet, open Sales in your account and tap Hand it over so you both sign for it.`
+        `When you meet, open Sales and tap Hand it over — you sign, then hand them your phone.`
       : `${title}${money ? ' ' + money : ''}\n\nYour payout is on its way from Stripe. ` +
         `Check your Kudzu sales page for the buyer's shipping address, and post it with the ` +
         `packed weight and box size you recorded.`,
@@ -146,8 +146,8 @@ async function workSold({ artist, workTitle, amountCents, currency, isPickup }) 
               you decide where, and your address is never published.</p>
             <p style="margin:0 0 20px;font-size:15px;line-height:1.6;color:#544c5e;">
               Your share has already been paid. When you meet, open <b>Sales</b> in your
-              account and tap <b>Hand it over</b> — they scan a code, you both sign, and
-              the signed document is your proof the work changed hands.</p>`
+              account and tap <b>Hand it over</b>. You sign, hand them your phone, they
+              sign — and the receipt goes to you both automatically.</p>`
          : `<p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#544c5e;">
               Your share is already on its way to your bank through Stripe — nothing to invoice, nothing to chase.</p>
             <p style="margin:0 0 20px;font-size:15px;line-height:1.6;color:#544c5e;">
@@ -203,7 +203,7 @@ async function handoffSigned({ bol, artistEmail }) {
   const ref = String(bol.id).slice(0, 8).toUpperCase();
   const proof =
     `<p style="margin:0;font-size:13px;line-height:1.6;color:#8a8072;">
-       Signed electronically by both parties on separate devices. Keep this email —
+       Signed electronically by both parties and recorded with a timestamp. Keep this email —
        it is the record that this work changed hands.</p>`;
 
   // The buyer has no account here, so this email is the only copy they

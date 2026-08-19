@@ -198,7 +198,7 @@ is confirmed and paid. Nothing is consigned into Kudzu Arts' hands.*
 provides a pre-filled **Bill of Lading** for the sale, stating the Work, the
 Artist, the buyer, the Retail Price, the order number, the date, and the
 condition of the Work, with signature blocks for both parties. The Artist prints
-it; **both parties sign at the handoff**; the buyer keeps a copy; the Artist
+it; **both parties sign at the handoff on the Artist's device**; the buyer keeps a copy; the Artist
 files a photograph or scan of the signed document against the order. Delivery is
 deemed to occur upon signature. Payment is not contingent on it.
 

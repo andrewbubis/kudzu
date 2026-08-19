@@ -421,10 +421,12 @@ CREATE INDEX IF NOT EXISTS agreement_sig_artist_idx
 -- unless we make it, and without proof of delivery a chargeback is
 -- simply lost.
 --
--- Signed on two devices, not one. If both signatures came from the
--- seller's phone, the first thing anyone contesting it would ask is
--- whether the seller signed for the buyer. Two devices, two addresses,
--- two timestamps answers that before it's asked.
+-- Signed at the handoff on the artist's device: they sign, hand the
+-- phone over, the buyer signs. An earlier design had the buyer sign on
+-- their own phone via a QR code — stronger evidence in theory, but it
+-- asked two strangers to coordinate two devices while holding a
+-- painting. The buyer's receipt is emailed to them immediately, which is
+-- both their copy and their chance to object if they never signed.
 CREATE TABLE IF NOT EXISTS bills_of_lading (
   id            uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   artwork_id    uuid REFERENCES artworks(id) ON DELETE SET NULL,

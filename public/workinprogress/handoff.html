@@ -12,51 +12,60 @@
 <link rel="stylesheet" href="css/v3.css">
 <link rel="stylesheet" href="css/account.css">
 <style>
-  /* Built for a phone held at arm's length in a studio, not a desk. */
-  .ho { max-width: 520px; }
+  /* One phone, passed across. An earlier version had the buyer sign on
+     their own device via a QR code — technically stronger evidence, but
+     it asked two strangers to coordinate two phones while holding a
+     painting. Handing someone your phone to sign is what every delivery
+     driver does, and the buyer's emailed receipt is their copy. */
+  .ho { max-width: 500px; }
   .ho h1 { font-family: var(--serif, Georgia, serif); font-weight: 400; font-size: 26px; margin: 0 0 6px; }
   .ho .sub { color: #888; margin: 0 0 24px; }
 
   .ho-card { border: 1px solid #e2e2e2; background: #fff; padding: 22px; margin-bottom: 16px; }
-  .ho-work { font-size: 19px; color: #111; margin: 0 0 4px; }
+  .ho-work { font-size: 20px; color: #111; margin: 0 0 4px; }
   .ho-meta { color: #888; font-size: 14px; margin: 0; }
   .ho-price { font-size: 30px; color: #111; margin: 14px 0 0; }
 
-  /* The code has to survive being read aloud across a table. */
-  .ho-code {
-    font-family: var(--mono, ui-monospace, monospace);
-    font-size: 34px; letter-spacing: 0.22em; text-align: center;
-    color: #111; margin: 6px 0 4px; word-break: break-all;
+  .ho-terms {
+    font-size: 13.5px; line-height: 1.6; color: #555;
+    background: #fbfaf7; border-left: 2px solid #8a8f43;
+    padding: 14px 16px; margin: 0 0 18px;
   }
-  .ho-qr { display: block; margin: 0 auto; width: 220px; height: 220px;
-           background: #fff; padding: 10px; border: 1px solid #e2e2e2; }
-  .ho-hint { text-align: center; color: #888; font-size: 13px; margin: 12px 0 0; }
 
-  .ho-steps { list-style: none; margin: 0; padding: 0; }
-  .ho-step { display: flex; gap: 13px; align-items: flex-start; padding: 13px 0; border-bottom: 1px solid #eee; }
-  .ho-step:last-child { border-bottom: 0; }
-  .ho-step .dot {
-    flex: 0 0 auto; width: 22px; height: 22px; border-radius: 50%;
-    border: 1px solid #ddd; color: #bbb; font-size: 12px;
-    display: flex; align-items: center; justify-content: center; margin-top: 1px;
-  }
-  .ho-step.done .dot { background: #1f7a45; border-color: #1f7a45; color: #fff; }
-  .ho-step .txt { color: #444; }
-  .ho-step.done .txt { color: #111; }
-  .ho-step .stamp { display: block; color: #888; font-size: 12px; margin-top: 2px; }
-
+  .sig-label { display: block; color: #888; font-size: 12px; letter-spacing: .1em;
+               text-transform: uppercase; margin-bottom: 8px; }
   .sig-input {
-    width: 100%; padding: 14px 16px; border: 1px solid #e2e2e2;
-    font-family: var(--serif, Georgia, serif); font-size: 18px; margin: 10px 0 12px;
-    outline: none;
+    width: 100%; padding: 15px 16px; border: 1px solid #e2e2e2;
+    font-family: var(--serif, Georgia, serif); font-size: 19px; outline: none;
   }
   .sig-input:focus { border-color: #8a8f43; }
+  .sig-go { width: 100%; margin-top: 14px; padding: 16px; border: 0;
+            background: #8a8f43; color: #fff; font-family: var(--serif); font-size: 17px;
+            cursor: pointer; }
+  .sig-go:disabled { opacity: .5; cursor: default; }
+  .sig-note { margin-top: 11px; color: #b3261e; font-size: 14px; min-height: 20px; }
 
-  .ho-done {
-    text-align: center; padding: 26px 20px;
-    background: #f2faf5; border: 1px solid #bfe0cd; color: #1f7a45;
+  .ho-signed { display: flex; align-items: center; gap: 10px; color: #1f7a45;
+               padding: 13px 0; border-bottom: 1px solid #eee; }
+  .ho-signed .tick { width: 21px; height: 21px; border-radius: 50%; background: #1f7a45;
+                     color: #fff; font-size: 12px; display: flex; align-items: center;
+                     justify-content: center; flex: 0 0 auto; }
+  .ho-signed .stamp { display: block; color: #888; font-size: 12px; }
+
+  /* The moment the phone changes hands. Loud on purpose — it's an
+     instruction to a person, not a label. */
+  .ho-pass {
+    text-align: center; padding: 22px 18px; margin-bottom: 16px;
+    background: #f4f2ec; border: 1px dashed #c9c2b0;
   }
-  .ho-done b { display: block; font-family: var(--serif); font-size: 21px; font-weight: 400; margin-bottom: 6px; }
+  .ho-pass b { display: block; font-family: var(--serif); font-size: 20px;
+               font-weight: 400; color: #211c2a; margin-bottom: 4px; }
+  .ho-pass span { color: #8a8072; font-size: 14px; }
+
+  .ho-done { text-align: center; padding: 28px 20px;
+             background: #f2faf5; border: 1px solid #bfe0cd; color: #1f7a45; }
+  .ho-done b { display: block; font-family: var(--serif); font-size: 22px;
+               font-weight: 400; margin-bottom: 6px; }
 </style>
 </head>
 <body>
@@ -64,7 +73,7 @@
 <header class="site-header">
   <a href="index.html" class="brand"><img class="mark" src="img/logo-k.png" alt="" aria-hidden="true"><span class="word"><b>KUDZU</b><span class="arts">arts</span></span></a>
   <nav class="nav" aria-label="Primary">
-    <a href="profile.html">Profile</a>
+    <a href="sales.html">Sales</a>
     <a href="documents.html">Documents</a>
   </nav>
   <button class="nav-toggle" type="button" aria-expanded="false">Menu</button>
@@ -72,70 +81,74 @@
 
 <main class="acct ho">
   <h1>Handing over the work</h1>
-  <p class="sub">Both of you sign, on your own phones. You were paid at purchase — this is the receipt.</p>
+  <p class="sub" id="topSub">You sign, then pass your phone to the buyer.</p>
 
   <div id="content" hidden>
+
     <div class="ho-card">
       <p class="ho-work" id="hWork">—</p>
-      <p class="ho-meta" id="hMeta">—</p>
+      <p class="ho-meta" id="hMeta"></p>
       <p class="ho-price" id="hPrice">—</p>
       <p class="ho-meta" style="margin-top:10px;">To <b id="hBuyer">—</b></p>
-    </div>
-
-    <!-- Hidden once both have signed — a QR nobody needs is just noise. -->
-    <div class="ho-card" id="joinCard">
-      <p style="margin:0 0 12px;text-align:center;color:#444;">
-        Have the buyer scan this, or type the code at
-        <b>kudzuarts.com/sign</b>
-      </p>
-      <canvas class="ho-qr" id="qr" width="220" height="220" aria-label="Scan to sign"></canvas>
-      <p class="ho-code" id="hCode">—</p>
-      <p class="ho-hint">Their phone, not yours — that's what makes two signatures worth having.</p>
-    </div>
-
-    <div class="ho-card">
-      <ul class="ho-steps">
-        <li class="ho-step" id="stepArtist">
-          <span class="dot">1</span>
-          <span class="txt">You sign
-            <span class="stamp" id="artistStamp">Not signed yet</span>
-          </span>
-        </li>
-        <li class="ho-step" id="stepBuyer">
-          <span class="dot">2</span>
-          <span class="txt">Buyer signs
-            <span class="stamp" id="buyerStamp">Waiting</span>
-          </span>
-        </li>
-      </ul>
-
-      <div id="artistSignBox" style="margin-top:16px;">
-        <label for="mySig" style="color:#888;font-size:13px;">Type your full name to sign</label>
-        <input class="sig-input" id="mySig" type="text" autocomplete="name" placeholder="Your full name">
-        <button class="acct-btn big" type="button" id="signBtn" style="width:100%;">Sign</button>
-        <span id="signNote" style="display:block;margin-top:9px;color:#b3261e;"></span>
+      <div id="artistDone" hidden>
+        <div class="ho-signed" style="margin-top:16px;border-bottom:0;">
+          <span class="tick">✓</span>
+          <span>You signed<span class="stamp" id="artistStamp"></span></span>
+        </div>
       </div>
+    </div>
+
+    <!-- Step 1 — the artist -->
+    <div class="ho-card" id="artistStep">
+      <p class="ho-terms">
+        You're confirming you're releasing this work to the buyer named above, in the
+        condition described. Copyright and reproduction rights stay with you.
+      </p>
+      <label class="sig-label" for="mySig">Type your full name to sign</label>
+      <input class="sig-input" id="mySig" type="text" autocomplete="name" placeholder="Your full name">
+      <button class="sig-go" type="button" id="artistSign">Sign</button>
+      <p class="sig-note" id="artistNote"></p>
+    </div>
+
+    <!-- The handover -->
+    <div class="ho-pass" id="passStep" hidden>
+      <b>Now pass your phone to <span id="passName">the buyer</span>.</b>
+      <span>They'll confirm they've received the work.</span>
+    </div>
+
+    <!-- Step 2 — the buyer, on the same phone -->
+    <div class="ho-card" id="buyerStep" hidden>
+      <p class="ho-terms">
+        By signing, you confirm you have received the work described above in the
+        condition stated. Title passes to you on signature. Copyright and all
+        reproduction rights remain with the artist. A receipt will be emailed to you
+        at <b id="buyerEmail">your email</b>.
+      </p>
+      <label class="sig-label" for="theirSig">Buyer — type your full name to sign</label>
+      <input class="sig-input" id="theirSig" type="text" autocomplete="off" placeholder="Your full name">
+      <button class="sig-go" type="button" id="buyerSign">Sign — I've received this work</button>
+      <p class="sig-note" id="buyerNote"></p>
     </div>
 
     <div class="ho-done" id="doneBox" hidden>
       <b>Signed by both.</b>
-      Delivery recorded. A copy has been emailed to you both.
-      <div style="margin-top:14px;">
+      Delivery recorded. A receipt has been emailed to you both.
+      <div style="margin-top:16px;">
         <a class="acct-btn ghost" id="viewDoc" href="#">View the document</a>
       </div>
     </div>
+
   </div>
 
   <p class="acct-empty" id="msg">Loading…</p>
 </main>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.0.3/qrcode.min.js"></script>
 <script>
 (function () {
   'use strict';
   var $ = function (id) { return document.getElementById(id); };
   var id = new URLSearchParams(location.search).get('id');
-  var poll = null;
+  var joinCode = null;
 
   function money(cents, currency) {
     if (cents == null) return '—';
@@ -148,7 +161,7 @@
   }
   function stamp(iso) {
     var d = new Date(iso);
-    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) +
+    return ' · ' + d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) +
            ' at ' + d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
   }
 
@@ -157,66 +170,49 @@
       headers: { 'Content-Type': 'application/json' },
       credentials: 'same-origin'
     }, opts || {}));
-    if (!res.ok) {
-      if (res.status === 401) { location.href = 'login.html'; return; }
-      throw Object.assign(new Error('failed'), { status: res.status });
-    }
+    if (res.status === 401) { location.href = 'login.html'; return; }
+    if (!res.ok) throw Object.assign(new Error('failed'), { status: res.status });
     return res.json();
   }
 
-  function drawQR(canvas, text) {
-    try {
-      var qr = qrcode(0, 'M');
-      qr.addData(text); qr.make();
-      var count = qr.getModuleCount();
-      var px = Math.floor(canvas.width / (count + 6));
-      var off = Math.floor((canvas.width - px * count) / 2);
-      var c = canvas.getContext('2d');
-      c.fillStyle = '#fff'; c.fillRect(0, 0, canvas.width, canvas.height);
-      c.fillStyle = '#000';
-      for (var row = 0; row < count; row++) {
-        for (var col = 0; col < count; col++) {
-          if (qr.isDark(row, col)) c.fillRect(off + col * px, off + row * px, px, px);
-        }
-      }
-    } catch (e) { console.error('QR render failed:', e); }
-  }
-
   function render(b) {
+    joinCode = b.joinCode || joinCode;
+
     $('hWork').textContent = b.workTitle;
     $('hMeta').textContent = b.workDetails || '';
     $('hPrice').textContent = money(b.priceCents, b.currency);
     $('hBuyer').textContent = b.buyerName;
-    $('hCode').textContent = b.joinCode;
+    $('passName').textContent = b.buyerName;
+    if (b.buyerEmail) $('buyerEmail').textContent = b.buyerEmail;
     $('viewDoc').href = 'bol.html?id=' + encodeURIComponent(b.id);
 
-    var signUrl = location.origin + '/workinprogress/sign.html?c=' + encodeURIComponent(b.joinCode);
-    drawQR($('qr'), signUrl);
+    var artistSigned = !!b.artistSignedAt;
+    var buyerSigned = !!b.buyerSignedAt;
 
-    if (b.artistSignedAt) {
-      $('stepArtist').classList.add('done');
-      $('stepArtist').querySelector('.dot').textContent = '✓';
-      $('artistStamp').textContent = 'Signed ' + stamp(b.artistSignedAt);
-      $('artistSignBox').hidden = true;
-    }
-    if (b.buyerSignedAt) {
-      $('stepBuyer').classList.add('done');
-      $('stepBuyer').querySelector('.dot').textContent = '✓';
-      $('buyerStamp').textContent = 'Signed ' + stamp(b.buyerSignedAt);
+    if (artistSigned) {
+      $('artistStep').hidden = true;
+      $('artistDone').hidden = false;
+      $('artistStamp').textContent = stamp(b.artistSignedAt);
     }
 
-    if (b.completedAt) {
-      $('joinCard').hidden = true;
+    // The pass-the-phone card only makes sense in the gap between the two
+    // signatures — before, it's premature; after, it's noise.
+    $('passStep').hidden = !(artistSigned && !buyerSigned);
+    $('buyerStep').hidden = !(artistSigned && !buyerSigned);
+
+    if (buyerSigned) {
       $('doneBox').hidden = false;
-      if (poll) { clearInterval(poll); poll = null; }
+      $('topSub').textContent = 'Done — this is now a signed record of delivery.';
+    } else if (artistSigned) {
+      $('topSub').textContent = 'Hand your phone over so the buyer can sign.';
     }
 
     $('msg').hidden = true;
     $('content').hidden = false;
   }
 
-  $('signBtn').addEventListener('click', async function () {
-    var btn = this, note = $('signNote');
+  $('artistSign').addEventListener('click', async function () {
+    var btn = this, note = $('artistNote');
     var sig = $('mySig').value.trim();
     note.textContent = '';
     if (sig.length < 3) { note.textContent = 'Type your full name.'; return; }
@@ -226,25 +222,41 @@
       render(await api('/handoffs/' + encodeURIComponent(id) + '/sign', {
         method: 'POST', body: JSON.stringify({ signature: sig })
       }));
+      $('theirSig').focus();
     } catch (e) {
       note.textContent = 'Could not sign. Try again.';
       btn.disabled = false; btn.textContent = 'Sign';
     }
   });
 
-  (async function boot() {
-    if (!id) { $('msg').textContent = 'No handoff specified.'; return; }
+  // The buyer signs through the public endpoint, on this same phone. It's
+  // keyed by the join code rather than the artist's session, so what gets
+  // recorded is the buyer's signature and not the artist's login.
+  $('buyerSign').addEventListener('click', async function () {
+    var btn = this, note = $('buyerNote');
+    var sig = $('theirSig').value.trim();
+    note.textContent = '';
+    if (sig.length < 3) { note.textContent = 'Please type your full name.'; return; }
+
+    btn.disabled = true; btn.textContent = 'Signing…';
     try {
+      var res = await fetch('/api/handoff/' + encodeURIComponent(joinCode) + '/sign', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ signature: sig })
+      });
+      if (!res.ok) throw new Error();
       render(await api('/bols/' + encodeURIComponent(id)));
     } catch (e) {
-      $('msg').textContent = 'Could not load this handoff.';
-      return;
+      note.textContent = 'Could not sign. Try again.';
+      btn.disabled = false; btn.textContent = 'Sign — I’ve received this work';
     }
-    // The buyer signs on their own phone, so this screen has to notice
-    // without being touched.
-    poll = setInterval(async function () {
-      try { render(await api('/bols/' + encodeURIComponent(id))); } catch (e) {}
-    }, 4000);
+  });
+
+  (async function boot() {
+    if (!id) { $('msg').textContent = 'No handoff specified.'; return; }
+    try { render(await api('/bols/' + encodeURIComponent(id))); }
+    catch (e) { $('msg').textContent = 'Could not load this handoff.'; }
   })();
 })();
 </script>

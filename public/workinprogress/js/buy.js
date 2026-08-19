@@ -113,7 +113,7 @@
           '<span class="kb-t">Local pickup — ' + esc(city) + '</span>' +
           '<span class="kb-d">Collect from the artist in ' + esc(city) + '. ' +
             'You’ll arrange a time between you; no shipping cost. ' +
-            'You both sign a receipt when you meet, and a copy is emailed to you.</span>' +
+            'You both sign a receipt when you meet, and it’s emailed to you.</span>' +
         '</label>' +
 
         '<button class="kb-go" type="button">Continue to payment</button>' +

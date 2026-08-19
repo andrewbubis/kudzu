@@ -876,7 +876,10 @@ router.get('/bols/:id', auth.requireArtist, async (req, res) => {
     res.json(Object.assign(publicBol(rows[0]), {
       artistName: rows[0].artist_name,
       artistSignature: rows[0].artist_signature,
-      buyerSignature: rows[0].buyer_signature
+      buyerSignature: rows[0].buyer_signature,
+      // Needed by the handoff screen: the buyer signs on the artist's
+      // phone through the public endpoint, keyed by this code.
+      buyerEmail: rows[0].buyer_email
     }));
   } catch (err) {
     res.status(500).json({ error: 'server_error' });

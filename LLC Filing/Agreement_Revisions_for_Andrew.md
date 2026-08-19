@@ -122,7 +122,7 @@ each one produces.
 chooses where, and their address is never published. Kudzu Arts generates a
 **Bill of Lading** for the sale: work title, artist, buyer, price, order number,
 date, condition line, and signature blocks for both parties. **Both parties sign
-at the handoff, each on their own phone**, or on paper if they prefer; the buyer
+at the handoff on the Artist's device**, or on paper if they prefer; the buyer
 keeps a copy, and both signatures are recorded against the order. Delivery is
 deemed to occur on signature. Payment is not contingent on it — the Artist was
 paid at purchase.

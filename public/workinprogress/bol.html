@@ -260,10 +260,10 @@
         $('bBuyerStamp').textContent = 'Signed ' + stamp(b.buyerSignedAt);
       }
 
-      // Signed on two devices, and the document says so. That fact is the
-      // whole reason this holds up better than a sheet of paper.
+      // What makes this stronger than a sheet of paper is the recorded
+      // timestamp and the fact neither party can alter it afterwards.
       $('bVerify').textContent = b.completedAt
-        ? 'Signed electronically by both parties on separate devices · recorded ' + stamp(b.completedAt)
+        ? 'Signed electronically by both parties · recorded ' + stamp(b.completedAt)
         : 'Awaiting signature — not yet a completed record of delivery';
 
       $('msg').hidden = true;
