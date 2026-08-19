@@ -24,27 +24,10 @@
     } catch (e) { return '$' + Math.round(cents / 100).toLocaleString(); }
   }
 
-  async function buy(work, btn) {
-    var original = btn ? btn.textContent : '';
-    if (btn) { btn.disabled = true; btn.textContent = 'Opening checkout…'; }
-    try {
-      var res = await fetch('/api/checkout/work/' + work.id, { method: 'POST' });
-      if (!res.ok) {
-        var b = await res.json().catch(function () { return {}; });
-        throw new Error(b.error || 'failed');
-      }
-      var data = await res.json();
-      location.href = data.url;
-    } catch (e) {
-      var msgs = {
-        already_sold: 'This piece has just sold.',
-        not_for_sale: 'This piece isn’t for sale.',
-        artist_payout_not_set_up: 'This artist hasn’t finished setting up payouts yet.',
-        payments_unavailable: 'Purchasing isn’t switched on yet.'
-      };
-      alert(msgs[e.message] || 'Could not start checkout. Try again.');
-      if (btn) { btn.disabled = false; btn.textContent = original; }
-    }
+  // Delivery choice lives in buy.js, shared with the artist page.
+  function buy(work, btn) {
+    if (window.kudzuBuy) return window.kudzuBuy(work, btn);
+    alert('Checkout is still loading. Try again in a moment.');
   }
 
   // ── Virtual gallery ───────────────────────────────────────────────

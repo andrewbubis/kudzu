@@ -138,24 +138,9 @@
     } catch (e) { return '$' + Math.round(cents / 100).toLocaleString(); }
   }
 
-  async function buy(work) {
-    try {
-      var res = await fetch('/api/checkout/work/' + work.id, { method: 'POST' });
-      if (!res.ok) {
-        var b = await res.json().catch(function () { return {}; });
-        throw new Error(b.error || 'failed');
-      }
-      var data = await res.json();
-      location.href = data.url;
-    } catch (e) {
-      var msgs = {
-        already_sold: 'This piece has just sold.',
-        not_for_sale: 'This piece isn’t for sale.',
-        artist_payout_not_set_up: 'This artist hasn’t finished setting up payouts yet.',
-        payments_unavailable: 'Purchasing isn’t switched on yet.'
-      };
-      alert(msgs[e.message] || 'Could not start checkout. Try again.');
-    }
+  function buy(work) {
+    if (window.kudzuBuy) return window.kudzuBuy(work);
+    alert('Checkout is still loading. Try again in a moment.');
   }
 
   function workCard(w) {
@@ -264,5 +249,6 @@
 </script>
 <script src="js/main.js" defer></script>
 <script src="js/nav-auth.js" defer></script>
+<script src="js/buy.js" defer></script>
 </body>
 </html>

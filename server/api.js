@@ -1188,7 +1188,8 @@ router.get('/works', async (req, res) => {
   try {
     const limit = Math.min(parseInt(req.query.limit, 10) || 60, 200);
     const { rows } = await db.query(
-      `SELECT w.*, a.name AS artist_name, a.slug AS artist_slug
+      `SELECT w.*, a.name AS artist_name, a.slug AS artist_slug,
+              a.works_city, a.works_country
          FROM artworks w
          JOIN artists a ON a.id = w.artist_id
         WHERE w.status IN ('published','sold')
@@ -1199,7 +1200,11 @@ router.get('/works', async (req, res) => {
     res.json({
       works: rows.map((w) => Object.assign(publicWork(w), {
         artist: w.artist_name,
-        artistSlug: w.artist_slug
+        artistSlug: w.artist_slug,
+        // Where a buyer would collect it. The city only — an artist's
+        // address is never published, and the exact spot is arranged
+        // between the two of them.
+        pickupCity: [w.works_city, w.works_country].filter(Boolean).join(', ')
       }))
     });
   } catch (err) {
@@ -1229,7 +1234,9 @@ router.get('/artists/:slug', async (req, res) => {
         bornCountry: artist.born_country, worksCity: artist.works_city,
         worksCountry: artist.works_country, link: artist.link_url
       },
-      works: works.rows.map(publicWork),
+      works: works.rows.map((w) => Object.assign(publicWork(w), {
+        pickupCity: [artist.works_city, artist.works_country].filter(Boolean).join(', ')
+      })),
       books: books.rows.map(publicBook),
       photos: photos.rows.map(publicPhoto)
     });
