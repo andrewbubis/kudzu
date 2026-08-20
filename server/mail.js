@@ -148,8 +148,8 @@ async function workSold({ artist, workTitle, amountCents, currency, isPickup }) 
         `A separate email has just gone to you and the buyer together, with each other's ` +
         `details on it — reply to all on that one and you're talking to them. It's on the ` +
         `buyer to get in touch and plan when they're coming; you say where you'd like to meet.\n\n` +
-        `When they arrive, open Sales on your phone and tap Hand it over. You both sign the ` +
-        `bill of lading, and that completes the sale.`
+        `When they arrive, open Sales on your phone and tap Complete the sale. You both sign ` +
+        `the bill of lading, and that's what finishes it.`
       : `${title}${money ? ' ' + money : ''}\n\nYou've been paid — your payout is on its way from Stripe. ` +
         `Check your Kudzu sales page for the buyer's shipping address, and post it with the ` +
         `packed weight and box size you recorded.`,
@@ -165,9 +165,9 @@ async function workSold({ artist, workTitle, amountCents, currency, isPickup }) 
               them. It's on the buyer to get in touch and plan when they're coming. You say
               where you'd like to meet; your address is never published by Kudzu.</p>
             <p style="margin:0 0 20px;font-size:15px;line-height:1.6;color:#544c5e;">
-              When they arrive, open <b>Sales</b> on your phone and tap <b>Hand it over</b>.
-              You sign, hand them your phone, they sign — and that bill of lading completes
-              the sale and goes to you both as the receipt.</p>`
+              When they arrive, open <b>Sales</b> on your phone and tap <b>Complete the sale</b>.
+              You sign, hand them your phone, they sign — and that bill of lading is what
+              finishes it. It goes to you both as the receipt.</p>`
          : `<p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#544c5e;">
               You've been paid — your share is already on its way to your bank through Stripe.</p>
             <p style="margin:0 0 20px;font-size:15px;line-height:1.6;color:#544c5e;">
@@ -228,9 +228,9 @@ async function pickupIntroduction({ bol, artist, artistEmail }) {
       `${bol.buyer_name}: reach out and settle when and where the two of you will make ` +
       `the exchange. ${artistName} knows the city and will say where.\n\n` +
       `${artistName}: you've already been paid in full. When ${bol.buyer_name} arrives, ` +
-      `open your profile, go to Sales on your phone and tap Hand it over. You both sign ` +
-      `the bill of lading — that document is what completes the sale and stands as the ` +
-      `receipt for it. It's emailed to you both the moment it's signed.`,
+      `open your profile, go to Sales on your phone and tap Complete the sale. You both sign ` +
+      `the bill of lading — that document is what completes the sale in full and stands as ` +
+      `the receipt for it. It's emailed to you both the moment it's signed.`,
     html: wrap(
       `Arranging pickup for <span style="font-style:italic;">${esc(bol.work_title)}</span>.`,
       `<p style="margin:0 0 18px;font-size:15px;line-height:1.6;color:#544c5e;">
@@ -258,7 +258,7 @@ async function pickupIntroduction({ bol, artist, artistEmail }) {
        <p style="margin:0 0 22px;font-size:15px;line-height:1.6;color:#544c5e;">
          <b>${esc(artistName)}</b> — you've already been paid in full. When
          ${esc(bol.buyer_name)} arrives, open your profile, go to <b>Sales</b> on your phone
-         and tap <b>Hand it over</b>.</p>
+         and tap <b>Complete the sale</b>.</p>
 
        <p style="margin:0 0 8px;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:#5f5a2c;">Signing for it</p>
        <p style="margin:0;font-size:15px;line-height:1.6;color:#544c5e;">

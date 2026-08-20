@@ -146,7 +146,7 @@
                       reach.join('<span style="color:#c9c2b0;"> · </span>') + '</span>'
                   : '') +
               '</span>' +
-              '<a class="acct-btn" href="handoff.html?id=' + encodeURIComponent(b.id) + '">Hand it over</a>';
+              '<a class="acct-btn" href="handoff.html?id=' + encodeURIComponent(b.id) + '">Complete the sale</a>';
             $('handoffList').appendChild(row);
           });
         }
