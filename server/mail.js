@@ -275,8 +275,12 @@ async function orderConfirmation({ order, artistName }) {
           `packed by the artist who made it, not pulled off a shelf, so it takes a little ` +
           `longer than a warehouse would.\n\n` +
           `You'll get an email with a tracking number the day it goes out. It ships ` +
-          `insured and needs a signature, so plan to be there — or have it sent somewhere ` +
-          `you will be.\n\n`
+          `insured and needs a signature, so plan to be there.\n\n` +
+          `WHEN IT ARRIVES — open and check it within 48 hours. Photograph the box before ` +
+          `you open it, and film yourself unwrapping it. Every shipment is insured: if it ` +
+          `arrives damaged we pay the return shipping and refund you in full, but we need ` +
+          `to hear within 48 hours with those photographs, and keep the packaging.\n\n` +
+          `Otherwise all sales are final — no returns on original work.\n\n`
         : '') +
       (addressLines(order).length ? `Going to:\n${addressLines(order).join('\n')}\n\n` : '') +
       `Questions about this order: info@kudzuarts.com`,
@@ -303,7 +307,23 @@ async function orderConfirmation({ order, artistName }) {
        <p style="margin:0 0 20px;font-size:15px;line-height:1.6;color:#544c5e;">
          You'll get an email with a <b>tracking number</b> the day it goes out. It travels
          insured and needs a signature on delivery — so plan to be there, or tell us
-         somewhere you will be.</p>` : ''}
+         somewhere you will be.</p>
+
+       <div style="margin:0 0 18px;padding:16px 18px;background:#fbfaf7;border-left:2px solid #b3261e;">
+         <p style="margin:0 0 4px;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:#8a8072;">When it arrives</p>
+         <p style="margin:0 0 8px;font-size:18px;color:#211c2a;">Open and check it within 48 hours.</p>
+         <p style="margin:0;font-size:14px;line-height:1.6;color:#544c5e;">
+           Photograph the box <b>before</b> you open it, then film yourself unwrapping it.
+           Keep the packaging.</p>
+       </div>
+       <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#544c5e;">
+         Every shipment is insured. If it arrives damaged we pay the return shipping and
+         refund you in full — but we need to hear within <b>48 hours</b>, with those
+         photographs. A carrier will always say the parcel left them in good condition, so
+         the pictures are what settle it.</p>
+       <p style="margin:0 0 20px;font-size:14px;line-height:1.6;color:#8a8072;">
+         Otherwise all sales are final — we don't take returns on original work. Full detail
+         on our shipping and returns page.</p>` : ''}
 
        ${addressLines(order).length ? `<p style="margin:0 0 6px;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:#5f5a2c;">Going to</p>
        <p style="margin:0 0 20px;font-size:15px;line-height:1.6;color:#211c2a;">
@@ -330,8 +350,10 @@ async function orderShipped({ order, artistName }) {
       `Tracking: ${order.tracking}${order.carrier ? ' (' + order.carrier + ')' : ''}\n\n` +
       `It's insured and needs a signature on delivery. If nobody's home ${carrier} will ` +
       `leave a card rather than the work.\n\n` +
-      `If it arrives damaged, photograph the box before you open it any further and email ` +
-      `info@kudzuarts.com the same day. That photograph is what settles a claim.`,
+      `WHEN IT LANDS — open and check it within 48 hours. Photograph the box before you ` +
+      `open it, film yourself unwrapping it, and keep the packaging. If anything is wrong, ` +
+      `email info@kudzuarts.com within 48 hours with the photographs: it's insured, we pay ` +
+      `the return shipping and refund you in full. After that window a claim can't be filed.`,
     html: wrap(
       `<span style="font-style:italic;">${esc(order.work_title)}</span> is on its way.`,
       `<p style="margin:0 0 18px;font-size:15px;line-height:1.6;color:#544c5e;">
@@ -349,11 +371,19 @@ async function orderShipped({ order, artistName }) {
          It's insured, and it needs a <b>signature on delivery</b> — if nobody's home,
          ${esc(carrier)} will leave a card rather than the work.</p>
 
+       <div style="margin:0 0 16px;padding:16px 18px;background:#fbfaf7;border-left:2px solid #b3261e;">
+         <p style="margin:0 0 4px;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:#8a8072;">When it lands</p>
+         <p style="margin:0 0 8px;font-size:18px;color:#211c2a;">Open and check it within 48 hours.</p>
+         <p style="margin:0;font-size:14px;line-height:1.6;color:#544c5e;">
+           Photograph the box <b>before</b> you open it, film yourself unwrapping it, and
+           keep the packaging until you're sure.</p>
+       </div>
        <p style="margin:0;font-size:15px;line-height:1.6;color:#544c5e;">
-         If it turns up damaged: <b>photograph the box before you open it any further</b>
-         and email <a href="mailto:info@kudzuarts.com" style="color:#5f5a2c;">info@kudzuarts.com</a>
-         the same day. That photograph is what settles a claim — without it, a carrier will
-         say it left them in good condition.</p>`,
+         Anything wrong, email
+         <a href="mailto:info@kudzuarts.com" style="color:#5f5a2c;">info@kudzuarts.com</a>
+         within 48 hours with those photographs. It's insured — we pay the return shipping
+         and refund you in full. After that window the insurer won't accept a claim and
+         neither can we, so please don't leave it.</p>`,
       'Kudzu Arts LLC · Nashville, Tennessee · kudzuarts.com'
     )
   });
