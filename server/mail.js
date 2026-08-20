@@ -128,8 +128,38 @@ async function inquiryReceived({ artist, from, message, workTitle }) {
   });
 }
 
+// ── ...and the collector hears back ──────────────────────────────────
+// Sending a message into a form and getting nothing back is indisputably
+// worse than getting a slow reply. This costs nothing and closes the loop.
+async function inquiryAcknowledged({ to, name, artistName, workTitle }) {
+  const about = workTitle ? `about ${workTitle}` : `about ${artistName}'s work`;
+  return send({
+    to,
+    subject: `Your message to ${artistName}`,
+    text:
+      `Thanks ${name} — your message ${about} went straight to ${artistName}.\n\n` +
+      `They'll reply to you directly, from their own address. Artists answer their own ` +
+      `messages here, so give them a few days.\n\n` +
+      `If you don't hear anything, write to info@kudzuarts.com and we'll chase it.`,
+    html: wrap(
+      `Your message reached ${esc(artistName)}.`,
+      `<p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#544c5e;">
+         Thanks, ${esc(name)} — what you wrote ${esc(about)} went straight to
+         ${esc(artistName)}, and they'll reply to you directly from their own address.</p>
+       <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#544c5e;">
+         Artists answer their own messages here — there's no gallery desk in between — so
+         give them a few days.</p>
+       <p style="margin:0;font-size:15px;line-height:1.6;color:#544c5e;">
+         Heard nothing? Write to
+         <a href="mailto:info@kudzuarts.com" style="color:#5f5a2c;">info@kudzuarts.com</a>
+         and we'll chase it for you.</p>`,
+      'Kudzu Arts LLC · Nashville, Tennessee · kudzuarts.com'
+    )
+  });
+}
+
 // ── A piece sold ─────────────────────────────────────────────────────
-async function workSold({ artist, workTitle, amountCents, currency, isPickup }) {
+async function workSold({ artist, workTitle, amountCents, currency, isPickup, order }) {
   const money = amountCents == null ? null :
     new Intl.NumberFormat('en-US', {
       style: 'currency', currency: (currency || 'usd').toUpperCase(),
@@ -150,9 +180,14 @@ async function workSold({ artist, workTitle, amountCents, currency, isPickup }) 
         `buyer to get in touch and plan when they're coming; you say where you'd like to meet.\n\n` +
         `When they arrive, open Sales on your phone and tap Complete the sale. You both sign ` +
         `the bill of lading, and that's what finishes it.`
-      : `${title}${money ? ' ' + money : ''}\n\nYou've been paid — your payout is on its way from Stripe. ` +
-        `Check your Kudzu sales page for the buyer's shipping address, and post it with the ` +
-        `packed weight and box size you recorded.`,
+      : `${title}${money ? ' ' + money : ''}\n\nYou've been paid — your payout is on its way from Stripe.\n\n` +
+        (order && order.ship_by
+          ? `Post it by ${longDate(order.ship_by)}. The buyer has been told that date.\n\n` : '') +
+        (order && addressLines(order).length
+          ? `Ship to:\n${addressLines(order).join('\n')}\n\n` : '') +
+        `Pack it to the weight and box size you recorded, insured, signature required. ` +
+        `Then open Sales and enter the tracking number — that's what tells the buyer it's ` +
+        `on its way, and it's what protects you if they ever dispute the charge.`,
     html: wrap(
       esc(title),
       `${money ? `<p style="margin:0 0 16px;font-size:26px;color:#211c2a;">${esc(money)}</p>` : ''}
@@ -170,13 +205,227 @@ async function workSold({ artist, workTitle, amountCents, currency, isPickup }) 
               finishes it. It goes to you both as the receipt.</p>`
          : `<p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#544c5e;">
               You've been paid — your share is already on its way to your bank through Stripe.</p>
+
+            ${order && order.ship_by ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+                   style="margin:0 0 18px;padding:16px 18px;background:#f4f2ec;border-left:2px solid #8a8f43;">
+              <tr><td style="font-family:Georgia,serif;">
+                <p style="margin:0 0 4px;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:#8a8072;">Post it by</p>
+                <p style="margin:0 0 4px;font-size:19px;color:#211c2a;">${esc(longDate(order.ship_by))}</p>
+                <p style="margin:0;font-size:13px;color:#8a8072;">The buyer has been given this date.</p>
+              </td></tr>
+            </table>` : ''}
+
+            ${order && addressLines(order).length ? `<p style="margin:0 0 6px;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:#5f5a2c;">Ship to</p>
+            <p style="margin:0 0 18px;font-size:15px;line-height:1.6;color:#211c2a;">
+              ${addressLines(order).map(esc).join('<br>')}</p>` : ''}
+
             <p style="margin:0 0 20px;font-size:15px;line-height:1.6;color:#544c5e;">
-              Next: the buyer's shipping address is on your sales page. Pack it to the weight and box size
-              you recorded when you uploaded it, and send it off. Ship signature-required.</p>`}
+              Pack it to the weight and box size you recorded, insured, signature required.
+              Then open <b>Sales</b> and enter the tracking number — that's what tells the
+              buyer it's on its way, and it's what protects you if they ever dispute the
+              charge.</p>`}
        ${profile ? `<p style="margin:0;"><a href="${esc(profile)}"
           style="display:inline-block;padding:12px 22px;background:#8a8f43;color:#ffffff;
                  text-decoration:none;font-size:14px;">See the order</a></p>` : ''}`,
       'Sent because a work on your Kudzu Arts page sold.'
+    )
+  });
+}
+
+// ── The buyer's order confirmation ───────────────────────────────────
+// Kudzu used to send a shipping buyer nothing at all. They paid, got
+// bounced to the gallery, and received one line from Stripe describing a
+// card charge. Then a month of silence while an artist crated a painting.
+//
+// That silence is where chargebacks come from. Not fraud — a person who
+// spent real money, heard nothing, and concluded something went wrong.
+// So this says what was bought, when it will be posted, and what happens
+// next, in that order.
+function money0(cents, currency) {
+  if (cents == null) return '';
+  try {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency', currency: (currency || 'usd').toUpperCase(),
+      maximumFractionDigits: 0
+    }).format(cents / 100);
+  } catch (e) { return '$' + Math.round(cents / 100); }
+}
+
+const longDate = (d) => new Date(d + 'T12:00:00Z').toLocaleDateString('en-US',
+  { weekday: 'long', month: 'long', day: 'numeric' });
+
+function addressLines(o) {
+  return [o.ship_name, o.ship_line1, o.ship_line2,
+    [o.ship_city, o.ship_state].filter(Boolean).join(', '),
+    o.ship_postal, o.ship_country].filter(Boolean);
+}
+
+async function orderConfirmation({ order, artistName }) {
+  const price = money0(order.price_cents, order.currency);
+  const by = order.ship_by ? longDate(order.ship_by) : null;
+
+  return send({
+    to: order.buyer_email,
+    subject: `Your order — ${order.work_title}`,
+    text:
+      `Thank you. You've bought ${order.work_title}` +
+      `${artistName ? ' by ' + artistName : ''}${price ? ', ' + price : ''}.\n\n` +
+      (by
+        ? `${artistName || 'The artist'} will pack and post it by ${by}. Original work is ` +
+          `packed by the artist who made it, not pulled off a shelf, so it takes a little ` +
+          `longer than a warehouse would.\n\n` +
+          `You'll get an email with a tracking number the day it goes out. It ships ` +
+          `insured and needs a signature, so plan to be there — or have it sent somewhere ` +
+          `you will be.\n\n`
+        : '') +
+      (addressLines(order).length ? `Going to:\n${addressLines(order).join('\n')}\n\n` : '') +
+      `Questions about this order: info@kudzuarts.com`,
+    html: wrap(
+      `Thank you.`,
+      `<p style="margin:0 0 18px;font-size:15px;line-height:1.6;color:#544c5e;">
+         You've bought <b>${esc(order.work_title)}</b>${artistName ? ' by ' + esc(artistName) : ''}${
+           order.work_details ? ' — ' + esc(order.work_details) : ''}.</p>
+       ${price ? `<p style="margin:0 0 20px;font-size:26px;color:#211c2a;">${esc(price)}</p>` : ''}
+
+       ${by ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+              style="margin:0 0 20px;padding:16px 18px;background:#f4f2ec;border-left:2px solid #8a8f43;">
+         <tr><td style="font-family:Georgia,serif;">
+           <p style="margin:0 0 4px;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:#8a8072;">Posted by</p>
+           <p style="margin:0;font-size:19px;color:#211c2a;">${esc(by)}</p>
+         </td></tr>
+       </table>
+
+       <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#544c5e;">
+         Original work is packed by the artist who made it rather than pulled off a shelf,
+         so it takes longer than a warehouse would. ${esc(artistName || 'The artist')} has
+         until then to get it into the post.</p>
+
+       <p style="margin:0 0 20px;font-size:15px;line-height:1.6;color:#544c5e;">
+         You'll get an email with a <b>tracking number</b> the day it goes out. It travels
+         insured and needs a signature on delivery — so plan to be there, or tell us
+         somewhere you will be.</p>` : ''}
+
+       ${addressLines(order).length ? `<p style="margin:0 0 6px;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:#5f5a2c;">Going to</p>
+       <p style="margin:0 0 20px;font-size:15px;line-height:1.6;color:#211c2a;">
+         ${addressLines(order).map(esc).join('<br>')}</p>
+       <p style="margin:0 0 20px;font-size:14px;line-height:1.6;color:#8a8072;">
+         Wrong address, or need it somewhere else? Reply to this email today and we'll
+         change it before it's packed.</p>` : ''}
+
+       <p style="margin:0;font-size:15px;line-height:1.6;color:#544c5e;">
+         Anything else — <a href="mailto:info@kudzuarts.com" style="color:#5f5a2c;">info@kudzuarts.com</a>.</p>`,
+      'Kudzu Arts LLC · Nashville, Tennessee · kudzuarts.com'
+    )
+  });
+}
+
+// ── It's in the post ─────────────────────────────────────────────────
+async function orderShipped({ order, artistName }) {
+  const carrier = order.carrier ? order.carrier : 'the carrier';
+  return send({
+    to: order.buyer_email,
+    subject: `On its way — ${order.work_title}`,
+    text:
+      `${order.work_title} is in the post.\n\n` +
+      `Tracking: ${order.tracking}${order.carrier ? ' (' + order.carrier + ')' : ''}\n\n` +
+      `It's insured and needs a signature on delivery. If nobody's home ${carrier} will ` +
+      `leave a card rather than the work.\n\n` +
+      `If it arrives damaged, photograph the box before you open it any further and email ` +
+      `info@kudzuarts.com the same day. That photograph is what settles a claim.`,
+    html: wrap(
+      `<span style="font-style:italic;">${esc(order.work_title)}</span> is on its way.`,
+      `<p style="margin:0 0 18px;font-size:15px;line-height:1.6;color:#544c5e;">
+         ${esc(artistName || 'The artist')} packed and posted it${order.carrier ? ' with ' + esc(order.carrier) : ''}.</p>
+
+       <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+              style="margin:0 0 20px;padding:16px 18px;background:#f4f2ec;border-left:2px solid #8a8f43;">
+         <tr><td style="font-family:Georgia,serif;">
+           <p style="margin:0 0 4px;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:#8a8072;">Tracking</p>
+           <p style="margin:0;font-size:19px;color:#211c2a;letter-spacing:0.03em;">${esc(order.tracking)}</p>
+         </td></tr>
+       </table>
+
+       <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#544c5e;">
+         It's insured, and it needs a <b>signature on delivery</b> — if nobody's home,
+         ${esc(carrier)} will leave a card rather than the work.</p>
+
+       <p style="margin:0;font-size:15px;line-height:1.6;color:#544c5e;">
+         If it turns up damaged: <b>photograph the box before you open it any further</b>
+         and email <a href="mailto:info@kudzuarts.com" style="color:#5f5a2c;">info@kudzuarts.com</a>
+         the same day. That photograph is what settles a claim — without it, a carrier will
+         say it left them in good condition.</p>`,
+      'Kudzu Arts LLC · Nashville, Tennessee · kudzuarts.com'
+    )
+  });
+}
+
+// ── A sale came undone ───────────────────────────────────────────────
+// Nobody enjoys this email, which is exactly why it has to exist. Before
+// it, a refund or a chargeback was silent: the artist's first clue would
+// be money missing from their bank weeks later, with no explanation and
+// nobody to ask.
+//
+// The two cases are genuinely different and the email says so. A refund
+// is over. A dispute is a thing that can still be won — and it is won on
+// evidence, which the artist has if they entered a tracking number or
+// signed a bill of lading. So this tells them to send it in.
+async function saleReversed({ artist, order, kind }) {
+  const price = money0(order.price_cents, order.currency);
+  const refunded = kind === 'refunded';
+
+  const evidence = order.tracking
+    ? `You have tracking on this one — ${order.tracking}${order.carrier ? ' with ' + order.carrier : ''}. ` +
+      `That, plus the signature on delivery, is strong evidence.`
+    : order.delivery === 'pickup'
+      ? `This was a local pickup. If you both signed the bill of lading, that document — ` +
+        `with both signatures and their timestamps — is your evidence.`
+      : `There's no tracking number recorded against this order, which makes it much ` +
+        `harder to answer. Send us anything you have: a receipt from the carrier, ` +
+        `photographs of it packed, messages with the buyer.`;
+
+  return send({
+    to: addressFor(artist),
+    subject: refunded
+      ? `Refunded — ${order.work_title}`
+      : `Payment disputed — ${order.work_title}`,
+    text: refunded
+      ? `The sale of ${order.work_title}${price ? ' (' + price + ')' : ''} has been refunded, ` +
+        `and the money has gone back to the buyer.\n\n` +
+        `The piece is back on your page and available again — you don't need to re-publish it.\n\n` +
+        `Questions: info@kudzuarts.com`
+      : `The buyer of ${order.work_title}${price ? ' (' + price + ')' : ''} has disputed the ` +
+        `charge with their bank. The money is held while it's decided.\n\n` +
+        `This is not settled, and disputes are won on evidence.\n\n${evidence}\n\n` +
+        `Email info@kudzuarts.com and we'll put the response together. There's a deadline, ` +
+        `so don't sit on it. The piece stays marked sold in the meantime.`,
+    html: wrap(
+      refunded
+        ? `<span style="font-style:italic;">${esc(order.work_title)}</span> was refunded.`
+        : `The payment for <span style="font-style:italic;">${esc(order.work_title)}</span> is being disputed.`,
+      refunded
+        ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#544c5e;">
+             ${price ? esc(price) + ' has' : 'The money has'} gone back to the buyer.</p>
+           <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#544c5e;">
+             The piece is <b>back on your page and available again</b> — you don't need to
+             re-publish it or do anything at all.</p>
+           <p style="margin:0;font-size:15px;line-height:1.6;color:#544c5e;">
+             If this is a surprise, tell us:
+             <a href="mailto:info@kudzuarts.com" style="color:#5f5a2c;">info@kudzuarts.com</a>.</p>`
+        : `<p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#544c5e;">
+             ${esc(order.buyer_name)} has disputed the charge with their bank.
+             ${price ? esc(price) + ' is' : 'The money is'} held while it's decided.</p>
+           <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#544c5e;">
+             <b>This isn't settled.</b> Disputes are won on evidence, and they're won often.</p>
+           <div style="margin:0 0 18px;padding:16px 18px;background:#f4f2ec;border-left:2px solid #8a8f43;
+                       font-size:14.5px;line-height:1.6;color:#211c2a;">${esc(evidence)}</div>
+           <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#544c5e;">
+             Email <a href="mailto:info@kudzuarts.com" style="color:#5f5a2c;">info@kudzuarts.com</a>
+             and we'll put the response together with you. There's a deadline on these, so
+             don't leave it.</p>
+           <p style="margin:0;font-size:14px;line-height:1.6;color:#8a8072;">
+             The piece stays marked sold while this is argued — it may well still be in the
+             buyer's hands, and relisting it now would be worse than waiting.</p>`,
+      'Kudzu Arts LLC · Nashville, Tennessee · kudzuarts.com'
     )
   });
 }
@@ -363,5 +612,8 @@ async function handoffSigned({ bol, artistEmail }) {
 }
 
 module.exports = {
-  isConfigured, send, inquiryReceived, workSold, pickupIntroduction, handoffSigned
+  isConfigured, send,
+  inquiryReceived, inquiryAcknowledged,
+  workSold, orderConfirmation, orderShipped, saleReversed,
+  pickupIntroduction, handoffSigned
 };

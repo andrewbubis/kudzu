@@ -33,6 +33,88 @@
     } catch (e) { return '$' + Math.round(cents / 100).toLocaleString(); }
   }
 
+  // How the ship-by date reads. "Overdue" and "Due today" are stated
+  // plainly rather than softened — a late piece is the thing most likely
+  // to turn a happy buyer into a chargeback, and the artist should feel
+  // that before the buyer does.
+  function dueLabel(iso) {
+    if (!iso) return { text: '', tone: '#888' };
+    var due = new Date(iso + 'T12:00:00Z');
+    var today = new Date();
+    var days = Math.round((due - today) / 864e5);
+    var when = due.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+    if (days < 0)  return { text: 'Overdue — was due ' + when, tone: '#b3261e' };
+    if (days === 0) return { text: 'Due today', tone: '#b3261e' };
+    if (days <= 2) return { text: 'Post by ' + when + ' — ' + days + ' day' +
+                                  (days === 1 ? '' : 's') + ' left', tone: '#b3261e' };
+    return { text: 'Post by ' + when, tone: '#5f5a2c' };
+  }
+
+  // One order, everything needed to put it in a box.
+  function shipCard(o) {
+    var el = document.createElement('div');
+    el.style.cssText = 'border:1px solid #e2e2e2;background:#fff;padding:16px 18px;margin-bottom:10px;';
+    var due = dueLabel(o.shipBy);
+
+    el.innerHTML =
+      '<div style="font-size:16px;"><b>' + esc(o.workTitle) + '</b>' +
+        '<span style="color:#888;"> · ' + money(o.priceCents, o.currency) + '</span></div>' +
+      (due.text
+        ? '<div style="font-size:13px;margin-top:4px;color:' + due.tone + ';">' + esc(due.text) + '</div>'
+        : '') +
+
+      '<div style="margin-top:12px;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#8a8072;">Ship to</div>' +
+      '<div style="font-size:14.5px;line-height:1.55;color:#211c2a;">' +
+        (o.shipTo && o.shipTo.length
+          ? o.shipTo.map(esc).join('<br>')
+          : '<span style="color:#b3261e;">No address on this order — email info@kudzuarts.com</span>') +
+      '</div>' +
+      '<div style="font-size:13px;margin-top:5px;">' +
+        '<a href="mailto:' + esc(o.buyerEmail) + '" style="color:#5f5a2c;">' + esc(o.buyerEmail) + '</a>' +
+        (o.buyerPhone ? '<span style="color:#c9c2b0;"> · </span><a href="tel:' + esc(o.buyerPhone) +
+          '" style="color:#5f5a2c;">' + esc(o.buyerPhone) + '</a>' : '') +
+      '</div>' +
+
+      '<div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;">' +
+        '<input class="trk" type="text" placeholder="Tracking number" ' +
+          'style="flex:1 1 190px;min-width:0;padding:11px 12px;border:1px solid #e2e2e2;' +
+          'font-family:inherit;font-size:15px;">' +
+        '<input class="car" type="text" placeholder="Carrier" ' +
+          'style="flex:0 1 120px;min-width:0;padding:11px 12px;border:1px solid #e2e2e2;' +
+          'font-family:inherit;font-size:15px;">' +
+        '<button class="go" type="button" style="padding:11px 18px;border:0;background:#8a8f43;' +
+          'color:#fff;font-family:inherit;font-size:15px;cursor:pointer;">Mark posted</button>' +
+      '</div>' +
+      '<div class="note" style="font-size:13px;color:#b3261e;margin-top:8px;min-height:18px;"></div>';
+
+    var btn = el.querySelector('.go');
+    var note = el.querySelector('.note');
+    btn.addEventListener('click', async function () {
+      var tracking = el.querySelector('.trk').value.trim();
+      note.textContent = '';
+      if (!tracking) {
+        // Not pedantry: without a number the buyer has nothing to watch
+        // and the artist has nothing to show if the charge is disputed.
+        note.textContent = 'Add the tracking number — it’s what proves you sent it.';
+        return;
+      }
+      btn.disabled = true; btn.textContent = 'Saving…';
+      try {
+        await api('/orders/' + encodeURIComponent(o.id) + '/ship', {
+          method: 'POST',
+          body: JSON.stringify({ tracking: tracking, carrier: el.querySelector('.car').value.trim() })
+        });
+        el.innerHTML = '<div style="font-size:15px;color:#1f7a45;">' +
+          '<b>' + esc(o.workTitle) + '</b> — posted. ' +
+          esc(o.buyerName) + ' has been emailed the tracking number.</div>';
+      } catch (e) {
+        note.textContent = 'Could not save that. Try again.';
+        btn.disabled = false; btn.textContent = 'Mark posted';
+      }
+    });
+    return el;
+  }
+
   // ── Header menu ───────────────────────────────────────────────────
   var menu = $('acctMenu'), menuBtn = $('acctMenuBtn');
   if (menu && menuBtn) {
@@ -151,6 +233,43 @@
           });
         }
       } catch (e) { /* leave the section hidden */ }
+    }
+
+    // ── Orders waiting to be posted ─────────────────────────────────
+    // The whole job on one card: the address to copy onto the box, the
+    // date it's due, and the field for the tracking number. An artist
+    // should never have to go looking for any of it.
+    if ($('toShip')) {
+      try {
+        var orders = (await api('/orders')).orders || [];
+        var pending = orders.filter(function (o) {
+          return o.delivery === 'ship' && !o.shippedAt && !o.refundedAt;
+        });
+        var moving = orders.filter(function (o) {
+          return o.delivery === 'ship' && o.shippedAt;
+        });
+
+        if (pending.length) { $('toShip').hidden = false; }
+        pending.forEach(function (o) { $('shipList').appendChild(shipCard(o)); });
+
+        if (moving.length) {
+          $('onWay').hidden = false;
+          moving.forEach(function (o) {
+            var row = document.createElement('div');
+            row.style.cssText = 'padding:12px 16px;border:1px solid #e2e2e2;background:#fff;' +
+                                'margin-bottom:8px;font-size:14px;';
+            row.innerHTML =
+              '<b>' + esc(o.workTitle) + '</b>' +
+              '<span style="color:#888;"> · ' + esc(o.buyerName) + '</span>' +
+              '<span style="display:block;color:#888;font-size:12.5px;margin-top:3px;">' +
+                'Posted ' + new Date(o.shippedAt).toLocaleDateString('en-US',
+                  { month: 'short', day: 'numeric' }) +
+                ' · ' + esc(o.carrier || 'tracking') + ' ' + esc(o.tracking) +
+              '</span>';
+            $('onWayList').appendChild(row);
+          });
+        }
+      } catch (e) { /* leave both sections hidden */ }
     }
 
     // Enquiries

@@ -689,6 +689,128 @@ const publicBol = (b) => ({
   createdAt: b.created_at
 });
 
+// ── Orders ───────────────────────────────────────────────────────────
+// What sold, where it goes, and whether it's gone yet.
+const publicOrder = (o) => ({
+  id: o.id,
+  artworkId: o.artwork_id,
+  workTitle: o.work_title,
+  workDetails: o.work_details || '',
+  priceCents: o.price_cents,
+  currency: o.currency,
+  payoutCents: o.payout_cents,
+  delivery: o.delivery,
+  buyerName: o.buyer_name,
+  buyerEmail: o.buyer_email,
+  buyerPhone: o.buyer_phone || '',
+  shipTo: [o.ship_name, o.ship_line1, o.ship_line2,
+    [o.ship_city, o.ship_state].filter(Boolean).join(', '),
+    o.ship_postal, o.ship_country].filter(Boolean),
+  shipBy: o.ship_by,
+  shippedAt: o.shipped_at,
+  tracking: o.tracking || '',
+  carrier: o.carrier || '',
+  refundedAt: o.refunded_at,
+  disputedAt: o.disputed_at,
+  createdAt: o.created_at
+});
+
+// The buyer's own look at what they just bought, keyed by the Stripe
+// session id they were redirected with. Public by necessity — they have
+// no account here and never will — so it returns only what they already
+// know: their own order, and only the parts they supplied or paid for.
+//
+// The session id is unguessable and single-purpose. It is not treated as
+// proof of anything beyond "this browser just completed this checkout".
+router.get('/orders/by-session/:sid', async (req, res) => {
+  try {
+    const { rows } = await db.query(
+      `SELECT o.*, a.name AS artist_name, a.slug AS artist_slug
+         FROM orders o JOIN artists a ON a.id = o.artist_id
+        WHERE o.stripe_session_id = $1`, [String(req.params.sid).slice(0, 200)]);
+    // The webhook may not have landed yet — Stripe redirects the browser
+    // and calls us separately, and the browser usually wins the race.
+    if (!rows[0]) return res.status(404).json({ error: 'not_ready' });
+
+    const o = rows[0];
+    res.json({
+      workTitle: o.work_title,
+      workDetails: o.work_details || '',
+      priceCents: o.price_cents,
+      currency: o.currency,
+      delivery: o.delivery,
+      artistName: o.artist_name,
+      artistSlug: o.artist_slug,
+      buyerName: o.buyer_name,
+      buyerEmail: o.buyer_email,
+      shipTo: [o.ship_name, o.ship_line1, o.ship_line2,
+        [o.ship_city, o.ship_state].filter(Boolean).join(', '),
+        o.ship_postal, o.ship_country].filter(Boolean),
+      shipBy: o.ship_by,
+      shippedAt: o.shipped_at,
+      tracking: o.tracking || '',
+      carrier: o.carrier || ''
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'server_error' });
+  }
+});
+
+router.get('/orders', auth.requireArtist, async (req, res) => {
+  try {
+    const { rows } = await db.query(
+      `SELECT * FROM orders WHERE artist_id = $1
+    ORDER BY shipped_at IS NOT NULL, created_at DESC LIMIT 200`, [req.artist.id]);
+    res.json({ orders: rows.map(publicOrder) });
+  } catch (err) {
+    res.status(500).json({ error: 'server_error' });
+  }
+});
+
+// Mark it posted. The tracking number is required — the database enforces
+// that too — because "shipped" without a number tells the buyer nothing
+// they can act on and leaves the artist nothing to show a card network.
+router.post('/orders/:id/ship', auth.requireArtist, async (req, res) => {
+  const b = req.body || {};
+  const tracking = String(b.tracking || '').trim().slice(0, 120);
+  const carrier = String(b.carrier || '').trim().slice(0, 60);
+  if (!tracking) return res.status(400).json({ error: 'tracking_required' });
+
+  try {
+    // Claim-first: only the request that flips shipped_at from NULL sends
+    // the email, so a double-tap can't tell the buyer twice.
+    const { rows } = await db.query(
+      `UPDATE orders
+          SET shipped_at = now(), tracking = $3, carrier = NULLIF($4,'')
+        WHERE id = $1 AND artist_id = $2 AND shipped_at IS NULL
+          AND delivery = 'ship'
+    RETURNING *`,
+      [req.params.id, req.artist.id, tracking, carrier]);
+
+    if (!rows[0]) {
+      // Either it isn't theirs, or it's already gone out.
+      const { rows: existing } = await db.query(
+        'SELECT * FROM orders WHERE id = $1 AND artist_id = $2',
+        [req.params.id, req.artist.id]);
+      if (!existing[0]) return res.status(404).json({ error: 'not_found' });
+      return res.json(publicOrder(existing[0]));
+    }
+
+    res.json(publicOrder(rows[0]));
+
+    const claimed = await db.query(
+      `UPDATE orders SET dispatch_sent_at = now()
+        WHERE id = $1 AND dispatch_sent_at IS NULL`, [rows[0].id]);
+    if (claimed.rowCount) {
+      mail.orderShipped({ order: rows[0], artistName: req.artist.name })
+        .catch((err) => console.error('dispatch email failed:', err.message));
+    }
+  } catch (err) {
+    console.error('mark shipped failed:', err.message);
+    res.status(500).json({ error: 'server_error' });
+  }
+});
+
 // ── The handoff ──────────────────────────────────────────────────────
 // An artist and a buyer standing in a room together, signing the same
 // document on two different phones.
@@ -972,6 +1094,12 @@ router.post('/inquiries', async (req, res) => {
       message,
       workTitle
     }).catch((err) => console.error('inquiry notification failed:', err.message));
+
+    // And tell the person who wrote it that it went somewhere. A form
+    // that swallows a message without a word is worse than a slow reply.
+    mail.inquiryAcknowledged({
+      to: email, name, artistName: ar[0].name, workTitle
+    }).catch((err) => console.error('inquiry acknowledgement failed:', err.message));
     return;
   } catch (err) {
     console.error('inquiry failed:', err.message);

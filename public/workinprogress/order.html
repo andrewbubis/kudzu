@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Thank you · Kudzu Arts</title>
+<meta name="description" content="Thank you for supporting a Kudzu Arts artist.">
+<meta name="theme-color" content="#fbfaf7">
+<link rel="icon" href="img/logo-k.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/v3.css">
+
+
+<noscript><style>.reveal{opacity:1 !important;transform:none !important;}</style></noscript>
+<meta name="robots" content="noindex, nofollow">
+<style>
+  .ty { max-width: 720px; margin: 0 auto; padding: 0 22px; }
+  .ty h1 { font-family: var(--serif); font-weight: 400;
+           font-size: clamp(38px,6vw,60px); line-height: 1.03;
+           letter-spacing: -0.005em; margin: 0 0 18px; }
+  .ty .ital { font-style: italic; }
+  .ty .warm { font-size: 18.5px; line-height: 1.7; color: #3f3a48; margin: 0 0 18px; }
+
+  .ty-card { background: #fff; border: 1px solid rgba(33,28,42,0.13);
+             padding: 26px 28px; margin: 30px 0 18px; }
+  .ty-work { font-family: var(--serif); font-size: 25px; margin: 0 0 3px; }
+  .ty-meta { color: #8a8072; font-size: 14.5px; margin: 0; }
+  .ty-price { font-family: var(--serif); font-size: 30px; margin: 16px 0 0; }
+
+  /* The date is the answer to the question they're actually holding. */
+  .ty-due { background: #fbfaf7; border-left: 2px solid #8a8f43;
+            padding: 18px 20px; margin: 22px 0; }
+  .ty-due .k { font-size: 11px; letter-spacing: .15em; text-transform: uppercase;
+               color: #8a8072; margin: 0 0 5px; }
+  .ty-due .v { font-family: var(--serif); font-size: 23px; margin: 0; }
+  .ty-due .n { font-size: 14px; color: #8a8072; margin: 6px 0 0; }
+
+  .ty-k { font-size: 11px; letter-spacing: .15em; text-transform: uppercase;
+          color: #5f5a2c; margin: 0 0 6px; }
+  .ty-body { font-size: 16px; line-height: 1.7; color: #3f3a48; margin: 0 0 14px; }
+  .ty-body:last-child { margin-bottom: 0; }
+  .ty-addr { font-size: 15.5px; line-height: 1.6; margin: 0 0 8px; }
+
+  .ty-more { border-top: 1px solid rgba(33,28,42,0.13); margin-top: 54px; padding-top: 38px; }
+  .ty-more h2 { font-family: var(--serif); font-weight: 400; font-size: 27px; margin: 0 0 22px; }
+  .ty-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 22px; }
+  .ty-tile { text-decoration: none; color: inherit; display: block; }
+  .ty-tile .shot { background: #efece4; aspect-ratio: 4/5; overflow: hidden; margin-bottom: 9px; }
+  .ty-tile .shot img { width: 100%; height: 100%; object-fit: cover; display: block;
+                       transition: transform .5s ease; }
+  .ty-tile:hover .shot img { transform: scale(1.035); }
+  .ty-tile .t { font-family: var(--serif); font-size: 17px; line-height: 1.25; }
+  .ty-tile .a { color: #8a8072; font-size: 13.5px; margin-top: 2px; }
+
+  .ty-msg { text-align: center; color: #544c5e; padding: 70px 20px; }
+</style>
+</head>
+<body>
+<header class="site-header">
+  <a href="index.html" class="brand"><img class="mark" src="img/logo-k.png" alt="" aria-hidden="true"><span class="word"><b>KUDZU</b><span class="arts">arts</span></span></a>
+  <nav class="nav" aria-label="Primary">
+    <a href="artists.html">Artists</a>
+    <a href="gallery.html">Virtual Gallery</a>
+    <a href="printshop.html">Print Shop</a>
+    <a href="contact.html">Contact</a>
+  </nav>
+  <a href="login.html" class="btn btn-clay nav-cta">Artist Login</a>
+  <button class="nav-toggle" type="button" aria-expanded="false">Menu</button>
+</header>
+
+<section class="tight" style="padding-bottom:0;">
+<main class="ty">
+
+  <div id="content" hidden>
+
+    <h1>Thank you, <span class="ital" id="oFirst">friend</span>.</h1>
+
+    <p class="warm">
+      You've just backed <span id="oArtistWarm">an artist</span> directly — not a gallery, not
+      a middleman. The great majority of what you paid goes straight to them.
+    </p>
+    <p class="warm">
+      We're glad to have you in this. Collectors are the reason any of it keeps going: studio
+      rent gets paid, the next piece gets made, and the workshops and residencies we run
+      through The Vine stay funded. Your support genuinely changes what's possible for the
+      people making work down here. Thank you.
+    </p>
+
+    <div class="ty-card">
+      <p class="ty-work" id="oWork">—</p>
+      <p class="ty-meta" id="oMeta"></p>
+      <p class="ty-meta" id="oArtist" style="margin-top:5px;"></p>
+      <p class="ty-price" id="oPrice">—</p>
+    </div>
+
+    <!-- Shipping -->
+    <div id="shipBlock" hidden>
+      <div class="ty-due">
+        <p class="k">Your artist has until</p>
+        <p class="v" id="oDue">—</p>
+        <p class="n">Ten business days to pack and post it.</p>
+      </div>
+
+      <p class="ty-body">
+        Original work is packed by the artist who made it — stretched, wrapped, corner-protected
+        and crated by hand — rather than pulled off a shelf. That takes longer than a warehouse
+        would, and it's the reason it arrives right.
+      </p>
+      <p class="ty-body">
+        The day it goes out you'll get an email with a <b>tracking number</b>. It travels insured
+        and needs a <b>signature on delivery</b> — that signature is how the sale is confirmed
+        as received, so plan to be there.
+      </p>
+
+      <div id="addrBlock" hidden style="margin-top:26px;">
+        <p class="ty-k">Going to</p>
+        <p class="ty-addr" id="oAddr"></p>
+        <p class="ty-body" style="font-size:14.5px;color:#8a8072;">
+          Wrong address? Email <a href="mailto:info@kudzuarts.com">info@kudzuarts.com</a> today
+          and we'll change it before it's packed.
+        </p>
+      </div>
+    </div>
+
+    <!-- Local pickup -->
+    <div id="pickupBlock" hidden>
+      <div class="ty-due">
+        <p class="k">Local pickup</p>
+        <p class="v">Check your email</p>
+        <p class="n">You and the artist have just been introduced.</p>
+      </div>
+      <p class="ty-body">
+        An email has gone to you and the artist together, with each other's details on it.
+        Reply to all and you're talking to them directly. From here it's on you to get in touch
+        and plan when you'll come and collect it.
+      </p>
+      <p class="ty-body">
+        When you meet, you'll both sign a <b>bill of lading</b> on the artist's phone. That
+        signed document confirms the work changed hands, completes the sale, and is emailed to
+        you both as your receipt.
+      </p>
+    </div>
+
+    <p class="ty-body" style="margin-top:26px;">
+      A confirmation is on its way to <b id="oEmail">your inbox</b> — keep it. Anything at all,
+      write to <a href="mailto:info@kudzuarts.com">info@kudzuarts.com</a>; a real person reads it.
+      Our <a href="shipping.html">shipping and returns</a> terms have the full detail.
+    </p>
+
+    <div class="ty-more" id="moreBlock" hidden>
+      <h2>More from the gallery</h2>
+      <div class="ty-grid" id="moreGrid"></div>
+      <p style="margin-top:26px;">
+        <a class="btn btn-clay" href="gallery.html">See the whole gallery</a>
+      </p>
+    </div>
+
+  </div>
+
+  <p class="ty-msg" id="msg">Confirming your order…</p>
+
+</main>
+</section>
+
+<footer class="site-footer">
+  <div class="vine-corner br"></div>
+  <div class="footer-grid">
+    <div class="footer-brand">
+      
+      <div class="footer-lockup">
+        <a href="index.html" class="brand"><img class="mark" src="img/logo-k.png" alt="" aria-hidden="true"><span class="word"><b>KUDZU</b><span class="arts">arts</span></span></a>
+        <a href="https://instagram.com/kudzu.arts" target="_blank" rel="noopener"
+           class="footer-ig-big" aria-label="Kudzu Arts on Instagram"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4.1"/><circle cx="17.5" cy="6.5" r="1.15" fill="currentColor" stroke="none"/></svg></a>
+      </div>
+<p class="blurb">Helping art take root — a southern art practice, climbing everywhere it can.</p>
+    </div>
+    <div class="footer-col"><h4>Visit</h4><a href="artists.html">Artists</a><a href="gallery.html">Virtual Gallery</a><a href="printshop.html">Print Shop</a></div>
+    <div class="footer-col"><h4>Gallery</h4><a href="contact.html">Contact</a><a href="contact.html">Newsletter</a><a href="contact.html">Submit work</a></div><div class="footer-col"><h4>Details</h4><a href="shipping.html">Shipping &amp; returns</a><a href="terms.html">Terms</a><a href="privacy.html">Privacy</a></div>
+    <div class="footer-col"><h4>Connect</h4><a href="https://instagram.com/kudzu.arts" target="_blank" rel="noopener">@kudzu.arts</a><a href="mailto:info@kudzuarts.com">info@kudzuarts.com</a><p>Rooted in Nashville &amp; Los Angeles</p>
+  </div>
+  </div>
+  <div class="footer-bot"><span>© Kudzu Arts MMXXVI</span><span>kudzuarts.com — the gallery is the door</span></div>
+  <a class="footer-ig" href="https://instagram.com/kudzu.arts" target="_blank" rel="noopener" aria-label="Kudzu Arts on Instagram"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.4" cy="6.6" r="1.1" fill="currentColor" stroke="none"/></svg></a>
+</footer>
+
+<script src="js/nav-auth.js" defer></script>
+
+<script>
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+  var sid = new URLSearchParams(location.search).get('session');
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c];
+    });
+  }
+  function money(cents, currency) {
+    if (cents == null) return '';
+    try {
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency', currency: (currency || 'usd').toUpperCase(),
+        maximumFractionDigits: 0
+      }).format(cents / 100);
+    } catch (e) { return '$' + Math.round(cents / 100); }
+  }
+
+  function render(o) {
+    var first = String(o.buyerName || '').trim().split(' ')[0];
+    if (first) $('oFirst').textContent = first;
+    if (o.artistName) {
+      $('oArtistWarm').textContent = o.artistName;
+      $('oArtist').textContent = 'by ' + o.artistName;
+    }
+    $('oWork').textContent = o.workTitle;
+    $('oMeta').textContent = o.workDetails || '';
+    $('oPrice').textContent = money(o.priceCents, o.currency);
+    if (o.buyerEmail) $('oEmail').textContent = o.buyerEmail;
+
+    if (o.delivery === 'pickup') {
+      $('pickupBlock').hidden = false;
+    } else {
+      $('shipBlock').hidden = false;
+      $('oDue').textContent = o.shipBy
+        ? new Date(o.shipBy + 'T12:00:00Z').toLocaleDateString('en-US',
+            { weekday: 'long', month: 'long', day: 'numeric' })
+        : 'Soon';
+      if (o.shipTo && o.shipTo.length) {
+        $('addrBlock').hidden = false;
+        $('oAddr').innerHTML = o.shipTo.map(esc).join('<br>');
+      }
+    }
+
+    $('msg').hidden = true;
+    $('content').hidden = false;
+    loadMore(o);
+  }
+
+  // Other work, so this isn't a dead end. Their own artist's pieces first
+  // — someone who just bought a Cato is more likely to want another one
+  // than a random tile from the grid.
+  async function loadMore(o) {
+    try {
+      var res = await fetch('/api/works?limit=60');
+      if (!res.ok) return;
+      var all = (await res.json()).works || [];
+      var pool = all.filter(function (w) {
+        return w.status === 'published' && w.image && w.title !== o.workTitle;
+      });
+      pool.sort(function (a, b) {
+        var sa = a.artistSlug === o.artistSlug ? 0 : 1;
+        var sb = b.artistSlug === o.artistSlug ? 0 : 1;
+        return sa - sb;
+      });
+      var pick = pool.slice(0, 4);
+      if (!pick.length) return;
+
+      pick.forEach(function (w) {
+        var a = document.createElement('a');
+        a.className = 'ty-tile';
+        a.href = 'artist.html?a=' + encodeURIComponent(w.artistSlug || '');
+        a.innerHTML =
+          '<div class="shot"><img loading="lazy" src="' + esc(w.image) + '" alt="' + esc(w.title) + '"></div>' +
+          '<div class="t">' + esc(w.title) + '</div>' +
+          '<div class="a">' + esc(w.artist || '') + '</div>';
+        $('moreGrid').appendChild(a);
+      });
+      $('moreBlock').hidden = false;
+    } catch (e) { /* the page is fine without it */ }
+  }
+
+  // Stripe redirects the browser and calls the webhook separately, and the
+  // browser usually wins that race. Poll rather than telling someone who
+  // has just paid that we can't find their order.
+  var tries = 0;
+  async function load() {
+    tries++;
+    try {
+      var res = await fetch('/api/orders/by-session/' + encodeURIComponent(sid));
+      if (res.ok) { render(await res.json()); return; }
+      if (res.status !== 404) throw new Error();
+    } catch (e) {}
+    if (tries < 10) { setTimeout(load, 1200); return; }
+    $('msg').innerHTML =
+      'Your payment went through — thank you. We\'re still writing up the order, and your ' +
+      'confirmation email will arrive shortly.<br><br>If it doesn\'t, email ' +
+      '<a href="mailto:info@kudzuarts.com">info@kudzuarts.com</a>.';
+  }
+
+  if (!sid) { $('msg').textContent = 'No order specified.'; } else { load(); }
+})();
+</script>
+<script src="js/main.js" defer></script>
+
+</body>
+</html>

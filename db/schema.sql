@@ -427,6 +427,83 @@ CREATE INDEX IF NOT EXISTS agreement_sig_artist_idx
 -- asked two strangers to coordinate two devices while holding a
 -- painting. The buyer's receipt is emailed to them immediately, which is
 -- both their copy and their chance to object if they never signed.
+-- ── Orders ───────────────────────────────────────────────────────────
+-- What was bought, by whom, and where it has to go.
+--
+-- This did not exist for a long time, and its absence was a real hole:
+-- Stripe collected a shipping address at checkout and the webhook threw
+-- it away, so an artist got told their work had sold and had no way to
+-- find out where to send it. A sale you cannot fulfil is not a sale.
+--
+-- Kept separate from `artworks` because a work is a thing and an order is
+-- an event. The address is copied in rather than joined, for the same
+-- reason the bill of lading copies the title: it is a record of what was
+-- true at the time, and it must not change afterwards.
+CREATE TABLE IF NOT EXISTS orders (
+  id            uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  artwork_id    uuid REFERENCES artworks(id) ON DELETE SET NULL,
+  artist_id     uuid NOT NULL REFERENCES artists(id) ON DELETE CASCADE,
+
+  work_title    text NOT NULL,
+  work_details  text,
+  price_cents   int  NOT NULL,
+  currency      text NOT NULL DEFAULT 'usd',
+  payout_cents  int,
+
+  delivery      text NOT NULL DEFAULT 'ship'
+                CHECK (delivery IN ('ship','pickup')),
+
+  buyer_name    text NOT NULL,
+  buyer_email   text NOT NULL,
+  buyer_phone   text,
+
+  -- Flattened rather than a JSON blob: an artist reads this off a screen
+  -- while writing on a box, and every one of these lines has to be
+  -- separately legible.
+  ship_name     text,
+  ship_line1    text,
+  ship_line2    text,
+  ship_city     text,
+  ship_state    text,
+  ship_postal   text,
+  ship_country  text,
+
+  -- The promise. Set when the order is created, ten business days out,
+  -- and shown to both of them from that moment. A deadline nobody stated
+  -- is a deadline nobody can miss — which sounds forgiving and is in fact
+  -- how a buyer ends up filing a chargeback out of pure uncertainty.
+  ship_by       date,
+
+  -- Dispatch. The tracking number is required to reach this state, so
+  -- `shipped_at IS NOT NULL` always means a real parcel with a real
+  -- number behind it — which is what answers a card network months later.
+  shipped_at    timestamptz,
+  tracking      text,
+  carrier       text,
+
+  delivered_at  timestamptz,
+
+  -- Set if the charge is refunded or lost to a dispute.
+  refunded_at   timestamptz,
+  disputed_at   timestamptz,
+
+  stripe_session_id text UNIQUE,
+  confirmation_sent_at timestamptz,
+  dispatch_sent_at     timestamptz,
+
+  created_at    timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS orders_artist_idx ON orders (artist_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS orders_artwork_idx ON orders (artwork_id);
+
+-- Tracking is not optional. Marking something shipped without it gives
+-- the buyer nothing to look at and gives the artist nothing to prove,
+-- so the database refuses the halfway state rather than trusting a form.
+ALTER TABLE orders DROP CONSTRAINT IF EXISTS orders_shipped_needs_tracking;
+ALTER TABLE orders ADD CONSTRAINT orders_shipped_needs_tracking
+  CHECK (shipped_at IS NULL OR (tracking IS NOT NULL AND length(trim(tracking)) > 0));
+
 CREATE TABLE IF NOT EXISTS bills_of_lading (
   id            uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   artwork_id    uuid REFERENCES artworks(id) ON DELETE SET NULL,

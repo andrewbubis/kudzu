@@ -280,7 +280,11 @@ router.post('/checkout/work/:id', async (req, res) => {
         shipping_address_collection: { allowed_countries: SHIPPING_COUNTRIES }
       }),
       phone_number_collection: { enabled: true },
-      success_url: `${site}/workinprogress/gallery.html?bought=${work.id}`,
+      // A real page. This used to point at the gallery with a ?bought=
+      // parameter that nothing read, so someone who had just spent a few
+      // thousand dollars was returned to a grid of paintings with no
+      // acknowledgement that anything had happened.
+      success_url: `${site}/workinprogress/order.html?session={CHECKOUT_SESSION_ID}`,
       cancel_url: `${site}/workinprogress/piece-${work.id}.html`,
       metadata: {
         kind: 'original',
@@ -332,6 +336,79 @@ function webhookHandler(req, res) {
       console.error('connect sync failed:', err.message);
     });
   }
+
+  // Money going back the other way. Neither of these used to be handled
+  // at all: a refunded piece stayed marked sold forever, and a chargeback
+  // was completely invisible — the first anyone would know is when the
+  // artist noticed money missing from their bank weeks later.
+  if (event.type === 'charge.refunded') {
+    markReversed(event.data.object, 'refunded').catch((err) => {
+      console.error('refund handling failed:', err.message);
+    });
+  }
+
+  if (event.type === 'charge.dispute.created') {
+    // event.data.object is the dispute; the charge id is on it.
+    markReversed({ payment_intent: event.data.object.payment_intent,
+                   id: event.data.object.charge }, 'disputed').catch((err) => {
+      console.error('dispute handling failed:', err.message);
+    });
+  }
+}
+
+// Find the order behind a charge and record what happened to it.
+//
+// A refund puts the work back on sale — it didn't sell, so it shouldn't
+// read as sold. A dispute deliberately does NOT: the money is only
+// provisionally gone, the piece may well be in the buyer's hands, and
+// quietly relisting something that might still be someone else's is worse
+// than leaving it marked sold while it's argued about.
+async function markReversed(charge, kind) {
+  if (!db.isReady()) return;
+
+  // Charges made through Checkout carry the session's payment_intent, so
+  // that's the reliable way back to the order we wrote.
+  const pi = charge.payment_intent;
+  if (!pi) return;
+
+  let sessionId = null;
+  try {
+    const list = await stripe.checkout.sessions.list({ payment_intent: pi, limit: 1 });
+    sessionId = list.data[0] ? list.data[0].id : null;
+  } catch (err) {
+    console.error('could not resolve session for payment_intent', pi, '—', err.message);
+  }
+  if (!sessionId) return;
+
+  const column = kind === 'refunded' ? 'refunded_at' : 'disputed_at';
+  const { rows } = await db.query(
+    `UPDATE orders SET ${column} = now()
+      WHERE stripe_session_id = $1 AND ${column} IS NULL
+  RETURNING *`, [sessionId]);
+  if (!rows[0]) return;
+
+  const order = rows[0];
+  console.log(kind, 'recorded for order', order.id, '—', order.work_title);
+
+  if (kind === 'refunded' && order.artwork_id) {
+    // Back to the wall. `published` rather than `draft`, because the
+    // artist did nothing wrong and shouldn't have to re-publish a piece
+    // that a buyer changed their mind about. The schema's own rules still
+    // apply — if their Stripe has since lapsed, the trigger drops it.
+    await db.query(
+      `UPDATE artworks SET status = 'published', sold_at = NULL, updated_at = now()
+        WHERE id = $1 AND status = 'sold'`, [order.artwork_id]);
+  }
+
+  try {
+    const { rows: ar } = await db.query(
+      'SELECT id, name, email, notify_channel FROM artists WHERE id = $1', [order.artist_id]);
+    if (ar[0]) {
+      await mail.saleReversed({ artist: ar[0], order, kind });
+    }
+  } catch (err) {
+    console.error('reversal notification failed:', err.message);
+  }
 }
 
 // Stripe considers an account usable only when it can both take charges
@@ -348,6 +425,72 @@ async function syncConnectState(account) {
   if (rowCount) {
     console.log('connect account no longer usable, unpublished work for', account.id);
   }
+}
+
+// How long an artist has to get a piece into the post. Ten working days:
+// long enough for someone who stretches their own canvas and has a day
+// job, short enough that a buyer isn't left guessing. Weekends skipped
+// because "two weeks" quietly means eighteen days to a person waiting.
+//
+// Public holidays are not modelled. Adding a calendar for them buys a day
+// of accuracy and costs a dependency that has to be maintained forever.
+const SHIP_DAYS = parseInt(process.env.KUDZU_SHIP_DAYS || '10', 10);
+
+function shipByDate(from, days) {
+  const d = new Date(from.getTime());
+  let left = days;
+  while (left > 0) {
+    d.setUTCDate(d.getUTCDate() + 1);
+    const day = d.getUTCDay();
+    if (day !== 0 && day !== 6) left--;
+  }
+  return d.toISOString().slice(0, 10);
+}
+
+// Write down the sale. Idempotent through the unique constraint on
+// stripe_session_id rather than through a check-then-insert, because two
+// webhook retries can overlap and only the database can settle that.
+async function recordOrder(session, md, work) {
+  const details = await db.query(
+    'SELECT medium, year, dimensions FROM artworks WHERE id = $1', [md.workId]);
+  const d = details.rows[0] || {};
+  const cd = session.customer_details || {};
+  const sd = session.shipping_details || {};
+  const addr = sd.address || {};
+  const isPickup = md.delivery === 'pickup';
+
+  const { rows } = await db.query(
+    `INSERT INTO orders
+       (artwork_id, artist_id, work_title, work_details, price_cents, currency,
+        payout_cents, delivery, buyer_name, buyer_email, buyer_phone,
+        ship_name, ship_line1, ship_line2, ship_city, ship_state, ship_postal,
+        ship_country, ship_by, stripe_session_id)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20)
+     ON CONFLICT (stripe_session_id) DO NOTHING
+     RETURNING *`,
+    [md.workId, work.artist_id, work.title,
+     [d.medium, d.year, d.dimensions].filter(Boolean).join(' · ') || null,
+     session.amount_total, session.currency || 'usd',
+     parseInt(md.payoutCents, 10) || null,
+     isPickup ? 'pickup' : 'ship',
+     cd.name || sd.name || 'Buyer', cd.email || '', cd.phone || null,
+     isPickup ? null : (sd.name || cd.name || null),
+     isPickup ? null : (addr.line1 || null),
+     isPickup ? null : (addr.line2 || null),
+     isPickup ? null : (addr.city || null),
+     isPickup ? null : (addr.state || null),
+     isPickup ? null : (addr.postal_code || null),
+     isPickup ? null : (addr.country || null),
+     // A pickup has no posting deadline — the two of them agree a time.
+     isPickup ? null : shipByDate(new Date(), SHIP_DAYS),
+     session.id]);
+
+  if (!rows[0]) return null;                  // a retry; already recorded
+
+  if (!isPickup && !rows[0].ship_line1) {
+    console.error('order', rows[0].id, 'has no shipping address — session', session.id);
+  }
+  return rows[0];
 }
 
 async function fulfil(session) {
@@ -367,6 +510,18 @@ async function fulfil(session) {
         `SELECT id, name, email, notify_channel, notify_phone, works_city
            FROM artists WHERE id = $1`,
         [rows[0].artist_id]);
+
+      // Every sale becomes an order, on both routes. For a shipped piece
+      // this is the only record of where it has to go — Stripe collects
+      // the address and hands it over exactly once, in this webhook, and
+      // for a long time we let it fall on the floor.
+      let order = null;
+      try {
+        order = await recordOrder(session, md, rows[0]);
+      } catch (err) {
+        // Loud, because a lost address means an unfulfillable sale.
+        console.error('COULD NOT RECORD ORDER for session', session.id, '—', err.message);
+      }
 
       // A pickup sale is not finished when the money arrives — it's
       // finished when the work is in the buyer's hands and both have
@@ -427,8 +582,25 @@ async function fulfil(session) {
           workTitle: rows[0].title,
           amountCents: session.amount_total,
           currency: session.currency,
-          isPickup: md.delivery === 'pickup'
+          isPickup: md.delivery === 'pickup',
+          // Carries the address and the deadline, so the artist can start
+          // packing from the email without going to look anything up.
+          order
         }).catch((err) => console.error('sale notification failed:', err.message));
+      }
+
+      // And the buyer hears from us. On a pickup the introduction already
+      // covers it; on a shipped sale this is the only thing Kudzu sends
+      // them, and without it their entire experience is a card charge and
+      // then a month of nothing.
+      if (order && order.delivery === 'ship') {
+        const claimed = await db.query(
+          `UPDATE orders SET confirmation_sent_at = now()
+            WHERE id = $1 AND confirmation_sent_at IS NULL`, [order.id]);
+        if (claimed.rowCount) {
+          mail.orderConfirmation({ order, artistName: ar[0] ? ar[0].name : null })
+            .catch((err) => console.error('order confirmation failed:', err.message));
+        }
       }
     }
     return;
@@ -478,4 +650,12 @@ async function fulfilPrint(session) {
   console.log('lumaprints order', result.orderNumber, 'for session', session.id);
 }
 
-module.exports = { router, webhookHandler, isConfigured };
+module.exports = {
+  router, webhookHandler, isConfigured,
+  // Exposed so the fulfilment path can be exercised against a stubbed
+  // database and Stripe. This is the code that runs when money moves and
+  // it is the hardest thing here to test by hand — reaching it needs a
+  // real card, a real webhook, and a piece you're willing to sell.
+  _fulfil: fulfil,
+  _shipByDate: shipByDate
+};
