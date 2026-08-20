@@ -143,10 +143,13 @@ async function workSold({ artist, workTitle, amountCents, currency, isPickup }) 
     to: addressFor(artist),
     subject: workTitle ? `${workTitle} sold` : 'Your work sold',
     text: isPickup
-      ? `${title}${money ? ' ' + money : ''}\n\nPaid, in full, already. This one is a local pickup. ` +
-        `A separate email has just gone to you and the buyer together — reply to all on that one ` +
-        `and you're talking to each other. They've been asked to reach out to you first.\n\n` +
-        `When you meet, open Sales and tap Hand it over — you sign, then hand them your phone.`
+      ? `${title}${money ? ' ' + money : ''}\n\nYou've been paid in full already. ` +
+        `This one is a local pickup.\n\n` +
+        `A separate email has just gone to you and the buyer together, with each other's ` +
+        `details on it — reply to all on that one and you're talking to them. It's on the ` +
+        `buyer to get in touch and plan when they're coming; you say where you'd like to meet.\n\n` +
+        `When they arrive, open Sales on your phone and tap Hand it over. You both sign the ` +
+        `bill of lading, and that completes the sale.`
       : `${title}${money ? ' ' + money : ''}\n\nYour payout is on its way from Stripe. ` +
         `Check your Kudzu sales page for the buyer's shipping address, and post it with the ` +
         `packed weight and box size you recorded.`,
@@ -155,18 +158,16 @@ async function workSold({ artist, workTitle, amountCents, currency, isPickup }) 
       `${money ? `<p style="margin:0 0 16px;font-size:26px;color:#211c2a;">${esc(money)}</p>` : ''}
        ${isPickup
          ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#544c5e;">
-              Your share has already been paid — nothing to invoice, nothing to chase.
-              This one is a <b>local pickup</b>.</p>
+              You've been paid in full already. This one is a <b>local pickup</b>.</p>
             <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#544c5e;">
               A second email has just gone out to you and the buyer <b>together</b>, with
-              each other's details on it. Reply to all on that one and you're in a
-              conversation with them. They've been told that getting in touch is theirs to
-              start — but you're welcome to go first. You choose where you meet; your
-              address is never published by Kudzu.</p>
+              each other's details on it — reply to all on that one and you're talking to
+              them. It's on the buyer to get in touch and plan when they're coming. You say
+              where you'd like to meet; your address is never published by Kudzu.</p>
             <p style="margin:0 0 20px;font-size:15px;line-height:1.6;color:#544c5e;">
-              When you meet, open <b>Sales</b> in your account and tap <b>Hand it over</b>.
-              You sign, hand them your phone, they sign — and the receipt goes to you both
-              automatically.</p>`
+              When they arrive, open <b>Sales</b> on your phone and tap <b>Hand it over</b>.
+              You sign, hand them your phone, they sign — and that bill of lading completes
+              the sale and goes to you both as the receipt.</p>`
          : `<p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#544c5e;">
               Your share is already on its way to your bank through Stripe — nothing to invoice, nothing to chase.</p>
             <p style="margin:0 0 20px;font-size:15px;line-height:1.6;color:#544c5e;">
@@ -184,12 +185,10 @@ async function workSold({ artist, workTitle, amountCents, currency, isPickup }) 
 // A local pickup is two strangers who need to meet, and until this email
 // exists neither of them has any way to reach the other. So: one message,
 // both of them in the To line, each other's address visible in the header.
-// Reply-all and it's a conversation — no relay to maintain, no Kudzu in
-// the middle, nothing to log in to.
+// Reply-all and it's a conversation.
 //
-// It says plainly that reaching out is the buyer's job. Somebody has to
-// go first, and a person who has just spent money is more motivated than
-// a person who has already been paid. Left unassigned, both wait.
+// It assigns the first move to the buyer, by name. Somebody has to go
+// first, and left unassigned both of them wait on the other.
 async function pickupIntroduction({ bol, artist, artistEmail }) {
   const money = bol.price_cents == null ? '' :
     new Intl.NumberFormat('en-US', {
@@ -219,26 +218,32 @@ async function pickupIntroduction({ bol, artist, artistEmail }) {
     replyTo: both,
     subject: `${bol.work_title} — arranging pickup${city ? ' in ' + city : ''}`,
     text:
-      `${bol.buyer_name} bought ${bol.work_title} from ${artistName}${where}. ${money}\n\n` +
-      `You're both on this email — reply to all and you're talking to each other.\n\n` +
-      `${bol.buyer_name} <${bol.buyer_email}>${bol.buyer_phone ? ' · ' + bol.buyer_phone : ''}\n` +
-      `${artistName} <${to}>\n\n` +
-      `${bol.buyer_name}: reaching out to arrange a time is yours to start.\n` +
-      `${artistName}: you've already been paid — nothing to invoice.\n\n` +
-      `When you meet, ${artistName} opens Sales on their phone and taps Hand it over. ` +
-      `You both sign, and a receipt comes to you both.`,
+      `${bol.buyer_name} has bought ${bol.work_title} from ${artistName}${where}` +
+      `${money ? ' for ' + money : ''}. Thank you, both.\n\n` +
+      `You're both on this email. Reply to all and you're talking to each other.\n\n` +
+      `From here it's on ${bol.buyer_name} to get in touch with ${artistName} and plan ` +
+      `when you'll come${city ? ' to ' + city : ''} to meet them.\n\n` +
+      `${bol.buyer_name} — ${bol.buyer_email}${bol.buyer_phone ? ' · ' + bol.buyer_phone : ''}\n` +
+      `${artistName} — ${to}\n\n` +
+      `${bol.buyer_name}: reach out and settle when and where the two of you will make ` +
+      `the exchange. ${artistName} knows the city and will say where.\n\n` +
+      `${artistName}: you've already been paid in full. When ${bol.buyer_name} arrives, ` +
+      `open your profile, go to Sales on your phone and tap Hand it over. You both sign ` +
+      `the bill of lading — that document is what completes the sale and stands as the ` +
+      `receipt for it. It's emailed to you both the moment it's signed.`,
     html: wrap(
       `Arranging pickup for <span style="font-style:italic;">${esc(bol.work_title)}</span>.`,
       `<p style="margin:0 0 18px;font-size:15px;line-height:1.6;color:#544c5e;">
          ${esc(bol.buyer_name)} has bought <b>${esc(bol.work_title)}</b> from
-         ${esc(artistName)}${esc(where)}${money ? ' — ' + esc(money) : ''}. Thank you, both.</p>
+         ${esc(artistName)}${esc(where)}${money ? ' for ' + esc(money) : ''}. Thank you, both.</p>
 
        <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#544c5e;">
-         You're both on this email. <b>Reply to all and you're talking to each other</b> —
-         Kudzu isn't in the middle of it. Sort out a time and a place between you.</p>
+         You're both on this email — <b>reply to all and you're talking to each other</b>.
+         From here it's on ${esc(bol.buyer_name)} to get in touch with ${esc(artistName)}
+         and plan when to come${city ? ' to ' + esc(city) : ''} and meet them.</p>
 
        <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
-              style="margin:0 0 20px;padding:16px 18px;background:#f4f2ec;border-left:2px solid #8a8f43;">
+              style="margin:0 0 22px;padding:16px 18px;background:#f4f2ec;border-left:2px solid #8a8f43;">
          <tr>
            ${person('Buyer', bol.buyer_name, bol.buyer_email, bol.buyer_phone)}
            ${person('Artist', artistName, to, null)}
@@ -246,19 +251,22 @@ async function pickupIntroduction({ bol, artist, artistEmail }) {
        </table>
 
        <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#544c5e;">
-         <b>${esc(bol.buyer_name)}</b> — starting the conversation is yours. Say when you
-         can get there and ${esc(artistName)} will tell you where.</p>
-       <p style="margin:0 0 20px;font-size:15px;line-height:1.6;color:#544c5e;">
-         <b>${esc(artistName)}</b> — you've already been paid in full; there's nothing to
-         invoice or chase. You choose where you're comfortable meeting. Your address is
-         never published by Kudzu.</p>
+         <b>${esc(bol.buyer_name)}</b> — reach out and settle when and where the two of you
+         will make the exchange. ${esc(artistName)} knows
+         ${city ? esc(city) : 'their city'} and will say where to meet.</p>
 
-       <p style="margin:0 0 8px;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:#5f5a2c;">When you meet</p>
+       <p style="margin:0 0 22px;font-size:15px;line-height:1.6;color:#544c5e;">
+         <b>${esc(artistName)}</b> — you've already been paid in full. When
+         ${esc(bol.buyer_name)} arrives, open your profile, go to <b>Sales</b> on your phone
+         and tap <b>Hand it over</b>.</p>
+
+       <p style="margin:0 0 8px;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:#5f5a2c;">Signing for it</p>
        <p style="margin:0;font-size:15px;line-height:1.6;color:#544c5e;">
-         ${esc(artistName)} opens <b>Sales</b> on their phone and taps <b>Hand it over</b>.
-         They sign, hand the phone across, ${esc(bol.buyer_name)} signs. That's the receipt —
-         it's emailed to you both, and it's what settles any question later about what
-         changed hands and when.</p>`,
+         You both sign the <b>bill of lading</b> — ${esc(artistName)} signs, hands the phone
+         across, ${esc(bol.buyer_name)} signs. That document is what completes the sale in
+         full and stands as the receipt for it. It's emailed to you both the moment it's
+         signed, and it's what answers any question later about what changed hands and
+         when.</p>`,
       'Sent to both of you because this was a local pickup on Kudzu Arts. ' +
       'Replies go to everyone on this message.'
     )
