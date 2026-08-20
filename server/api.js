@@ -911,7 +911,15 @@ router.get('/bols', auth.requireArtist, async (req, res) => {
     const { rows } = await db.query(
       `SELECT * FROM bills_of_lading WHERE artist_id = $1
     ORDER BY created_at DESC LIMIT 200`, [req.artist.id]);
-    res.json({ bols: rows.map(publicBol) });
+    // The artist's own list, behind their session — so it carries the
+    // buyer's contact details. They need to reach this person to arrange
+    // a time, and hunting through their inbox for the introduction email
+    // is a worse answer than having it here.
+    res.json({ bols: rows.map((b) => Object.assign(publicBol(b), {
+      buyerEmail: b.buyer_email,
+      buyerPhone: b.buyer_phone || '',
+      pickupCity: b.pickup_city || ''
+    })) });
   } catch (err) {
     res.status(500).json({ error: 'server_error' });
   }

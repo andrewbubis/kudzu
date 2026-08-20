@@ -443,6 +443,11 @@ CREATE TABLE IF NOT EXISTS bills_of_lading (
 
   buyer_name    text NOT NULL,
   buyer_email   text NOT NULL,
+  buyer_phone   text,                      -- collected at checkout
+
+  -- The artist's city at the time of sale, so the introduction email can
+  -- say where the work is without either party publishing an address.
+  pickup_city   text,
 
   -- Short code the buyer uses to join the signing on their own phone.
   -- It identifies a session; it is not a secret that proves anything.
@@ -480,8 +485,18 @@ CREATE TABLE IF NOT EXISTS bills_of_lading (
   -- can't send two people two copies of the same receipt.
   receipt_sent_at     timestamptz,
 
+  -- The introduction: one email addressed to both of them, which is how
+  -- they meet. Claimed the same way as the receipt, because Stripe
+  -- retries webhooks and nobody should be introduced twice.
+  intro_sent_at       timestamptz,
+
   created_at    timestamptz NOT NULL DEFAULT now()
 );
+
+-- Added after the table shipped.
+ALTER TABLE bills_of_lading ADD COLUMN IF NOT EXISTS buyer_phone   text;
+ALTER TABLE bills_of_lading ADD COLUMN IF NOT EXISTS pickup_city   text;
+ALTER TABLE bills_of_lading ADD COLUMN IF NOT EXISTS intro_sent_at timestamptz;
 
 CREATE INDEX IF NOT EXISTS bol_artist_idx ON bills_of_lading (artist_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS bol_code_idx   ON bills_of_lading (join_code);

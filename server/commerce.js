@@ -364,7 +364,8 @@ async function fulfil(session) {
     // should not be told twice that the same piece sold.
     if (rows[0]) {
       const { rows: ar } = await db.query(
-        'SELECT id, name, email, notify_channel, notify_phone FROM artists WHERE id = $1',
+        `SELECT id, name, email, notify_channel, notify_phone, works_city
+           FROM artists WHERE id = $1`,
         [rows[0].artist_id]);
 
       // A pickup sale is not finished when the money arrives — it's
@@ -378,20 +379,43 @@ async function fulfil(session) {
           const d = details.rows[0] || {};
           const cd = session.customer_details || {};
 
-          await db.query(
+          const opened = await db.query(
             `INSERT INTO bills_of_lading
                (artwork_id, artist_id, work_title, work_details, price_cents, currency,
-                buyer_name, buyer_email, join_code, stripe_session_id, payout_cents)
-             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
-             ON CONFLICT DO NOTHING`,
+                buyer_name, buyer_email, buyer_phone, pickup_city,
+                join_code, stripe_session_id, payout_cents)
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
+             ON CONFLICT DO NOTHING
+             RETURNING *`,
             [md.workId, rows[0].artist_id, rows[0].title,
              [d.medium, d.year, d.dimensions].filter(Boolean).join(' · ') || null,
              session.amount_total, session.currency || 'usd',
              cd.name || 'Buyer', cd.email || '',
+             // Stripe already asks for a phone at checkout. Coordinating a
+             // doorstep meeting over email alone is miserable.
+             cd.phone || null, ar[0] ? ar[0].works_city || null : null,
              makeJoinCode(), session.id,
              // Recorded on the document for reference. Payment already
              // went to the artist at checkout; nothing here releases it.
              parseInt(md.payoutCents, 10) || null]);
+
+          // The introduction. Nothing else in the system gives these two
+          // people a way to reach each other, so this is the whole
+          // mechanism — and it must fire exactly once, because Stripe
+          // retries webhooks and being introduced twice reads as a bug.
+          //
+          // ON CONFLICT DO NOTHING means a retry returns no row, so the
+          // insert itself is the guard. `intro_sent_at` catches the rest.
+          if (opened.rows[0] && ar[0]) {
+            const bol = opened.rows[0];
+            const claimed = await db.query(
+              `UPDATE bills_of_lading SET intro_sent_at = now()
+                WHERE id = $1 AND intro_sent_at IS NULL`, [bol.id]);
+            if (claimed.rowCount) {
+              mail.pickupIntroduction({ bol, artist: ar[0] })
+                .catch((err) => console.error('pickup introduction failed:', err.message));
+            }
+          }
         } catch (err) {
           console.error('could not open handoff for', md.workId, '—', err.message);
         }

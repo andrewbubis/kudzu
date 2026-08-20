@@ -121,12 +121,31 @@
             row.style.cssText =
               'display:flex;justify-content:space-between;align-items:center;gap:14px;' +
               'padding:14px 16px;border:1px solid #e2e2e2;background:#fff;margin-bottom:8px;';
+            // The buyer's email and phone sit right here, tappable. An
+            // introduction email went to both of them when the piece sold,
+            // but an artist standing in their studio wondering when this
+            // person is coming shouldn't have to go find it.
+            var reach = [];
+            if (b.buyerEmail) {
+              reach.push('<a href="mailto:' + esc(b.buyerEmail) + '" style="color:#5f5a2c;">' +
+                         esc(b.buyerEmail) + '</a>');
+            }
+            if (b.buyerPhone) {
+              reach.push('<a href="tel:' + esc(b.buyerPhone) + '" style="color:#5f5a2c;">' +
+                         esc(b.buyerPhone) + '</a>');
+            }
+
             row.innerHTML =
               '<span><b>' + esc(b.workTitle) + '</b>' +
                 '<span style="color:#888;"> · ' + esc(b.buyerName) + '</span>' +
                 '<span style="display:block;color:#888;font-size:12px;margin-top:2px;">' +
                   (b.artistSignedAt ? 'Waiting on the buyer to sign' : 'Not signed yet') +
-                '</span></span>' +
+                '</span>' +
+                (reach.length
+                  ? '<span style="display:block;font-size:12.5px;margin-top:5px;">' +
+                      reach.join('<span style="color:#c9c2b0;"> · </span>') + '</span>'
+                  : '') +
+              '</span>' +
               '<a class="acct-btn" href="handoff.html?id=' + encodeURIComponent(b.id) + '">Hand it over</a>';
             $('handoffList').appendChild(row);
           });
