@@ -150,7 +150,7 @@ async function workSold({ artist, workTitle, amountCents, currency, isPickup }) 
         `buyer to get in touch and plan when they're coming; you say where you'd like to meet.\n\n` +
         `When they arrive, open Sales on your phone and tap Hand it over. You both sign the ` +
         `bill of lading, and that completes the sale.`
-      : `${title}${money ? ' ' + money : ''}\n\nYour payout is on its way from Stripe. ` +
+      : `${title}${money ? ' ' + money : ''}\n\nYou've been paid — your payout is on its way from Stripe. ` +
         `Check your Kudzu sales page for the buyer's shipping address, and post it with the ` +
         `packed weight and box size you recorded.`,
     html: wrap(
@@ -169,7 +169,7 @@ async function workSold({ artist, workTitle, amountCents, currency, isPickup }) 
               You sign, hand them your phone, they sign — and that bill of lading completes
               the sale and goes to you both as the receipt.</p>`
          : `<p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#544c5e;">
-              Your share is already on its way to your bank through Stripe — nothing to invoice, nothing to chase.</p>
+              You've been paid — your share is already on its way to your bank through Stripe.</p>
             <p style="margin:0 0 20px;font-size:15px;line-height:1.6;color:#544c5e;">
               Next: the buyer's shipping address is on your sales page. Pack it to the weight and box size
               you recorded when you uploaded it, and send it off. Ship signature-required.</p>`}
