@@ -287,6 +287,35 @@
 
 /* ── Hidden state for filtering ──────────────────────────────── */
 .grant-card.hidden { display: none; }
+
+/* ── Sort buttons ───────────────────────────────────────────────── */
+.sort-group { margin-left: auto; }
+.sort-btn {
+  background: transparent; border: none; color: var(--cream-dim);
+  font-family: var(--mono); font-size: 11px; letter-spacing: 0.2em;
+  text-transform: uppercase; padding: 12px 16px; cursor: pointer;
+  transition: color .2s; position: relative;
+}
+.sort-btn::after {
+  content: ""; position: absolute; bottom: -1px; left: 0; right: 0; height: 2px;
+  background: var(--gold); transform: scaleX(0); transition: transform .2s;
+}
+.sort-btn:hover { color: var(--cream); }
+.sort-btn.active { color: var(--gold); }
+.sort-btn.active::after { transform: scaleX(1); }
+
+/* ── Filter section labels ──────────────────────────────────────── */
+.filter-section-label {
+  font-family: var(--mono); font-size: 9px; letter-spacing: 0.22em;
+  text-transform: uppercase; color: var(--cream-dim); opacity: 0.55;
+  padding: 12px 10px 12px 0; align-self: center; white-space: nowrap;
+}
+
+/* ── Flat sorted view ───────────────────────────────────────────── */
+#flat-sorted-section { display: none; }
+#flat-sorted-section .grants-grid {
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+}
 .state-group.hidden { display: none; }
 
 /* ── Nomination pill ─────────────────────────────────────────── */
@@ -391,10 +420,17 @@
         <button class="filter-btn" data-filter="national">National <span class="filter-count">15</span></button>
       </div>
       <div class="filter-group">
+        <span class="filter-section-label">Medium</span>
         <button class="filter-btn" data-filter="painting">Painting</button>
+        <button class="filter-btn" data-filter="sculpture">Sculpture</button>
         <button class="filter-btn" data-filter="ceramics">Ceramics / Glass</button>
         <button class="filter-btn" data-filter="mural">Mural / Public</button>
-        <button class="filter-btn" data-filter="open-soon">Opens Soon</button>
+        <button class="filter-btn" data-filter="open-soon">Open Now</button>
+      </div>
+      <div class="filter-group sort-group">
+        <span class="filter-section-label">Sort</span>
+        <button class="sort-btn active" data-sort="best">Best results</button>
+        <button class="sort-btn" data-sort="ending-soonest">Ending soonest</button>
       </div>
     </div>
     <div class="artist-filter-row">
@@ -2056,6 +2092,13 @@
   </div><!-- /wrap -->
 </div><!-- /grants-section -->
 
+<!-- ── Flat sorted view (Ending soonest) ──────────────────────────────── -->
+<div id="flat-sorted-section">
+  <div class="wrap">
+    <div class="grants-grid" id="flat-sorted-grid"></div>
+  </div>
+</div>
+
 <!-- ── About this tracker ──────────────────────────────────────────── -->
 <div class="about-tracker">
   <div class="wrap" style="max-width: 820px;">
@@ -2105,14 +2148,19 @@
 </footer>
 
 <script>
-// ── Filter logic ─────────────────────────────────────────────────────
-const filterBtns = document.querySelectorAll('.filter-btn');
+// ── Filter + Sort logic ───────────────────────────────────────────────
+const filterBtns  = document.querySelectorAll('.filter-btn');
+const sortBtns    = document.querySelectorAll('.sort-btn');
 const artistPills = document.querySelectorAll('.artist-pill');
-const cards = document.querySelectorAll('.grant-card');
-const groups = document.querySelectorAll('.state-group');
+const cards       = document.querySelectorAll('.grant-card');
+const groups      = document.querySelectorAll('.state-group');
+const grantsSection      = document.querySelector('.grants-section');
+const flatSortedSection  = document.getElementById('flat-sorted-section');
+const flatSortedGrid     = document.getElementById('flat-sorted-grid');
 
 let activeFilter = 'all';
 let activeArtist = null;
+let activeSort   = 'best';
 
 filterBtns.forEach(btn => {
   btn.addEventListener('click', () => {
@@ -2125,11 +2173,19 @@ filterBtns.forEach(btn => {
   });
 });
 
+sortBtns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    activeSort = btn.dataset.sort;
+    sortBtns.forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    applyFilter();
+  });
+});
+
 artistPills.forEach(pill => {
   pill.addEventListener('click', () => {
     const slug = pill.dataset.artist;
     if (activeArtist === slug) {
-      // toggle off
       activeArtist = null;
       pill.classList.remove('active');
     } else {
@@ -2144,38 +2200,103 @@ artistPills.forEach(pill => {
   });
 });
 
-function applyFilter() {
+// Parse a sortable date from a grant card's deadline text
+function parseSortDate(card) {
+  const status = card.dataset.status;
+  if (status === 'closed')     return new Date(1900, 0, 1);
+  if (status === 'rolling' || status === 'nomination') return new Date(2099, 0, 1);
+
+  const MONTHS = {
+    jan:0, feb:1, mar:2, apr:3, may:4, jun:5,
+    jul:6, aug:7, sep:8, oct:9, nov:10, dec:11
+  };
+  function monthIdx(str) {
+    return MONTHS[str.slice(0,3).toLowerCase()];
+  }
+
+  // Collect all text from deadline spans + meta-line
+  const spans = card.querySelectorAll('.deadline-open,.deadline-soon,.deadline-rolling,[class*="deadline"]');
+  const meta  = card.querySelector('.grant-meta-line');
+  const text  = Array.from(spans).map(s => s.textContent).join(' ')
+              + (meta ? meta.textContent : '');
+
+  // Pattern: "Aug 23, 2026" or "August 23, 2026" or "Aug 23 2026"
+  const m1 = text.match(/([A-Za-z]{3,9})\s+(\d{1,2}),?\s+(20\d{2})/);
+  if (m1) {
+    const mo = monthIdx(m1[1]);
+    if (mo !== undefined) return new Date(+m1[3], mo, +m1[2]);
+  }
+
+  // Pattern: "October 6, 2026" from "closes Oct 6, 2026"
+  const m2 = text.match(/(Oct(?:ober)?|Nov(?:ember)?|Sep(?:tember)?|Dec(?:ember)?|Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?)\w*\s+(\d{1,2})[,\s]+(20\d{2})/i);
+  if (m2) {
+    const mo = monthIdx(m2[1]);
+    if (mo !== undefined) return new Date(+m2[3], mo, +m2[2]);
+  }
+
+  // Pattern: "~January 2027" or "~April 2027"
+  const m3 = text.match(/~?\s*([A-Za-z]{3,9})\s+(20\d{2})/);
+  if (m3) {
+    const mo = monthIdx(m3[1]);
+    if (mo !== undefined) return new Date(+m3[2], mo, 1);
+  }
+
+  // Fallback for annual
+  if (status === 'annual') return new Date(2027, 5, 1);
+  return new Date(2027, 11, 31);
+}
+
+function cardMatchesFilter(card) {
+  const state   = card.dataset.state;
+  const mediums = (card.dataset.mediums || '').split(',');
+  const status  = card.dataset.status;
+  const artists = (card.dataset.artists || '').split(',');
   const f = activeFilter;
   const a = activeArtist;
 
+  if (a) return artists.includes(a);
+
+  if (f === 'all')       return true;
+  if (f === 'tn')        return state === 'tn';
+  if (f === 'ca')        return state === 'ca';
+  if (f === 'national')  return state === 'national';
+  if (f === 'painting')  return mediums.includes('painting');
+  if (f === 'sculpture') return mediums.includes('sculpture');
+  if (f === 'ceramics')  return mediums.includes('ceramics') || mediums.includes('glass');
+  if (f === 'mural')     return mediums.includes('mural');
+  if (f === 'open-soon') return status === 'open' || status === 'open-soon';
+  return false;
+}
+
+function applyFilter() {
+  // Mark each card hidden/visible
   cards.forEach(card => {
-    const state = card.dataset.state;
-    const mediums = (card.dataset.mediums || '').split(',');
-    const status = card.dataset.status;
-    const artists = (card.dataset.artists || '').split(',');
-
-    // Artist filter takes priority when set
-    if (a) {
-      card.classList.toggle('hidden', !artists.includes(a));
-    } else {
-      let show = false;
-      if (f === 'all') show = true;
-      else if (f === 'tn' && state === 'tn') show = true;
-      else if (f === 'ca' && state === 'ca') show = true;
-      else if (f === 'national' && state === 'national') show = true;
-      else if (f === 'painting' && mediums.includes('painting')) show = true;
-      else if (f === 'ceramics' && (mediums.includes('ceramics') || mediums.includes('glass'))) show = true;
-      else if (f === 'mural' && mediums.includes('mural')) show = true;
-      else if (f === 'open-soon' && (status === 'open' || status === 'open-soon')) show = true;
-      card.classList.toggle('hidden', !show);
-    }
+    card.classList.toggle('hidden', !cardMatchesFilter(card));
   });
 
-  // Hide state groups if all cards inside are hidden
-  groups.forEach(group => {
-    const visibleCards = group.querySelectorAll('.grant-card:not(.hidden)');
-    group.classList.toggle('hidden', visibleCards.length === 0);
-  });
+  if (activeSort === 'ending-soonest') {
+    // Flat sorted view
+    grantsSection.style.display    = 'none';
+    flatSortedSection.style.display = '';
+
+    const visible = Array.from(cards).filter(c => !c.classList.contains('hidden'));
+    visible.sort((a, b) => parseSortDate(a) - parseSortDate(b));
+
+    flatSortedGrid.innerHTML = '';
+    visible.forEach(card => {
+      flatSortedGrid.appendChild(card.cloneNode(true));
+    });
+  } else {
+    // Normal grouped view
+    grantsSection.style.display    = '';
+    flatSortedSection.style.display = 'none';
+
+    // Hide state groups where all cards are hidden
+    groups.forEach(group => {
+      const visible = group.querySelectorAll('.grant-card:not(.hidden)');
+      group.classList.toggle('hidden', visible.length === 0);
+    });
+  }
 }
 
 // ── Reveal on scroll ────────────────────────────────────────────────
