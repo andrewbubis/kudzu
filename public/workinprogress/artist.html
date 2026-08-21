@@ -146,6 +146,18 @@
   function workCard(w) {
     var el = document.createElement('article');
     el.className = 'ap-work';
+    // Make card image + title clickable to piece detail page
+    if (w.id) {
+      var _slug = new URLSearchParams(location.search).get('a') || '';
+      if (_slug) {
+        var _href = 'piece.html?a=' + encodeURIComponent(_slug) + '&w=' + encodeURIComponent(w.id);
+        el.style.cursor = 'pointer';
+        el.addEventListener('click', function (e) {
+          if (e.target.closest('button, a')) return; // don't intercept acquire/link clicks
+          location.href = _href;
+        });
+      }
+    }
     el.innerHTML =
       '<div class="fr"><img src="' + esc(w.image) + '" alt="' + esc(w.title) + '" loading="lazy"></div>' +
       '<div class="t">' + esc(w.title) + '</div>' +
