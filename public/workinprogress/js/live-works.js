@@ -75,7 +75,7 @@
 
         hangable.slice(0, 8).forEach(function (x) {
           var a = document.createElement('a');
-          a.href = 'artist.html?a=' + encodeURIComponent(x.w.artistSlug);
+          a.href = 'piece.html?a=' + encodeURIComponent(x.w.artistSlug) + '&w=' + encodeURIComponent(x.w.id);
           a.className = 'hung';
 
           // Height as a share of the wall; centre pinned to eye level.
@@ -115,9 +115,9 @@
 
         var acts = el.querySelector('.pacts');
         var view = document.createElement('a');
-        view.className = 'btn btn-line';
-        view.href = 'artist.html?a=' + encodeURIComponent(w.artistSlug);
-        view.textContent = 'See the artist';
+        view.className = 'btn btn-fill';
+        view.href = 'piece.html?a=' + encodeURIComponent(w.artistSlug) + '&w=' + encodeURIComponent(w.id);
+        view.textContent = 'View work →';
         acts.appendChild(view);
 
         if (w.status !== 'sold' && w.forSale && w.priceCents) {
