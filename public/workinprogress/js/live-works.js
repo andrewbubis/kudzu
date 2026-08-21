@@ -103,14 +103,15 @@
         var el = document.createElement('div');
         el.className = 'piece reveal';
         el.innerHTML =
-          '<div class="pwrap"><img class="pimg" src="' + esc(w.image) + '" alt="' +
-            esc(w.title + ' by ' + w.artist) + '" loading="lazy">' +
-            '<span class="ptag' + (w.status === 'sold' ? ' sold' : '') + '">' +
-            (w.status === 'sold' ? 'Sold' : 'For sale') + '</span></div>' +
+          '<div class="pwrap">' +
+          (w.artistSlug && w.id ? '<a href="piece.html?a=' + encodeURIComponent(w.artistSlug) + '&w=' + encodeURIComponent(w.id) + '" aria-label="View ' + esc(w.title) + '">' : '') +
+          '<img class="pimg" src="' + esc(w.image) + '" alt="' + esc(w.title + ' by ' + w.artist) + '" loading="lazy">' +
+          (w.artistSlug && w.id ? '</a>' : '') +
+          '<span class="ptag' + (w.status === 'sold' ? ' sold' : '') + '">' + (w.status === 'sold' ? 'Sold' : 'For sale') + '</span></div>' +
           '<div class="pinfo">' +
             '<div class="ptitle"><h3>' + esc(w.title) + '</h3>' +
               '<span class="price">' + (w.status === 'sold' ? '' : money(w.priceCents, w.currency)) + '</span></div>' +
-            '<p class="by">' + esc(w.artist) + '</p>' +
+            '<p class="by">' + (w.artistSlug ? '<a href="artist.html?a=' + encodeURIComponent(w.artistSlug) + '" style="color:inherit;text-decoration:none;">' + esc(w.artist) + '</a>' : esc(w.artist)) + '</p>' +
             '<p class="spec">' + esc([w.year, w.medium, w.dimensions].filter(Boolean).join(' · ')) + '</p>' +
             '<div class="pacts"></div>' +
           '</div>';
