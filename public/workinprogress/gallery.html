@@ -136,7 +136,7 @@
   var target=0.5,cur=0.5,raf=null;
   function frame(){
     cur+=(target-cur)*0.055;
-    var max=r.offsetWidth-v.offsetWidth;
+    var max=Math.max(0,r.scrollWidth-v.offsetWidth);
     r.style.transform='translateX('+(-cur*max).toFixed(1)+'px) rotateY('+((0.5-cur)*2.5).toFixed(2)+'deg)';
     if(Math.abs(target-cur)>0.0004){raf=requestAnimationFrame(frame);}else{raf=null;}
   }

@@ -248,7 +248,7 @@
   transition: transform .35s cubic-bezier(.2,.7,.2,1), box-shadow .35s;
 }
 .wframe img { display: block; width: 100%; height: auto; }
-.wframe:hover { transform: translateY(-7px) scale(1.03); box-shadow: 0 32px 54px rgba(33,28,42,0.36), 0 4px 12px rgba(33,28,42,0.22); z-index: 6; }
+.wframe:hover { transform: translateY(-4px) scale(1.012); box-shadow: 0 28px 48px rgba(33,28,42,0.32), 0 3px 10px rgba(33,28,42,0.20); z-index: 6; }
 /* An empty spot on the wall. Keeps the room the right length to walk
    while the roster is small — reads as a hanging space waiting for work,
    not as a picture that failed to load. */
