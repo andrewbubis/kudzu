@@ -250,5 +250,41 @@
 <script src="js/main.js" defer></script>
 <script src="js/nav-auth.js" defer></script>
 <script src="js/buy.js" defer></script>
+
+<!-- ── EMAIL CAPTURE — individual artist ────────────────────────── -->
+<section id="artistEmailCapture" style="background:var(--paper-2); padding:clamp(48px,6vw,80px) 0; text-align:center;">
+  <div class="wrap" style="max-width:540px; margin-inline:auto;">
+    <p style="font-family:var(--sans); font-size:11px; font-weight:600; letter-spacing:0.16em; text-transform:uppercase; color:var(--clay); margin-bottom:12px;">Stay connected</p>
+    <h2 id="artistEmailTitle" style="font-family:var(--serif); font-weight:400; font-size:clamp(24px,3vw,34px); margin:0 0 14px;">Get updates about <em>this artist.</em></h2>
+    <p style="font-family:var(--serif); font-size:15px; color:var(--ink-soft); margin:0 0 28px; line-height:1.6;">New work, shows, and availability — we'll let you know.</p>
+    <form novalidate id="artistEmailForm"
+          style="display:flex; gap:10px; flex-wrap:wrap; justify-content:center; max-width:400px; margin:0 auto;">
+      <input type="hidden" name="access_key" value="273c38ff-3f87-48c6-8c7d-5aa1dff2126e">
+      <input type="hidden" name="subject" id="artistEmailSubject" value="Kudzu Arts — Artist newsletter sign-up">
+      <input type="checkbox" name="botcheck" style="display:none;" tabindex="-1" autocomplete="off">
+      <input type="email" name="email" required placeholder="your@email.com"
+             style="flex:1; min-width:200px; padding:13px 16px; font-family:var(--serif); font-size:15px; color:var(--ink); background:var(--paper); border:1.5px solid var(--line); outline:none;">
+      <button type="submit" class="btn btn-clay" style="white-space:nowrap;">Sign up</button>
+      <div class="form-msg" role="status" aria-live="polite" style="width:100%; font-size:13px; text-align:center;"></div>
+    </form>
+  </div>
+</section>
+<script>
+(function () {
+  var slug = new URLSearchParams(location.search).get('a') || '';
+  if (!slug) return;
+  fetch('/api/artists/' + encodeURIComponent(slug))
+    .then(function(r){ return r.ok ? r.json() : null; })
+    .then(function(d){
+      if (!d || !d.artist) return;
+      var name = d.artist.name;
+      var title = document.getElementById('artistEmailTitle');
+      if (title) title.innerHTML = 'Get updates about <em>' + name.split(' ')[0] + '.</em>';
+      var subj = document.getElementById('artistEmailSubject');
+      if (subj) subj.value = 'Kudzu Arts — Updates for ' + name;
+    })
+    .catch(function(){});
+})();
+</script>
 </body>
 </html>

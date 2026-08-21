@@ -49,7 +49,7 @@
 <section style="padding-top:0;" class="artist-area">
   <div class="wrap">
     <div class="artist-grid">
-      <a href="artist-ian-patrick-cato.html" class="artist-card reveal"><span class="art" style="background-image:url('img/ian-patrick-cato-pinned.jpg')"></span><span class="name">Ian Patrick Cato</span></a>
+      <a href="artist.html?a=ian-patrick-cato" class="artist-card reveal"><span class="art" style="background-image:url('img/ian-patrick-cato-pinned.jpg')"></span><span class="name">Ian Patrick Cato</span></a>
       <!-- Empty seats. The grid keeps its shape while the roster fills in;
            these carry no link and no name. -->
       <span class="artist-card ghost" aria-hidden="true"></span>
@@ -93,6 +93,25 @@
      paragraph rather than tucked into the footer's corner. -->
 <div class="vine-band" aria-hidden="true" style="margin-bottom:clamp(18px,2.5vw,32px);"></div>
 
+
+<!-- ── EMAIL CAPTURE — roster ───────────────────────────────────── -->
+<section style="background:var(--paper-2); padding:clamp(48px,6vw,80px) 0; text-align:center;">
+  <div class="wrap" style="max-width:580px; margin-inline:auto;">
+    <p style="font-family:var(--sans); font-size:11px; font-weight:600; letter-spacing:0.16em; text-transform:uppercase; color:var(--clay); margin-bottom:12px;">Stay in the loop</p>
+    <h2 style="font-family:var(--serif); font-weight:400; font-size:clamp(26px,3.5vw,38px); margin:0 0 14px;">Keep up with our ever-expanding <em>roster.</em></h2>
+    <p style="font-family:var(--serif); font-size:15px; color:var(--ink-soft); margin:0 0 28px; line-height:1.6;">New artists, new work, and upcoming shows — straight to your inbox.</p>
+    <form novalidate data-endpoint="https://api.web3forms.com/submit"
+          style="display:flex; gap:10px; flex-wrap:wrap; justify-content:center; max-width:440px; margin:0 auto;">
+      <input type="hidden" name="access_key" value="273c38ff-3f87-48c6-8c7d-5aa1dff2126e">
+      <input type="hidden" name="subject" value="Kudzu Arts — Roster newsletter sign-up">
+      <input type="checkbox" name="botcheck" style="display:none;" tabindex="-1" autocomplete="off">
+      <input type="email" name="email" required placeholder="your@email.com"
+             style="flex:1; min-width:200px; padding:13px 16px; font-family:var(--serif); font-size:15px; color:var(--ink); background:var(--paper); border:1.5px solid var(--line); outline:none;">
+      <button type="submit" class="btn btn-clay" style="white-space:nowrap;">Sign up</button>
+      <div class="form-msg" role="status" aria-live="polite" style="width:100%; font-size:13px; text-align:center;"></div>
+    </form>
+  </div>
+</section>
 <footer class="site-footer" style="padding-top:clamp(46px,5.5vw,78px);">
   <div class="footer-grid">
     <div class="footer-brand">
