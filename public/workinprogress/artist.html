@@ -36,7 +36,6 @@
     .ap-work .fr img { transition: none; }
     .ap-work:hover .fr img { transform: none; }
   }
-  body { position: relative; }
 </style>
 </head>
 <body>
@@ -53,8 +52,9 @@
   <button class="nav-toggle" type="button" aria-expanded="false">Menu</button>
 </header>
 
-<!-- Full-page right vine -->
-<div style="position:absolute;right:0;top:0;width:140px;height:100%;background:url('img/vine-hand-right.png') top center/cover no-repeat;pointer-events:none;z-index:0;opacity:0.65;animation:vine-sway 6s ease-in-out infinite;animation-delay:-3s;" aria-hidden="true"></div>
+<div style="position:relative; overflow:hidden;">
+<div class="vine-edge right" aria-hidden="true"></div>
+
 
 <!-- No vine decal here on purpose. Everywhere else the vine frames the
      page; on an artist's own header it crowds their photo and bio, which
@@ -304,5 +304,7 @@
     .catch(function(){});
 })();
 </script>
+
+</div><!-- end vine wrapper -->
 </body>
 </html>
