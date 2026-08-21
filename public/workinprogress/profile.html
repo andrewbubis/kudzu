@@ -33,7 +33,7 @@
       <li id="stripeDash" hidden><a href="#" id="stripeDashLink">payouts</a></li>
       <li><a href="sales.html">sales</a></li>
       <li><a href="inquiries.html">inquiries</a></li>
-      <li><a href="profile.html?tab=grants">grants</a></li>
+      <li><a href="grants.html">grants</a></li>
       <li><a href="documents.html">documents</a></li>
       <li><a href="settings.html">settings</a></li>
       <li class="sep"><a href="#" id="logoutLink">log out</a></li>
@@ -114,7 +114,7 @@
             title="Photos of you in your studio and detail shots of your work — we cycle these through the site">gallery photos</button>
     <button class="acct-tab" role="tab" aria-selected="false" data-tab="bio">bio</button>
     <button class="acct-tab" role="tab" aria-selected="false" data-tab="cv">c.v.</button>
-    <button class="acct-tab" role="tab" aria-selected="false" data-tab="grants">grants</button>
+    <a href="grants.html" class="acct-tab" style="text-decoration:none;">grants ↗</a>
   </div>
 
   <!-- Work ─────────────────────────────────────────────────────── -->
@@ -190,88 +190,40 @@
   </section>
 
     <!-- Grants ───────────────────────────────────────────────────────── -->
-  <section class="acct-panel" id="grantsPanel" role="tabpanel" hidden style="padding:0 0 40px;">
-    <style>
-      /* Scoped grant card styles for profile embed */
-      .g-filter-bar { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:24px; align-items:center; }
-      .g-filter-bar span { font-family:var(--sans); font-size:12px; color:var(--ink-mute); margin-right:4px; }
-      .g-fbtn { background:transparent; border:1px solid var(--line); color:var(--ink-soft);
-        font-family:var(--sans); font-size:12px; padding:5px 14px; cursor:pointer;
-        transition:all .2s; }
-      .g-fbtn:hover, .g-fbtn.active { background:var(--ink); color:var(--paper); border-color:var(--ink); }
-      .g-sep { width:1px; height:22px; background:var(--line); margin:0 4px; }
-      .g-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(380px,1fr)); gap:18px; }
-      .g-grid .grant-card { background:#fff; border:1px solid var(--line);
-        display:flex; flex-direction:column; transition:border-color .2s, transform .2s; }
-      .g-grid .grant-card:hover { border-color:var(--gold); transform:translateY(-2px); }
-      .g-grid .grant-card-top { padding:20px 20px 16px; border-bottom:1px solid var(--line);
-        display:flex; justify-content:space-between; align-items:flex-start; gap:10px; }
-      .g-grid .grant-funder { font-family:var(--sans); font-size:10px; letter-spacing:.2em;
-        text-transform:uppercase; color:var(--ink-mute); margin-bottom:8px; }
-      .g-grid .grant-name { font-family:var(--serif); font-weight:400; font-size:20px;
-        line-height:1.2; color:var(--ink); margin:0; }
-      .g-grid .amount-badge { font-family:var(--sans); font-size:12px; font-weight:600;
-        padding:5px 10px; white-space:nowrap; flex:0 0 auto; align-self:flex-start; }
-      .g-grid .amt-sm { background:rgba(140,100,30,.1); color:var(--gold); border:1px solid rgba(140,100,30,.25); }
-      .g-grid .amt-md { background:rgba(80,100,20,.1); color:#4f6020; border:1px solid rgba(80,100,20,.25); }
-      .g-grid .amt-lg { background:rgba(30,80,140,.1); color:#1a5a8a; border:1px solid rgba(30,80,140,.25); }
-      .g-grid .amt-xl { background:rgba(140,40,80,.1); color:#8a2a50; border:1px solid rgba(140,40,80,.25); }
-      .g-grid .grant-card-body { padding:16px 20px; flex:1; }
-      .g-grid .grant-purpose { font-family:var(--serif); font-size:14px; line-height:1.6;
-        color:var(--ink-soft); margin-bottom:14px; }
-      .g-grid .grant-row { display:flex; justify-content:space-between; gap:12px; margin-bottom:12px; flex-wrap:wrap; }
-      .g-grid .grant-field label { display:block; font-family:var(--sans); font-size:9.5px;
-        letter-spacing:.2em; text-transform:uppercase; color:var(--ink-mute); margin-bottom:4px; }
-      .g-grid .grant-field span { font-family:var(--sans); font-size:13px; color:var(--ink-soft); }
-      .g-grid .deadline-open { color:#2d7a2d !important; font-weight:500; }
-      .g-grid .deadline-soon { color:var(--gold) !important; font-weight:500; }
-      .g-grid .deadline-rolling { color:#4f6020 !important; }
-      .g-grid .deadline-closed { color:var(--ink-mute) !important; }
-      .g-grid .tag-row { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:14px; }
-      .g-grid .tag { font-family:var(--sans); font-size:9px; letter-spacing:.12em;
-        text-transform:uppercase; padding:3px 8px;
-        background:rgba(0,0,0,.04); color:var(--ink-mute);
-        border:1px solid var(--line); }
-      .g-grid .tag.medium { color:#4f6020; border-color:rgba(80,96,32,.3); }
-      .g-grid .tag.location { color:var(--gold); border-color:rgba(140,100,30,.3); }
-      .g-grid .grant-bullets { font-family:var(--sans); font-size:12.5px; line-height:1.7;
-        color:var(--ink-soft); padding-left:18px; margin:0 0 14px; }
-      .g-grid .grant-meta-line { font-family:var(--sans); font-size:11.5px; color:var(--ink-mute);
-        display:flex; flex-direction:column; gap:3px; margin-bottom:14px; }
-      .g-grid .btn-ghost { display:inline-block; border:1px solid var(--line); color:var(--ink-soft);
-        font-family:var(--sans); font-size:11px; padding:7px 14px; text-decoration:none;
-        margin-right:8px; transition:all .2s; }
-      .g-grid .btn-ghost:hover { border-color:var(--ink); color:var(--ink); }
-      .g-grid .btn-primary { display:inline-block; background:var(--olive); color:var(--paper);
-        font-family:var(--sans); font-size:11px; padding:7px 14px; text-decoration:none;
-        transition:opacity .2s; }
-      .g-grid .btn-primary:hover { opacity:.85; }
-      .g-grid .grant-card-footer { padding:14px 20px 18px; background:var(--paper-2);
-        border-top:1px solid var(--line); }
-      .g-grid .match-label { font-family:var(--sans); font-size:9.5px; letter-spacing:.18em;
-        text-transform:uppercase; color:var(--gold); margin-bottom:8px; }
-      .g-grid .artist-chip { display:inline-block; font-family:var(--sans); font-size:11.5px;
-        color:var(--ink-soft); border:1px solid var(--line); padding:4px 10px;
-        text-decoration:none; transition:border-color .2s; }
-      .g-grid .artist-chip:hover { border-color:var(--gold); color:var(--ink); }
-      .g-grid .grant-card.g-hidden { display:none; }
-      @media(max-width:600px){ .g-grid { grid-template-columns:1fr; } }
-    </style>
-
-    <div class="g-filter-bar" id="grantFilters">
-      <span>State</span>
-      <button class="g-fbtn active" data-gf-state="all">All</button>
-      <button class="g-fbtn" data-gf-state="tn">Tennessee</button>
-      <button class="g-fbtn" data-gf-state="ca">California</button>
-      <button class="g-fbtn" data-gf-state="national">National</button>
-      <div class="g-sep"></div>
-      <span>Status</span>
-      <button class="g-fbtn active" data-gf-status="all">All</button>
-      <button class="g-fbtn" data-gf-status="open">Open now</button>
-      <button class="g-fbtn" data-gf-status="annual">Annual</button>
-      <button class="g-fbtn" data-gf-status="rolling">Rolling</button>
+  <section class="acct-panel" id="grantsPanel" role="tabpanel" hidden style="padding:40px 0;">
+    <div style="max-width:520px;">
+      <p style="font-family:var(--sans); font-size:11px; font-weight:600; letter-spacing:0.16em; text-transform:uppercase; color:var(--gold); margin-bottom:14px;">Grant Tracker</p>
+      <h2 style="font-family:var(--serif); font-weight:300; font-size:clamp(28px,3vw,38px); line-height:1.1; margin:0 0 16px;">34 opportunities, <em>matched to your work.</em></h2>
+      <p style="font-family:var(--serif); font-size:15px; color:var(--ink-soft); line-height:1.65; margin:0 0 28px;">Kudzu maintains a live tracker of grants, residencies, open calls, and public art commissions relevant to our roster — filtered by medium, region, and deadline. Updated monthly.</p>
+      <a href="grants.html" class="btn btn-clay" style="display:inline-block; text-decoration:none; font-size:14px; padding:13px 28px;">Open grant tracker →</a>
     </div>
-    <div class="g-grid" id="grantGrid"><p class="acct-empty" id="grantLoading">Loading grants…</p></div>
+  </section>
+
+  <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp" hidden>
+  <input type="file" id="bookInput" accept="image/jpeg,image/png,image/webp" hidden>
+  <input type="file" id="photoInput" accept="image/jpeg,image/png,image/webp" hidden>
+</main>
+
+<script>
+(function () {
+  var tab = new URLSearchParams(location.search).get('tab');
+  if (!tab) return;
+  window.addEventListener('DOMContentLoaded', function () {
+    var btn = document.querySelector('.acct-tab[data-tab="' + tab + '"]');
+    if (btn) btn.click();
+  });
+})();
+</script>
+<script src="js/account.js" defer></script>
+</body>
+</html>    <!-- Grants ───────────────────────────────────────────────────── -->
+  <section class="acct-panel" id="grantsPanel" role="tabpanel" hidden style="padding:40px 0;">
+    <div style="max-width:520px;">
+      <p style="font-family:var(--sans); font-size:11px; font-weight:600; letter-spacing:0.16em; text-transform:uppercase; color:var(--gold); margin-bottom:14px;">Grant Tracker</p>
+      <h2 style="font-family:var(--serif); font-weight:300; font-size:clamp(28px,3vw,38px); line-height:1.1; margin:0 0 16px;">34 opportunities, <em>matched to your work.</em></h2>
+      <p style="font-family:var(--serif); font-size:15px; color:var(--ink-soft); line-height:1.65; margin:0 0 28px;">Kudzu maintains a live tracker of grants, residencies, open calls, and public art commissions relevant to our roster — filtered by medium, region, and deadline. Updated monthly.</p>
+      <a href="grants.html" class="btn btn-clay" style="display:inline-block; text-decoration:none; font-size:14px; padding:13px 28px;">Open grant tracker →</a>
+    </div>
   </section>
 
   <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp" hidden>
