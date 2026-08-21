@@ -700,12 +700,14 @@
       var text = await resp.text();
       var parser = new DOMParser();
       var doc = parser.parseFromString(text, 'text/html');
-      var cards = Array.from(doc.querySelectorAll('.grant-card')).filter(function(c) {
-        if (!slug) return true;
+      var allCards = Array.from(doc.querySelectorAll('.grant-card'));
+      var matched = slug ? allCards.filter(function(c) {
         return (c.getAttribute('data-artists') || '').split(',').some(function(a) {
           return a.trim() === slug;
         });
-      });
+      }) : allCards;
+      // Admin fallback: if no slug, or isAdmin, or nothing matched → show all
+      var cards = (!slug || (state.me && state.me.isAdmin) || matched.length === 0) ? allCards : matched;
       grid.innerHTML = '';
       if (cards.length === 0) {
         grid.innerHTML = '<p class="acct-empty">No matched grants found for your profile yet.</p>';
