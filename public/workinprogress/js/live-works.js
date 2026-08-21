@@ -63,35 +63,37 @@
     if (!wall && !grid) return;
 
     if (wall) {
-      // Only work we can size belongs on the wall — anything without
-      // usable dimensions would be a guess, and guesses look wrong.
+      // Size each wframe proportional to its real-world width.
+      // The widest piece gets 14% of the room width; others scale down.
       var hangable = works.map(function (w) {
         return { w: w, size: parseDimensions(w.dimensions) };
       }).filter(function (x) { return x.size; });
 
       if (hangable.length) {
+        var maxW = Math.max.apply(null, hangable.map(function (x) { return x.size.w; }));
         wall.innerHTML = '';
-        wall.classList.add('photo-wall');
+        wall.classList.remove('photo-wall');
 
         hangable.slice(0, 8).forEach(function (x) {
           var a = document.createElement('a');
           a.href = 'piece.html?a=' + encodeURIComponent(x.w.artistSlug) + '&w=' + encodeURIComponent(x.w.id);
-          a.className = 'hung';
-
-          // Height as a share of the wall; centre pinned to eye level.
-          var hPct = (x.size.h / WALL_HEIGHT_IN) * 100;
-          var centreFromTop = ((WALL_HEIGHT_IN - EYE_LEVEL_IN) / WALL_HEIGHT_IN) * 100;
-
-          a.style.height = hPct.toFixed(2) + '%';
-          a.style.top = (centreFromTop - hPct / 2).toFixed(2) + '%';
-          a.style.aspectRatio = (x.size.w / x.size.h).toFixed(4);
+          a.className = 'wframe frame-black';
+          a.style.width = ((x.size.w / maxW) * 14).toFixed(1) + '%';
 
           a.innerHTML =
             '<img src="' + esc(x.w.image) + '" alt="' +
-            esc(x.w.title + ' by ' + x.w.artist) + '" loading="lazy">' +
-            '<span class="plaque">' + esc(x.w.title) + '<br>' + esc(x.w.artist) + '</span>';
+            esc(x.w.title + ' by ' + x.w.artist) + '" loading="lazy">';
           wall.appendChild(a);
         });
+
+        // Fill remaining spaces with ghost frames so the wall looks intentional
+        var ghosts = Math.max(0, 4 - hangable.length);
+        for (var g = 0; g < ghosts; g++) {
+          var sp = document.createElement('span');
+          sp.className = 'wframe wframe-ghost';
+          sp.setAttribute('aria-hidden', 'true');
+          wall.appendChild(sp);
+        }
       }
     }
 
