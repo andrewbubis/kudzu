@@ -764,7 +764,8 @@
       if (tab.dataset.tab === 'books') renderBooks();
       if (tab.dataset.tab === 'photos') renderPhotos();
       if (tab.dataset.tab === 'grants') {
-        loadGrantsPanel((state.me && state.me.slug) || '');
+        var gSlug = (state.me && state.me.isAdmin) ? '' : ((state.me && state.me.slug) || '');
+        loadGrantsPanel(gSlug);
       }
       if (tab.dataset.tab === 'sold') $('soldEmpty').hidden = state.works.some(function (w) { return w.status === 'sold'; });
     });

@@ -33,6 +33,7 @@
       <li id="stripeDash" hidden><a href="#" id="stripeDashLink">payouts</a></li>
       <li><a href="sales.html">sales</a></li>
       <li><a href="inquiries.html">inquiries</a></li>
+      <li><a href="profile.html?tab=grants">grants</a></li>
       <li><a href="documents.html">documents</a></li>
       <li><a href="settings.html">settings</a></li>
       <li class="sep"><a href="#" id="logoutLink">log out</a></li>
@@ -278,6 +279,16 @@
   <input type="file" id="photoInput" accept="image/jpeg,image/png,image/webp" hidden>
 </main>
 
+<script>
+(function () {
+  var tab = new URLSearchParams(location.search).get('tab');
+  if (!tab) return;
+  window.addEventListener('DOMContentLoaded', function () {
+    var btn = document.querySelector('.acct-tab[data-tab="' + tab + '"]');
+    if (btn) btn.click();
+  });
+})();
+</script>
 <script src="js/account.js" defer></script>
 </body>
 </html>
