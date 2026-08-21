@@ -33,6 +33,9 @@
      them to the top of the row so the frames line up along their tops
      instead of floating to different baselines. */
   .prints-grid { align-items: start; }
+  .print { display: block; text-decoration: none; }
+  .pprice { font-family: var(--serif); font-size: 15px; color: var(--ink); margin: 10px 0 8px; opacity: 0.7; }
+  .print .btn-olive { display: block; width: 100%; text-align: center; box-sizing: border-box; margin-top: 4px; }
 </style>
 </head>
 <body style="position:relative;">
@@ -67,11 +70,15 @@
 <section id="prints" style="padding-top: clamp(28px,3.5vw,48px);">
   <div class="wrap">
     <div class="prints-grid">
-      <a href="print-ian-patrick-cato.html" class="print reveal">
-        <div class="pframe"><img src="img/ian-patrick-cato-pinned.jpg" alt="Current Simulation print — Ian Patrick Cato"></div>
-        <h3 class="ptitle">Current Simulation</h3>
-        <p class="pby">Ian Patrick Cato</p>
-      </a>
+      <div class="print reveal">
+        <a href="print-ian-patrick-cato.html" style="text-decoration:none;color:inherit;">
+          <div class="pframe"><img src="img/ian-patrick-cato-pinned.jpg" alt="Current Simulation print — Ian Patrick Cato"></div>
+          <h3 class="ptitle">Current Simulation</h3>
+          <p class="pby">Ian Patrick Cato</p>
+        </a>
+        <p class="pprice">From $40</p>
+        <a href="mailto:info@kudzuarts.com?subject=Print%20order%3A%20Current%20Simulation%20%E2%80%94%20Ian%20Patrick%20Cato" class="btn btn-olive">Buy Now</a>
+      </div>
     </div>
   </div>
 </section>
