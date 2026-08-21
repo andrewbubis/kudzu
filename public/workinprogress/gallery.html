@@ -151,7 +151,7 @@
   v.addEventListener('touchmove',function(e){if(sx===null)return;var dx=(sx-e.touches[0].clientX)/v.offsetWidth;go(st+dx*1.4);},{passive:true});
   v.addEventListener('touchend',function(){sx=null;});
   window.addEventListener('resize',function(){if(!raf)raf=requestAnimationFrame(frame);});
-  go(0.5);
+  go(0.08);
 })();
 </script>
 <script src="js/buy.js" defer></script>
