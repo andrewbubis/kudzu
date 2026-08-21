@@ -216,24 +216,4 @@
 </script>
 <script src="js/account.js" defer></script>
 </body>
-</html>    <!-- Grants ───────────────────────────────────────────────────── -->
-  
-
-  <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp" hidden>
-  <input type="file" id="bookInput" accept="image/jpeg,image/png,image/webp" hidden>
-  <input type="file" id="photoInput" accept="image/jpeg,image/png,image/webp" hidden>
-</main>
-
-<script>
-(function () {
-  var tab = new URLSearchParams(location.search).get('tab');
-  if (!tab) return;
-  window.addEventListener('DOMContentLoaded', function () {
-    var btn = document.querySelector('.acct-tab[data-tab="' + tab + '"]');
-    if (btn) btn.click();
-  });
-})();
-</script>
-<script src="js/account.js" defer></script>
-</body>
 </html>
