@@ -162,8 +162,11 @@
         });
       }
     }
+    var _pieceLink = (_slug && w.id) ? ('piece.html?a=' + encodeURIComponent(_slug) + '&w=' + encodeURIComponent(w.id)) : '';
     el.innerHTML =
-      '<div class="fr"><img src="' + esc(w.image) + '" alt="' + esc(w.title) + '" loading="lazy"></div>' +
+      '<div class="fr">' + (_pieceLink ? '<a href="' + _pieceLink + '" tabindex="-1" aria-hidden="true">' : '') +
+      '<img src="' + esc(w.image) + '" alt="' + esc(w.title) + '" loading="lazy" style="display:block;">' +
+      (_pieceLink ? '</a>' : '') + '</div>' +
       '<div class="t">' + esc(w.title) + '</div>' +
       '<div class="r"><span>' + esc([w.year, w.medium].filter(Boolean).join(' · ')) + '</span>' +
       '<span class="' + (w.status === 'sold' ? 'sold' : '') + '">' +
