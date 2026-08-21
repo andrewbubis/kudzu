@@ -688,6 +688,60 @@
     });
   }
 
+
+  // ── Grant tracker panel ───────────────────────────────────────────
+  var grantsLoaded = false;
+  async function loadGrantsPanel(slug) {
+    if (grantsLoaded) return;
+    grantsLoaded = true;
+    var grid = $('grantGrid');
+    try {
+      var resp = await fetch('grants.html');
+      var text = await resp.text();
+      var parser = new DOMParser();
+      var doc = parser.parseFromString(text, 'text/html');
+      var cards = Array.from(doc.querySelectorAll('.grant-card')).filter(function(c) {
+        if (!slug) return true;
+        return (c.getAttribute('data-artists') || '').split(',').some(function(a) {
+          return a.trim() === slug;
+        });
+      });
+      grid.innerHTML = '';
+      if (cards.length === 0) {
+        grid.innerHTML = '<p class="acct-empty">No matched grants found for your profile yet.</p>';
+        return;
+      }
+      cards.forEach(function(card) { grid.appendChild(document.adoptNode(card)); });
+      // Filters
+      var activeState = 'all', activeStatus = 'all';
+      function applyFilters() {
+        cards.forEach(function(card) {
+          var stateMatch = activeState === 'all' || card.getAttribute('data-state') === activeState;
+          var statusMatch = activeStatus === 'all' || card.getAttribute('data-status') === activeStatus;
+          card.classList.toggle('g-hidden', !(stateMatch && statusMatch));
+        });
+      }
+      document.querySelectorAll('[data-gf-state]').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          document.querySelectorAll('[data-gf-state]').forEach(function(b) { b.classList.remove('active'); });
+          btn.classList.add('active');
+          activeState = btn.getAttribute('data-gf-state');
+          applyFilters();
+        });
+      });
+      document.querySelectorAll('[data-gf-status]').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          document.querySelectorAll('[data-gf-status]').forEach(function(b) { b.classList.remove('active'); });
+          btn.classList.add('active');
+          activeStatus = btn.getAttribute('data-gf-status');
+          applyFilters();
+        });
+      });
+    } catch(e) {
+      grid.innerHTML = '<p class="acct-empty">Could not load grants.</p>';
+    }
+  }
+
   // ── Tabs ──────────────────────────────────────────────────────────
   var panels = {
     work: ['workGrid', 'workEmpty', 'workBar'],
@@ -710,11 +764,7 @@
       if (tab.dataset.tab === 'books') renderBooks();
       if (tab.dataset.tab === 'photos') renderPhotos();
       if (tab.dataset.tab === 'grants') {
-        var fr = $('grantsFrame');
-        if (!fr.src || fr.src === window.location.href) {
-          var slug = (state.me && state.me.slug) || '';
-          fr.src = 'grants.html' + (slug ? '?artist=' + encodeURIComponent(slug) : '');
-        }
+        loadGrantsPanel((state.me && state.me.slug) || '');
       }
       if (tab.dataset.tab === 'sold') $('soldEmpty').hidden = state.works.some(function (w) { return w.status === 'sold'; });
     });
