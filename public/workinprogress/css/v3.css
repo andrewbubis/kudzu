@@ -121,6 +121,8 @@ section { position: relative; padding-block: clamp(72px, 9vw, 128px); }
 .btn-line:hover { background: var(--ink); color: var(--paper); }
 .btn-clay { background: var(--clay); color: var(--paper); }
 .btn-clay:hover { background: var(--olive); }
+.btn-olive { background: var(--olive); color: var(--paper); }
+.btn-olive:hover { opacity: 0.88; }
 .btn-lg { padding: 17px 34px; font-size: 15px; }
 
 /* ── Header ───────────────────────────────────────────────────── */
