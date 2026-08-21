@@ -113,6 +113,7 @@
             title="Photos of you in your studio and detail shots of your work — we cycle these through the site">gallery photos</button>
     <button class="acct-tab" role="tab" aria-selected="false" data-tab="bio">bio</button>
     <button class="acct-tab" role="tab" aria-selected="false" data-tab="cv">c.v.</button>
+    <button class="acct-tab" role="tab" aria-selected="false" data-tab="grants">grants</button>
   </div>
 
   <!-- Work ─────────────────────────────────────────────────────── -->
@@ -185,6 +186,11 @@
     <textarea id="cvText" placeholder="Education, exhibitions, residencies, collections, press — one per line."></textarea>
     <p class="hint">One entry per line. Shown on your public artist page.</p>
     <button class="acct-btn" type="button" data-save="cv">Save c.v.</button>
+  </section>
+
+    <!-- Grants ───────────────────────────────────────────────────────── -->
+  <section class="acct-panel" id="grantsPanel" role="tabpanel" hidden style="padding:0;">
+    <iframe id="grantsFrame" src="" style="width:100%;height:80vh;border:none;border-radius:8px;display:block;" loading="lazy" title="Grant Tracker"></iframe>
   </section>
 
   <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp" hidden>

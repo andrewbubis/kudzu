@@ -1606,6 +1606,16 @@ if ('IntersectionObserver' in window) {
   reveals.forEach(el => el.classList.add('in'));
 }
 
+// ── Auto-filter by ?artist= param ────────────────────────────────────
+(function () {
+  var a = new URLSearchParams(location.search).get('artist');
+  if (!a) return;
+  window.addEventListener('DOMContentLoaded', function () {
+    var pill = document.querySelector('.artist-pill[data-artist="' + a + '"');
+    if (pill) pill.click();
+  });
+})();
+
 // ── Mobile nav toggle ───────────────────────────────────────────────
 const navToggle = document.querySelector('.nav-toggle');
 const nav = document.querySelector('.nav');

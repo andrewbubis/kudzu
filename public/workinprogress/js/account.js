@@ -695,7 +695,8 @@
     books: ['booksGrid', 'booksEmpty', 'booksBar'],
     photos: ['photosPanel'],
     bio:  ['bioPanel'],
-    cv:   ['cvPanel']
+    cv:   ['cvPanel'],
+    grants: ['grantsPanel']
   };
   document.querySelectorAll('.acct-tab').forEach(function (tab) {
     tab.addEventListener('click', function () {
@@ -708,6 +709,13 @@
       if (tab.dataset.tab === 'work') renderWorks();
       if (tab.dataset.tab === 'books') renderBooks();
       if (tab.dataset.tab === 'photos') renderPhotos();
+      if (tab.dataset.tab === 'grants') {
+        var fr = $('grantsFrame');
+        if (!fr.src || fr.src === window.location.href) {
+          var slug = (state.me && state.me.slug) || '';
+          fr.src = 'grants.html' + (slug ? '?artist=' + encodeURIComponent(slug) : '');
+        }
+      }
       if (tab.dataset.tab === 'sold') $('soldEmpty').hidden = state.works.some(function (w) { return w.status === 'sold'; });
     });
   });
