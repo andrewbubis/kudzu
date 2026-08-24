@@ -16,6 +16,14 @@ const db = require('./db');
 
 const SESSION_COOKIE = 'kudzu_sid';
 const SESSION_DAYS = 30;
+
+// Emails that are always admin. Set ADMIN_EMAILS in Railway as a
+// comma-separated list. On first login after setting this, the account
+// is promoted in the database so subsequent requests need no env check.
+const ADMIN_EMAILS = new Set(
+  (process.env.ADMIN_EMAILS || 'andrewbubis@gmail.com,iancatoes@gmail.com')
+    .split(',').map(s => s.trim().toLowerCase()).filter(Boolean)
+);
 const INVITE_DAYS = 14;
 
 // ── Passwords ────────────────────────────────────────────────────────
@@ -77,7 +85,17 @@ async function attachArtist(req, _res, next) {
         WHERE s.id = $1 AND s.expires_at > now()`,
       [sid]
     );
-    if (rows[0]) req.artist = rows[0];
+    if (rows[0]) {
+      req.artist = rows[0];
+      // Auto-promote if email is in the ADMIN_EMAILS list and not yet admin in DB.
+      if (!req.artist.is_admin && ADMIN_EMAILS.has((req.artist.email || '').toLowerCase())) {
+        try {
+          await db.query('UPDATE artists SET is_admin = true WHERE id = $1', [req.artist.id]);
+          req.artist.is_admin = true;
+          console.log('[kudzu] auto-promoted', req.artist.email, 'to admin');
+        } catch (e) { /* non-fatal */ }
+      }
+    }
   } catch (err) {
     console.error('session lookup failed:', err.message);
   }
