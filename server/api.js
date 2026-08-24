@@ -1255,6 +1255,28 @@ router.get('/admin/roster', auth.requireArtist, auth.requireAdmin, async (_req, 
   }
 });
 
+router.get('/admin/artists/:id/works', auth.requireArtist, auth.requireAdmin, async (req, res) => {
+  try {
+    const id = req.params.id;
+    const [artist, works, photos, books] = await Promise.all([
+      db.query('SELECT * FROM artists WHERE id = $1', [id]),
+      db.query('SELECT * FROM artworks WHERE artist_id = $1 ORDER BY position, created_at', [id]),
+      db.query('SELECT * FROM artist_photos WHERE artist_id = $1 ORDER BY position, created_at', [id]),
+      db.query('SELECT * FROM books WHERE artist_id = $1 ORDER BY position, created_at', [id])
+    ]);
+    if (!artist.rows[0]) return res.status(404).json({ error: 'not_found' });
+    res.json({
+      artist: publicArtist(artist.rows[0]),
+      works: works.rows.map(publicWork),
+      photos: photos.rows.map(publicPhoto),
+      books: books.rows.map(publicBook)
+    });
+  } catch (err) {
+    console.error('admin artist works failed:', err.message);
+    res.status(500).json({ error: 'server_error' });
+  }
+});
+
 router.patch('/admin/artists/:id', auth.requireArtist, auth.requireAdmin, async (req, res) => {
   let sets, vals;
   try {

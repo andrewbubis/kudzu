@@ -71,6 +71,8 @@
     // enforces this too — the menu item is just the convenience.
     var adminItem = $('adminInvite');
     if (adminItem) adminItem.hidden = !me.isAdmin;
+    var adminDash = $('adminDash');
+    if (adminDash) adminDash.hidden = !me.isAdmin;
 
     var photo = $('photo');
     if (me.photo) {

@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin · Kudzu Arts</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#fbfaf7">
+<link rel="icon" href="img/logo-k.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/v3.css">
+<link rel="stylesheet" href="css/account.css">
+<style>
+.adm { max-width: 940px; margin: 0 auto; padding: 32px 20px 80px; }
+.adm-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 32px; gap: 16px; flex-wrap: wrap; }
+.adm-head h1 { margin: 0; font-size: 22px; }
+.adm-stats { display: flex; gap: 24px; flex-wrap: wrap; }
+.adm-stat { text-align: center; }
+.adm-stat .n { display: block; font-size: 28px; font-weight: 600; line-height: 1; }
+.adm-stat .l { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--a-soft); margin-top: 3px; }
+.adm-artist { border: 1px solid var(--a-line); border-radius: 6px; margin-bottom: 12px; overflow: hidden; }
+.adm-artist-row { display: grid; grid-template-columns: 1fr auto auto auto; gap: 16px; align-items: center; padding: 16px 20px; cursor: pointer; user-select: none; }
+.adm-artist-row:hover { background: var(--a-bg); }
+.adm-artist-name { font-weight: 600; font-size: 15px; }
+.adm-artist-email { font-size: 12px; color: var(--a-soft); margin-top: 2px; }
+.adm-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.chip { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; padding: 2px 8px; border-radius: 20px; border: 1px solid; white-space: nowrap; }
+.chip.ok  { color: #2e7d32; border-color: #a5d6a7; background: #f1f8f1; }
+.chip.no  { color: #b71c1c; border-color: #ef9a9a; background: #fdf1f1; }
+.chip.dim { color: var(--a-soft); border-color: var(--a-line); background: transparent; }
+.adm-counts { display: flex; gap: 12px; font-size: 13px; white-space: nowrap; }
+.adm-counts span { color: var(--a-soft); }
+.adm-counts strong { color: var(--a-ink); }
+.adm-toggle { font-size: 18px; color: var(--a-soft); transition: transform .15s; }
+.adm-artist.open .adm-toggle { transform: rotate(180deg); }
+.adm-detail { display: none; border-top: 1px solid var(--a-line); padding: 20px; }
+.adm-artist.open .adm-detail { display: block; }
+.adm-detail-meta { display: flex; gap: 32px; flex-wrap: wrap; margin-bottom: 20px; font-size: 13px; }
+.adm-detail-meta dt { color: var(--a-soft); font-size: 11px; text-transform: uppercase; letter-spacing:.06em; }
+.adm-detail-meta dd { margin: 0; }
+.adm-works-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px,1fr)); gap: 12px; }
+.adm-work { border: 1px solid var(--a-line); border-radius: 4px; overflow: hidden; font-size: 12px; }
+.adm-work img { width: 100%; aspect-ratio: 1; object-fit: cover; display: block; background: var(--a-bg); }
+.adm-work .adm-work-info { padding: 8px; }
+.adm-work .adm-work-title { font-weight: 600; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.adm-work .adm-work-meta { color: var(--a-soft); margin-top: 2px; }
+.adm-work .adm-work-status { display: inline-block; font-size: 10px; text-transform: uppercase; letter-spacing:.06em; padding: 1px 6px; border-radius: 3px; margin-top: 4px; }
+.status-published { background: #e8f5e9; color: #2e7d32; }
+.status-draft     { background: #fff3e0; color: #e65100; }
+.status-sold      { background: #ede7f6; color: #4527a0; }
+.adm-section-label { font-size: 12px; text-transform: uppercase; letter-spacing:.08em; color: var(--a-soft); margin: 0 0 10px; }
+.adm-empty { color: var(--a-soft); font-size: 13px; font-style: italic; }
+.adm-photos-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px; }
+.adm-photos-row img { width: 80px; height: 80px; object-fit: cover; border-radius: 4px; border: 1px solid var(--a-line); }
+.adm-link { font-size: 12px; color: var(--a-link); text-decoration: underline; }
+.adm-loading { color: var(--a-soft); font-size: 13px; font-style: italic; }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <a href="index.html" class="brand"><img class="mark" src="img/logo-k.png" alt="" aria-hidden="true"><span class="word"><b>KUDZU</b><span class="arts">arts</span></span></a>
+  <nav class="nav" aria-label="Primary">
+    <a href="artists.html">Artists</a>
+    <a href="gallery.html">Virtual Gallery</a>
+    <a href="printshop.html">Print Shop</a>
+    <a href="contact.html">Contact</a>
+  </nav>
+  <div class="acct-menu" data-open="false" id="acctMenu">
+    <button type="button" aria-haspopup="true" aria-expanded="false" id="acctMenuBtn">
+      <span id="acctMenuName">account</span>
+    </button>
+    <ul>
+      <li><a href="profile.html">me</a></li>
+      <li id="adminInvite" hidden><a href="invites.html">send link</a></li>
+      <li id="adminDash" hidden><a href="admin.html">admin</a></li>
+      <li><a href="sales.html">sales</a></li>
+      <li><a href="inquiries.html">inquiries</a></li>
+      <li><a href="grants.html">grants</a></li>
+      <li><a href="documents.html">documents</a></li>
+      <li><a href="settings.html">settings</a></li>
+      <li class="sep"><a href="#" id="logoutLink">log out</a></li>
+    </ul>
+  </div>
+  <button class="nav-toggle" type="button" aria-expanded="false">Menu</button>
+</header>
+
+<main class="adm" id="main">
+  <p style="color:var(--a-soft);font-style:italic;">Loading…</p>
+</main>
+
+<script src="js/account.js" defer></script>
+<script>
+(function () {
+  var IMAGE_BASE = '/uploads/';
+
+  function img(path, alt) {
+    if (!path) return '<div style="width:100%;aspect-ratio:1;background:var(--a-bg);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--a-soft);">no image</div>';
+    return '<img src="' + IMAGE_BASE + path + '" alt="' + esc(alt || '') + '" loading="lazy">';
+  }
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+
+  function chip(label, ok) {
+    return '<span class="chip ' + (ok ? 'ok' : 'no') + '">' + (ok ? '✓' : '✗') + ' ' + esc(label) + '</span>';
+  }
+
+  function fmt(dateStr) {
+    if (!dateStr) return '—';
+    return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+
+  function price(cents) {
+    if (!cents) return '—';
+    return '$' + (cents / 100).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  }
+
+  async function loadDetail(artistId, container) {
+    container.innerHTML = '<p class="adm-loading">Loading…</p>';
+    try {
+      var r = await fetch('/api/admin/artists/' + artistId + '/works', { credentials: 'same-origin' });
+      if (!r.ok) throw new Error('failed');
+      var data = await r.json();
+      var a = data.artist;
+      var works = data.works || [];
+      var photos = data.photos || [];
+      var books = data.books || [];
+
+      var html = '<div class="adm-detail-meta">';
+      html += '<div><dt>Joined</dt><dd>' + esc(fmt(a.joinedAt || a.createdAt)) + '</dd></div>';
+      html += '<div><dt>Email</dt><dd>' + esc(a.email || '—') + '</dd></div>';
+      html += '<div><dt>Location</dt><dd>' + esc([a.worksCity, a.worksCountry].filter(Boolean).join(', ') || '—') + '</dd></div>';
+      html += '<div><dt>Link</dt><dd>' + (a.link ? '<a class="adm-link" href="' + esc(a.link) + '" target="_blank" rel="noopener">' + esc(a.link) + '</a>' : '—') + '</dd></div>';
+      html += '<div><dt>Public page</dt><dd><a class="adm-link" href="/workinprogress/' + esc(a.slug) + '.html" target="_blank">' + esc(a.slug) + '</a></dd></div>';
+      html += '</div>';
+
+      // Bio
+      if (a.bio && a.bio.trim()) {
+        html += '<p class="adm-section-label">Bio</p>';
+        html += '<p style="font-size:13px;line-height:1.6;margin:0 0 20px;max-width:600px;">' + esc(a.bio).replace(/\n/g,'<br>') + '</p>';
+      } else {
+        html += '<p class="adm-empty" style="margin-bottom:20px;">No bio entered.</p>';
+      }
+
+      // Works
+      html += '<p class="adm-section-label">Artworks (' + works.length + ')</p>';
+      if (works.length) {
+        html += '<div class="adm-works-grid">';
+        works.forEach(function (w) {
+          html += '<div class="adm-work">' + img(w.imagePath, w.title) +
+            '<div class="adm-work-info">' +
+              '<div class="adm-work-title">' + esc(w.title || 'Untitled') + '</div>' +
+              '<div class="adm-work-meta">' + esc([w.year, w.medium].filter(Boolean).join(' · ')) + '</div>' +
+              '<div class="adm-work-meta">' + price(w.priceCents) + '</div>' +
+              '<span class="adm-work-status status-' + esc(w.status) + '">' + esc(w.status) + '</span>' +
+            '</div></div>';
+        });
+        html += '</div>';
+      } else {
+        html += '<p class="adm-empty">No artworks uploaded yet.</p>';
+      }
+
+      // Gallery photos
+      if (photos.length) {
+        html += '<p class="adm-section-label" style="margin-top:20px;">Gallery photos (' + photos.length + ')</p>';
+        html += '<div class="adm-photos-row">';
+        photos.forEach(function (p) {
+          html += '<img src="' + IMAGE_BASE + esc(p.imagePath) + '" alt="' + esc(p.caption || '') + '" loading="lazy">';
+        });
+        html += '</div>';
+      }
+
+      // Books
+      if (books.length) {
+        html += '<p class="adm-section-label" style="margin-top:20px;">Books (' + books.length + ')</p>';
+        html += '<div class="adm-works-grid">';
+        books.forEach(function (b) {
+          html += '<div class="adm-work">' + img(b.imagePath, b.title) +
+            '<div class="adm-work-info">' +
+              '<div class="adm-work-title">' + esc(b.title || 'Untitled') + '</div>' +
+              '<div class="adm-work-meta">' + esc([b.year, b.publisher].filter(Boolean).join(' · ')) + '</div>' +
+            '</div></div>';
+        });
+        html += '</div>';
+      }
+
+      container.innerHTML = html;
+    } catch (e) {
+      container.innerHTML = '<p class="adm-empty">Could not load details.</p>';
+    }
+  }
+
+  window.addEventListener('DOMContentLoaded', async function () {
+    try {
+      var [meRes, rosterRes] = await Promise.all([
+        fetch('/api/me', { credentials: 'same-origin' }),
+        fetch('/api/admin/roster', { credentials: 'same-origin' })
+      ]);
+      if (!meRes.ok) { location.href = 'login.html'; return; }
+      var meData = await meRes.json();
+      if (!meData.artist || !meData.artist.isAdmin) { location.href = 'profile.html'; return; }
+      if (!rosterRes.ok) throw new Error('roster failed');
+      var roster = await rosterRes.json();
+
+      var artists = roster.artists || [];
+      var totalWorks = artists.reduce(function (s, a) { return s + a.published + a.drafts; }, 0);
+      var totalPublished = artists.reduce(function (s, a) { return s + a.published; }, 0);
+      var totalSold = artists.reduce(function (s, a) { return s + a.sold; }, 0);
+
+      var html = '<div class="adm-head">' +
+        '<h1>Artist Roster</h1>' +
+        '<div class="adm-stats">' +
+          '<div class="adm-stat"><span class="n">' + artists.length + '</span><span class="l">Artists</span></div>' +
+          '<div class="adm-stat"><span class="n">' + totalWorks + '</span><span class="l">Works</span></div>' +
+          '<div class="adm-stat"><span class="n">' + totalPublished + '</span><span class="l">Published</span></div>' +
+          '<div class="adm-stat"><span class="n">' + totalSold + '</span><span class="l">Sold</span></div>' +
+        '</div>' +
+      '</div>';
+
+      artists.forEach(function (a, i) {
+        html += '<div class="adm-artist" id="artist-' + esc(a.id) + '">' +
+          '<div class="adm-artist-row" data-id="' + esc(a.id) + '">' +
+            '<div>' +
+              '<div class="adm-artist-name">' + esc(a.name) + (a.isAdmin ? ' <span class="chip dim" style="font-size:10px;">admin</span>' : '') + '</div>' +
+              '<div class="adm-artist-email">' + esc(a.email) + '</div>' +
+            '</div>' +
+            '<div class="adm-chips">' +
+              chip('photo', a.has.photo) +
+              chip('bio', a.has.bio) +
+              chip('cv', a.has.cv) +
+              chip('stripe', a.has.stripe) +
+            '</div>' +
+            '<div class="adm-counts">' +
+              '<div><strong>' + a.published + '</strong> <span>pub</span></div>' +
+              '<div><strong>' + a.drafts + '</strong> <span>draft</span></div>' +
+              '<div><strong>' + a.sold + '</strong> <span>sold</span></div>' +
+            '</div>' +
+            '<span class="adm-toggle">▾</span>' +
+          '</div>' +
+          '<div class="adm-detail" id="detail-' + esc(a.id) + '"></div>' +
+        '</div>';
+      });
+
+      document.getElementById('main').innerHTML = html;
+
+      document.getElementById('main').addEventListener('click', function (e) {
+        var row = e.target.closest('.adm-artist-row');
+        if (!row) return;
+        var id = row.dataset.id;
+        var card = document.getElementById('artist-' + id);
+        var detail = document.getElementById('detail-' + id);
+        var isOpen = card.classList.toggle('open');
+        if (isOpen && !detail.dataset.loaded) {
+          detail.dataset.loaded = '1';
+          loadDetail(id, detail);
+        }
+      });
+    } catch (err) {
+      document.getElementById('main').innerHTML = '<p style="color:var(--a-soft)">Could not load admin data.</p>';
+    }
+  });
+})();
+</script>
+</body>
+</html>

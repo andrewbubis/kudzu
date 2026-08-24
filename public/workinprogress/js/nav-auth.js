@@ -57,7 +57,7 @@
         '</button>' +
         '<ul>' +
           '<li><a href="profile.html">me</a></li>' +
-          (me.isAdmin ? '<li><a href="invites.html">send link</a></li>' : '') +
+          (me.isAdmin ? '<li><a href="invites.html">send link</a></li><li><a href="admin.html">admin</a></li>' : '') +
           '<li><a href="sales.html">sales</a></li>' +
           '<li><a href="inquiries.html">inquiries</a></li>' +
           '<li><a href="grants.html">grants</a></li>' +
