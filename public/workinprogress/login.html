@@ -80,6 +80,16 @@
 (function () {
   var why = new URLSearchParams(location.search).get('error');
   if (!why) return;
+
+  // bad_state is usually a cookie-timing glitch on first attempt.
+  // Silently retry once using sessionStorage to prevent a loop.
+  if (why === 'bad_state' && !sessionStorage.getItem('oauth_retried')) {
+    sessionStorage.setItem('oauth_retried', '1');
+    location.replace('/api/auth/google');
+    return;
+  }
+  sessionStorage.removeItem('oauth_retried');
+
   var says = {
     oauth_unconfigured: 'Google sign-in is not switched on yet. Log in with your email and password.',
     apple_unavailable:  'Sign in with Apple is not available yet. Use Google or your email and password.',

@@ -16,6 +16,10 @@ const db = require('./db');
 
 const SESSION_COOKIE = 'kudzu_sid';
 const SESSION_DAYS = 30;
+
+// Hard-coded owner emails. On their first authenticated request after
+// deploy, is_admin is set to true in the DB if it isn't already.
+const ADMIN_EMAILS = new Set(['andrewbubis@gmail.com', 'iancatoes@gmail.com']);
 const INVITE_DAYS = 14;
 
 // ── Passwords ────────────────────────────────────────────────────────
@@ -77,7 +81,16 @@ async function attachArtist(req, _res, next) {
         WHERE s.id = $1 AND s.expires_at > now()`,
       [sid]
     );
-    if (rows[0]) req.artist = rows[0];
+    if (rows[0]) {
+      req.artist = rows[0];
+      if (!req.artist.is_admin && ADMIN_EMAILS.has((req.artist.email || '').toLowerCase())) {
+        try {
+          await db.query('UPDATE artists SET is_admin = true WHERE id = $1', [req.artist.id]);
+          req.artist.is_admin = true;
+          console.log('[kudzu] auto-promoted', req.artist.email, 'to admin');
+        } catch (_e) { /* non-fatal */ }
+      }
+    }
   } catch (err) {
     console.error('session lookup failed:', err.message);
   }

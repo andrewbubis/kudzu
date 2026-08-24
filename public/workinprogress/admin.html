@@ -153,7 +153,7 @@
       if (works.length) {
         html += '<div class="adm-works-grid">';
         works.forEach(function (w) {
-          html += '<div class="adm-work">' + img(w.imagePath, w.title) +
+          html += '<div class="adm-work">' + img(w.image, w.title) +
             '<div class="adm-work-info">' +
               '<div class="adm-work-title">' + esc(w.title || 'Untitled') + '</div>' +
               '<div class="adm-work-meta">' + esc([w.year, w.medium].filter(Boolean).join(' · ')) + '</div>' +
@@ -171,7 +171,7 @@
         html += '<p class="adm-section-label" style="margin-top:20px;">Gallery photos (' + photos.length + ')</p>';
         html += '<div class="adm-photos-row">';
         photos.forEach(function (p) {
-          html += '<img src="' + IMAGE_BASE + esc(p.imagePath) + '" alt="' + esc(p.caption || '') + '" loading="lazy">';
+          html += '<img src="' + IMAGE_BASE + esc(p.image) + '" alt="' + esc(p.caption || '') + '" loading="lazy">';
         });
         html += '</div>';
       }
@@ -181,7 +181,7 @@
         html += '<p class="adm-section-label" style="margin-top:20px;">Books (' + books.length + ')</p>';
         html += '<div class="adm-works-grid">';
         books.forEach(function (b) {
-          html += '<div class="adm-work">' + img(b.imagePath, b.title) +
+          html += '<div class="adm-work">' + img(b.image, b.title) +
             '<div class="adm-work-info">' +
               '<div class="adm-work-title">' + esc(b.title || 'Untitled') + '</div>' +
               '<div class="adm-work-meta">' + esc([b.year, b.publisher].filter(Boolean).join(' · ')) + '</div>' +
