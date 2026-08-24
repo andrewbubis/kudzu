@@ -222,6 +222,8 @@
 .signin label { display: block; margin: 0 0 5px; color: var(--a-soft); }
 .signin input { width: 100%; padding: 9px 11px; border: 1px solid var(--a-line); font: inherit; margin-bottom: 14px; }
 .signin .acct-btn { width: 100%; }
+.signin .remember-row { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--a-soft); margin-bottom: 16px; cursor: pointer; }
+.signin .remember-row input { width: auto; margin: 0; accent-color: var(--a-link); }
 .signin .note { color: var(--a-mute); margin-top: 18px; text-align: center; }
 .signin .err { color: var(--a-danger); margin-bottom: 14px; }
 .signin .err[hidden] { display: none; }

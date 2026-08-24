@@ -87,12 +87,12 @@ router.use((_req, res, next) => {
 
 // ── Auth ─────────────────────────────────────────────────────────────
 router.post('/auth/login', async (req, res) => {
-  const { email, password } = req.body || {};
+  const { email, password, remember } = req.body || {};
   if (!email || !password) return res.status(400).json({ error: 'missing_fields' });
   try {
     const artist = await auth.login(email, password);
     if (!artist) return res.status(401).json({ error: 'bad_credentials' });
-    await auth.createSession(res, artist.id);
+    await auth.createSession(res, artist.id, { remember: remember !== false });
     res.json({ artist: publicArtist(artist) });
   } catch (err) {
     console.error('login failed:', err.message);

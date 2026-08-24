@@ -61,6 +61,10 @@
       <label for="password">password</label>
       <input id="password" name="password" type="password" autocomplete="current-password" required>
 
+      <label class="remember-row">
+        <input type="checkbox" id="rememberMe" name="remember"> Remember me
+      </label>
+
       <button class="acct-btn" type="submit" id="submitBtn">Log in</button>
     </form>
 
@@ -106,10 +110,12 @@ document.getElementById('loginForm').addEventListener('submit', async function (
       credentials: 'same-origin',
       body: JSON.stringify({
         email: document.getElementById('email').value.trim(),
-        password: document.getElementById('password').value
+        password: document.getElementById('password').value,
+        remember: document.getElementById('rememberMe').checked
       })
     });
     if (!res.ok) throw new Error(res.status === 401 ? 'bad' : 'down');
+    sessionStorage.removeItem('oauth_retried');
     location.href = 'profile.html';
   } catch (e2) {
     /* This used to say "the backend is still being built" for every

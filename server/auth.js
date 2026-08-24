@@ -39,20 +39,23 @@ function verifyPassword(password, stored) {
 }
 
 // ── Sessions ─────────────────────────────────────────────────────────
-async function createSession(res, artistId) {
+async function createSession(res, artistId, { remember = true } = {}) {
   const id = crypto.randomBytes(32).toString('base64url');
   const expires = new Date(Date.now() + SESSION_DAYS * 864e5);
   await db.query(
     'INSERT INTO sessions (id, artist_id, expires_at) VALUES ($1,$2,$3)',
     [id, artistId, expires]
   );
-  res.cookie(SESSION_COOKIE, id, {
+  const cookieOpts = {
     httpOnly: true,                                  // JavaScript cannot read it
     secure: process.env.NODE_ENV === 'production',   // HTTPS only in production
     sameSite: 'lax',                                 // blocks cross-site sends
-    expires,
     path: '/'
-  });
+  };
+  // "Remember me" → persistent cookie that survives browser restarts.
+  // Without it → session cookie (expires when the browser closes).
+  if (remember) cookieOpts.expires = expires;
+  res.cookie(SESSION_COOKIE, id, cookieOpts);
   return id;
 }
 
