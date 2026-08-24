@@ -60,12 +60,12 @@
 
   function renderIdentity() {
     var me = state.me;
-    $('artistName').textContent = me.name || 'your name';
-    $('bornYear').textContent = me.bornYear || '—';
-    $('bornCountry').textContent = me.bornCountry || 'add country';
-    $('worksCity').textContent = me.worksCity || 'add city';
-    $('worksCountry').textContent = me.worksCountry || 'add country';
-    $('acctMenuName').textContent = (me.name || 'account').split(' ')[0].toLowerCase();
+    if ($('artistName')) $('artistName').textContent = me.name || 'your name';
+    if ($('bornYear')) $('bornYear').textContent = me.bornYear || '—';
+    if ($('bornCountry')) $('bornCountry').textContent = me.bornCountry || 'add country';
+    if ($('worksCity')) $('worksCity').textContent = me.worksCity || 'add city';
+    if ($('worksCountry')) $('worksCountry').textContent = me.worksCountry || 'add country';
+    if ($('acctMenuName')) $('acctMenuName').textContent = (me.name || 'account').split(' ')[0].toLowerCase();
 
     // "send link" only exists for admins (you and Andrew). The server
     // enforces this too — the menu item is just the convenience.

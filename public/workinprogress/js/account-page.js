@@ -171,6 +171,7 @@
       $('acctMenuName').textContent = (me.name || 'account').split(' ')[0].toLowerCase();
     }
     if ($('adminInvite')) $('adminInvite').hidden = !me.isAdmin;
+    if ($('adminDash')) $('adminDash').hidden = !me.isAdmin;
     if ($('stripeDash')) $('stripeDash').hidden = !me.stripeConnected;
 
     // Sales

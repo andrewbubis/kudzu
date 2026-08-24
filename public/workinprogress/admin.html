@@ -205,6 +205,10 @@
       if (!meRes.ok) { location.href = 'login.html'; return; }
       var meData = await meRes.json();
       if (!meData.artist || !meData.artist.isAdmin) { location.href = 'profile.html'; return; }
+      var adminDashEl = document.getElementById('adminDash');
+      if (adminDashEl) adminDashEl.hidden = false;
+      var acctNameEl = document.getElementById('acctMenuName');
+      if (acctNameEl) acctNameEl.textContent = (meData.artist.name || 'account').split(' ')[0].toLowerCase();
       if (!rosterRes.ok) throw new Error('roster failed');
       var roster = await rosterRes.json();
 

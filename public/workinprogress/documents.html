@@ -292,6 +292,7 @@
       var me = await api('/me');
       $('acctMenuName').textContent = (me.artist.name || 'account').split(' ')[0];
       if (me.artist.isAdmin) $('adminInvite').hidden = false;
+      if (me.artist.isAdmin) $('adminDash').hidden = false;
       if (me.artist.stripeConnected) $('stripeDash').hidden = false;
     } catch (e) {
       if (e.status === 401) { location.href = 'login.html'; return; }
