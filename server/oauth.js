@@ -1,30 +1,27 @@
 // Sign in with Google (and Apple, when the developer account exists).
 //
-// Standard OAuth 2.0 authorization-code flow, done by hand — no library,
-// so there is no dependency to keep patched for something this small.
+// The state parameter is a signed, self-validating HMAC token — no
+// browser cookie needed for CSRF protection. This eliminates the
+// first-attempt login failure that happened when the browser dropped
+// the short-lived state cookie before the Google callback arrived.
 //
-// Improvements over the original:
-//  · bad_state is retried once server-side — the user never sees the
-//    login page on a first-attempt cookie glitch.
-//  · The kudzu_remember cookie (set by the login page before the Google
-//    redirect) is read here and passed through to createSession so the
-//    "Remember me" checkbox works with Google sign-in too.
+// State format: nonce.timestamp.invite.HMAC
+// The server verifies the HMAC on callback. No storage required.
 
 const crypto = require('crypto');
 const express = require('express');
-const db = require('./db');
-const auth = require('./auth');
+const db      = require('./db');
+const auth    = require('./auth');
 
 const router = express.Router();
-const STATE_COOKIE   = 'kudzu_oauth';
 const REMEMBER_COOKIE = 'kudzu_remember';
 
 const GOOGLE = {
   authorize: 'https://accounts.google.com/o/oauth2/v2/auth',
-  token: 'https://oauth2.googleapis.com/token',
-  userinfo: 'https://openidconnect.googleapis.com/v1/userinfo',
-  scope: 'openid email profile',
-  id: () => process.env.GOOGLE_CLIENT_ID,
+  token:     'https://oauth2.googleapis.com/token',
+  userinfo:  'https://openidconnect.googleapis.com/v1/userinfo',
+  scope:     'openid email profile',
+  id:     () => process.env.GOOGLE_CLIENT_ID,
   secret: () => process.env.GOOGLE_CLIENT_SECRET
 };
 
@@ -41,28 +38,42 @@ function isConfigured(provider) {
   return false;
 }
 
-function startGoogleFlow(req, res) {
-  const state  = crypto.randomBytes(24).toString('base64url');
-  const invite = typeof req.query.invite === 'string' ? req.query.invite : '';
-  // _retry=1 means this is already a retry — don't retry again on failure.
-  const retry  = req.query._retry === '1';
+// ── Signed state ─────────────────────────────────────────────────────
+// Uses GOOGLE_CLIENT_SECRET as the HMAC key — it's already a secret,
+// already configured in Railway, and unique per deployment.
+function hmacKey() {
+  return process.env.GOOGLE_CLIENT_SECRET || 'kudzu-dev-state';
+}
 
-  res.cookie(STATE_COOKIE, JSON.stringify({ state, invite, retry }), {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    maxAge: 10 * 60 * 1000,
-    path: '/'
-  });
+function makeState(invite) {
+  const nonce   = crypto.randomBytes(16).toString('hex');
+  const ts      = Math.floor(Date.now() / 1000).toString(36);
+  // Sanitise invite: only alphanum + - _ so dots remain unambiguous delimiters
+  const inv     = String(invite || '').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 64);
+  const payload = [nonce, ts, inv].join('.');
+  const sig     = crypto.createHmac('sha256', hmacKey()).update(payload).digest('hex');
+  return payload + '.' + sig;
+}
 
-  const url = new URL(GOOGLE.authorize);
-  url.searchParams.set('client_id', GOOGLE.id());
-  url.searchParams.set('redirect_uri', redirectUri(req, 'google'));
-  url.searchParams.set('response_type', 'code');
-  url.searchParams.set('scope', GOOGLE.scope);
-  url.searchParams.set('state', state);
-  url.searchParams.set('prompt', 'select_account');
-  res.redirect(url.toString());
+function parseState(raw) {
+  const s = String(raw || '');
+  // Format: nonce.ts.inv.sig  (inv may be empty, so minimum 3 dots)
+  const lastDot = s.lastIndexOf('.');
+  if (lastDot < 1) return null;
+  const payload  = s.slice(0, lastDot);
+  const sig      = s.slice(lastDot + 1);
+  const expected = crypto.createHmac('sha256', hmacKey()).update(payload).digest('hex');
+  // Constant-time comparison
+  if (sig.length !== expected.length) return null;
+  try {
+    if (!crypto.timingSafeEqual(Buffer.from(sig, 'hex'), Buffer.from(expected, 'hex'))) return null;
+  } catch { return null; }
+  const parts = payload.split('.');
+  if (parts.length < 3) return null;
+  const ts  = parseInt(parts[1], 36);
+  const age = Math.floor(Date.now() / 1000) - ts;
+  if (isNaN(age) || age < 0 || age > 600) return null; // must be within 10 minutes
+  return { invite: parts[2] || '' };
 }
 
 // ── Start ────────────────────────────────────────────────────────────
@@ -74,10 +85,21 @@ router.get('/auth/:provider', (req, res) => {
   if (provider !== 'google' || !isConfigured('google')) {
     return res.redirect('/workinprogress/login.html?error=oauth_unconfigured');
   }
-  startGoogleFlow(req, res);
+
+  const invite = typeof req.query.invite === 'string' ? req.query.invite : '';
+  const state  = makeState(invite);
+
+  const url = new URL(GOOGLE.authorize);
+  url.searchParams.set('client_id',      GOOGLE.id());
+  url.searchParams.set('redirect_uri',   redirectUri(req, 'google'));
+  url.searchParams.set('response_type',  'code');
+  url.searchParams.set('scope',          GOOGLE.scope);
+  url.searchParams.set('state',          state);
+  url.searchParams.set('prompt',         'select_account');
+  res.redirect(url.toString());
 });
 
-// ── Return ───────────────────────────────────────────────────────────
+// ── Callback ─────────────────────────────────────────────────────────
 router.get('/auth/:provider/callback', async (req, res) => {
   const provider = req.params.provider;
   const fail = (why) => res.redirect('/workinprogress/login.html?error=' + why);
@@ -85,29 +107,12 @@ router.get('/auth/:provider/callback', async (req, res) => {
   if (provider !== 'google' || !isConfigured('google')) return fail('oauth_unconfigured');
   if (!db.isReady()) return fail('backend_unavailable');
 
-  let saved;
-  try { saved = JSON.parse(req.cookies[STATE_COOKIE] || '{}'); }
-  catch (err) { saved = {}; }
-  res.clearCookie(STATE_COOKIE, { path: '/' });
-
-  // Read the "remember me" preference set by the login page before the redirect.
+  // Read and immediately clear the "remember me" preference.
   const remember = req.cookies[REMEMBER_COOKIE] !== '0';
   res.clearCookie(REMEMBER_COOKIE, { path: '/' });
 
-  // Constant-time state comparison.
-  const given    = String(req.query.state || '');
-  const expected = String(saved.state || '');
-  const stateOk  = expected && given.length === expected.length &&
-    crypto.timingSafeEqual(Buffer.from(given), Buffer.from(expected));
-
-  if (!stateOk) {
-    // First failure: retry silently — no login page shown to the user.
-    if (!saved.retry) {
-      return res.redirect('/api/auth/google?_retry=1');
-    }
-    // Already retried once. Show the error.
-    return fail('bad_state');
-  }
+  const parsed = parseState(req.query.state);
+  if (!parsed) return fail('bad_state');
   if (!req.query.code) return fail('no_code');
 
   try {
@@ -115,11 +120,11 @@ router.get('/auth/:provider/callback', async (req, res) => {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({
-        code: String(req.query.code),
-        client_id: GOOGLE.id(),
+        code:          String(req.query.code),
+        client_id:     GOOGLE.id(),
         client_secret: GOOGLE.secret(),
-        redirect_uri: redirectUri(req, 'google'),
-        grant_type: 'authorization_code'
+        redirect_uri:  redirectUri(req, 'google'),
+        grant_type:    'authorization_code'
       })
     });
     if (!tokenRes.ok) throw new Error('token_exchange_failed');
@@ -136,7 +141,7 @@ router.get('/auth/:provider/callback', async (req, res) => {
 
     const email = String(info.email || '').toLowerCase().trim();
 
-    // 1. Known identity → sign in.
+    // 1. Known Google identity → sign in.
     const { rows: known } = await db.query(
       `SELECT a.* FROM identities i JOIN artists a ON a.id = i.artist_id
         WHERE i.provider = 'google' AND i.subject = $1`, [info.sub]);
@@ -145,7 +150,7 @@ router.get('/auth/:provider/callback', async (req, res) => {
       return res.redirect('/workinprogress/profile.html');
     }
 
-    // 2. Existing account with that email → link the two.
+    // 2. Existing account matched by email → link identity.
     const { rows: byEmail } = await db.query(
       'SELECT * FROM artists WHERE email = $1', [email]);
     if (byEmail[0]) {
@@ -157,11 +162,11 @@ router.get('/auth/:provider/callback', async (req, res) => {
       return res.redirect('/workinprogress/profile.html');
     }
 
-    // 3. Brand new, but carrying an invite → create the account.
-    if (saved.invite) {
+    // 3. Brand-new, carrying an invite → create account.
+    if (parsed.invite) {
       const artist = await auth.redeemInvite({
-        token: saved.invite,
-        name: info.name || email.split('@')[0],
+        token:    parsed.invite,
+        name:     info.name || email.split('@')[0],
         email,
         password: null,
         identity: { provider: 'google', subject: info.sub, email }
@@ -170,7 +175,7 @@ router.get('/auth/:provider/callback', async (req, res) => {
       return res.redirect('/workinprogress/profile.html');
     }
 
-    // 4. Otherwise: no invite, no account. Kudzu is invite-only.
+    // 4. No invite, no account. Kudzu is invite-only.
     return fail('no_invite');
   } catch (err) {
     console.error('oauth callback failed:', err.message);
