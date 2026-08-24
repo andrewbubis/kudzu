@@ -3,9 +3,13 @@
 // Standard OAuth 2.0 authorization-code flow, done by hand — no library,
 // so there is no dependency to keep patched for something this small.
 //
-// State is now a signed, self-validating token (nonce~ts~invite~HMAC).
-// No cookie is needed, so there are no browser cookie-timing failures
-// on first login.
+// Two things worth noting:
+//  · The `state` parameter is a random value stored in a short-lived
+//    cookie and compared on return. Without it, an attacker can finish
+//    a login in someone else's browser (CSRF).
+//  · OAuth never creates accounts on its own. Kudzu is invite-only, so
+//    an unrecognised Google account is turned away unless it arrives
+//    carrying a valid invite.
 
 const crypto = require('crypto');
 const express = require('express');
@@ -13,6 +17,7 @@ const db = require('./db');
 const auth = require('./auth');
 
 const router = express.Router();
+const STATE_COOKIE = 'kudzu_oauth';
 
 const GOOGLE = {
   authorize: 'https://accounts.google.com/o/oauth2/v2/auth',
@@ -33,39 +38,7 @@ function redirectUri(req, provider) {
 
 function isConfigured(provider) {
   if (provider === 'google') return !!(GOOGLE.id() && GOOGLE.secret());
-  return false;
-}
-
-// ── Stateless signed state ───────────────────────────────────────────
-// Encodes nonce, timestamp, and invite into a single HMAC-signed string.
-// No cookie or server-side storage needed — the signature proves we made it.
-function stateSecret() {
-  return process.env.GOOGLE_CLIENT_SECRET || 'kudzu-state-dev';
-}
-
-function makeState(invite) {
-  const nonce = crypto.randomBytes(16).toString('base64url');
-  const ts    = Math.floor(Date.now() / 1000).toString(36);
-  const inv   = typeof invite === 'string' ? invite.replace(/~/g, '') : '';
-  const payload = `${nonce}~${ts}~${inv}`;
-  const sig   = crypto.createHmac('sha256', stateSecret()).update(payload).digest('base64url');
-  return `${payload}~${sig}`;
-}
-
-function parseState(raw) {
-  const parts = String(raw || '').split('~');
-  if (parts.length < 4) return null;
-  const sig     = parts[parts.length - 1];
-  const payload = parts.slice(0, parts.length - 1).join('~');
-  const expected = crypto.createHmac('sha256', stateSecret()).update(payload).digest('base64url');
-  try {
-    if (sig.length !== expected.length) return null;
-    if (!crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected))) return null;
-  } catch { return null; }
-  const ts  = parseInt(parts[1], 36);
-  const age = Math.floor(Date.now() / 1000) - ts;
-  if (age > 600 || age < 0) return null; // older than 10 min or from the future
-  return { invite: parts[2] || '' };
+  return false; // Apple needs a paid developer account; not wired yet.
 }
 
 // ── Start ────────────────────────────────────────────────────────────
@@ -78,8 +51,18 @@ router.get('/auth/:provider', (req, res) => {
     return res.redirect('/workinprogress/login.html?error=oauth_unconfigured');
   }
 
+  const state = crypto.randomBytes(24).toString('base64url');
+  // Carry the invite through the round trip so a brand-new artist can
+  // sign up with Google straight from their invite link.
   const invite = typeof req.query.invite === 'string' ? req.query.invite : '';
-  const state  = makeState(invite);
+
+  res.cookie(STATE_COOKIE, JSON.stringify({ state, invite }), {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: 10 * 60 * 1000,
+    path: '/'
+  });
 
   const url = new URL(GOOGLE.authorize);
   url.searchParams.set('client_id', GOOGLE.id());
@@ -99,8 +82,18 @@ router.get('/auth/:provider/callback', async (req, res) => {
   if (provider !== 'google' || !isConfigured('google')) return fail('oauth_unconfigured');
   if (!db.isReady()) return fail('backend_unavailable');
 
-  const parsed = parseState(req.query.state);
-  if (!parsed) return fail('bad_state');
+  let saved;
+  try { saved = JSON.parse(req.cookies[STATE_COOKIE] || '{}'); }
+  catch (err) { saved = {}; }
+  res.clearCookie(STATE_COOKIE, { path: '/' });
+
+  // Constant-time compare, and reject anything that doesn't match.
+  const given = String(req.query.state || '');
+  const expected = String(saved.state || '');
+  if (!expected || given.length !== expected.length ||
+      !crypto.timingSafeEqual(Buffer.from(given), Buffer.from(expected))) {
+    return fail('bad_state');
+  }
   if (!req.query.code) return fail('no_code');
 
   try {
@@ -151,9 +144,9 @@ router.get('/auth/:provider/callback', async (req, res) => {
     }
 
     // 3. Brand new, but carrying an invite → create the account.
-    if (parsed.invite) {
+    if (saved.invite) {
       const artist = await auth.redeemInvite({
-        token: parsed.invite,
+        token: saved.invite,
         name: info.name || email.split('@')[0],
         email,
         password: null,

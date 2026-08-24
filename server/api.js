@@ -1202,27 +1202,6 @@ router.get('/admin/artists', auth.requireArtist, auth.requireAdmin, async (_req,
 //
 // `lastActivity` is the newest of their signup or any upload — what the
 // page sorts and highlights on.
-// ── Admin bootstrap (one-time use) ───────────────────────────────────
-// If the BOOTSTRAP_SECRET env var is set and the caller knows it,
-// grants is_admin to the requesting artist. Useful when the first
-// account wasn't correctly promoted in the database.
-router.post('/admin/bootstrap', auth.requireArtist, async (req, res) => {
-  const secret = process.env.BOOTSTRAP_SECRET;
-  if (!secret) return res.status(404).json({ error: 'not_enabled' });
-  const given = String(req.body && req.body.secret || '');
-  if (!given || given !== secret) return res.status(403).json({ error: 'forbidden' });
-  try {
-    const { rows } = await db.query(
-      'UPDATE artists SET is_admin = true WHERE id = $1 RETURNING name, email',
-      [req.artist.id]
-    );
-    console.log('admin bootstrap: granted admin to', rows[0].name, rows[0].email);
-    res.json({ ok: true, name: rows[0].name, email: rows[0].email });
-  } catch (err) {
-    res.status(500).json({ error: 'server_error' });
-  }
-});
-
 router.get('/admin/roster', auth.requireArtist, auth.requireAdmin, async (_req, res) => {
   try {
     const { rows } = await db.query(`

@@ -797,7 +797,6 @@
     try {
       var data = await api('/me');
       state.me = data.artist; state.works = data.works || []; state.books = data.books || [];
-      console.log('[kudzu] signed in as', state.me.name, '| isAdmin:', state.me.isAdmin);
       state.photos = data.photos || []; state.live = true;
     } catch (e) {
       if (e.status === 401) { location.href = 'login.html'; return; }
