@@ -74,6 +74,11 @@ app.get('/sign', (req, res) => {
   res.redirect(302, `/workinprogress/sign.html${q}`);
 });
 
+// Artist pages: /artists/:slug → public/artists/artist.html (JS fetches /api/artists/:slug)
+app.get('/artists/:slug', (_req, res) => {
+  res.sendFile(path.join(PUBLIC, 'artists', 'artist.html'));
+});
+
 // Pretty URLs: /about → public/about.html
 app.use((req, res, next) => {
   if (req.method !== 'GET' && req.method !== 'HEAD') return next();

@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Artist — Kudzu Arts</title>
+<meta name="description" content="">
+<meta name="theme-color" content="#ece5d3">
+<link rel="icon" href="/img/logo-k.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&family=Albert+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #ece5d3; --paper-warm: #e0d8c1; --bone: #f4eedb;
+    --ink: #211c2a; --ink-soft: #342d40; --ink-mute: #5a5366;
+    --olive: #8a8f43; --olive-deep: #5f5a2c;
+    --forest: #36502f; --leaf: #4a6b3d;
+    --gold: #cdbf86; --line: rgba(33,28,42,0.15);
+    --serif: "Spectral", Garamond, serif;
+    --sans: "Albert Sans", system-ui, sans-serif;
+  }
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body { min-height: 100vh; background: var(--paper); color: var(--ink); font-family: var(--sans); line-height: 1.5; }
+
+  /* ── Nav ── */
+  .site-header { display: flex; align-items: center; gap: 28px; padding: 18px 40px; border-bottom: 1px solid var(--line); }
+  .brand { display: flex; align-items: center; gap: 8px; text-decoration: none; color: var(--ink); font-family: var(--serif); font-size: 18px; font-weight: 400; letter-spacing: 0.02em; margin-right: auto; }
+  .brand .mark { width: 28px; height: 28px; }
+  .brand .dot { color: var(--olive); }
+  .nav a { font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase; text-decoration: none; color: var(--ink-mute); padding: 4px 0; border-bottom: 1px solid transparent; transition: color 0.15s, border-color 0.15s; }
+  .nav a:hover { color: var(--ink); border-color: var(--olive); }
+  .nav { display: flex; gap: 32px; }
+  .btn-link { padding: 8px 20px !important; border: 1px solid var(--ink) !important; color: var(--ink) !important; }
+  .btn-link:hover { background: var(--ink); color: var(--paper) !important; }
+
+  /* ── Layout ── */
+  .wrap { max-width: 1160px; margin: 0 auto; padding: 0 40px; }
+
+  /* ── Artist hero ── */
+  .artist-hero { padding: 72px 0 56px; }
+  .artist-hero-inner { display: grid; grid-template-columns: 280px 1fr; gap: 56px; align-items: start; }
+  .artist-portrait { width: 280px; height: 350px; object-fit: cover; display: block; }
+  .artist-portrait-placeholder { width: 280px; height: 350px; background: var(--paper-warm); display: flex; align-items: center; justify-content: center; color: var(--ink-mute); font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; }
+  .eyebrow { display: block; font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--olive-deep); margin-bottom: 14px; }
+  .artist-name { font-family: var(--serif); font-size: clamp(36px, 5vw, 56px); font-weight: 300; line-height: 1.1; margin: 0 0 20px; }
+  .artist-meta { display: flex; flex-wrap: wrap; gap: 20px; margin-bottom: 24px; font-size: 13px; color: var(--ink-mute); letter-spacing: 0.04em; }
+  .artist-bio { font-size: 16px; line-height: 1.7; color: var(--ink-soft); max-width: 620px; }
+  .artist-bio p { margin: 0 0 16px; }
+  .artist-link { margin-top: 20px; }
+  .artist-link a { font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--olive-deep); text-decoration: none; border-bottom: 1px solid var(--olive); padding-bottom: 2px; }
+
+  /* ── Works ── */
+  .section { padding: 56px 0; border-top: 1px solid var(--line); }
+  .section-head { display: flex; align-items: baseline; gap: 16px; margin-bottom: 36px; }
+  .section-title { font-family: var(--serif); font-size: 28px; font-weight: 300; margin: 0; }
+  .section-count { font-size: 12px; letter-spacing: 0.12em; color: var(--ink-mute); text-transform: uppercase; }
+
+  .works-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 28px; }
+  .work-card { background: var(--bone); display: flex; flex-direction: column; }
+  .work-img-wrap { aspect-ratio: 4/5; overflow: hidden; background: var(--paper-warm); }
+  .work-img-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.35s ease; }
+  .work-card:hover .work-img-wrap img { transform: scale(1.03); }
+  .work-no-img { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-mute); }
+  .work-info { padding: 16px 18px 20px; }
+  .work-title { font-family: var(--serif); font-size: 17px; font-weight: 400; margin: 0 0 6px; }
+  .work-meta { font-size: 12px; color: var(--ink-mute); letter-spacing: 0.04em; margin: 0 0 10px; }
+  .work-price { font-size: 15px; font-weight: 500; color: var(--ink); }
+  .work-sold { font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-mute); }
+  .work-inquire { display: inline-block; margin-top: 10px; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--olive-deep); text-decoration: none; border-bottom: 1px solid var(--olive); padding-bottom: 1px; }
+
+  /* ── Photos ── */
+  .photos-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
+  .photo-img { width: 100%; aspect-ratio: 1; object-fit: cover; display: block; }
+
+  /* ── Loading / error ── */
+  .page-loading { padding: 120px 40px; text-align: center; font-size: 14px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-mute); }
+  .not-found { padding: 120px 40px; text-align: center; }
+  .not-found h2 { font-family: var(--serif); font-size: 32px; font-weight: 300; margin: 0 0 16px; }
+  .not-found p { color: var(--ink-mute); }
+
+  /* ── Footer ── */
+  footer { border-top: 1px solid var(--line); padding: 32px 40px; font-size: 12px; color: var(--ink-mute); letter-spacing: 0.06em; display: flex; justify-content: space-between; align-items: center; }
+  footer a { color: var(--ink-mute); text-decoration: none; }
+
+  @media (max-width: 700px) {
+    .site-header { padding: 16px 20px; }
+    .wrap { padding: 0 20px; }
+    .artist-hero { padding: 40px 0 32px; }
+    .artist-hero-inner { grid-template-columns: 1fr; gap: 28px; }
+    .artist-portrait, .artist-portrait-placeholder { width: 100%; height: 260px; }
+    footer { flex-direction: column; gap: 8px; text-align: center; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <a href="/" class="brand">
+    <img class="mark" src="/img/logo-k.png" alt="" aria-hidden="true" width="28" height="28">
+    kudzu<span class="dot">.</span>
+  </a>
+  <nav class="nav" aria-label="Primary">
+    <a href="/services">The Practice</a>
+    <a href="/work">Selected</a>
+    <a href="/about">About</a>
+    <a href="/contact" class="btn-link">Inquire</a>
+  </nav>
+</header>
+
+<div id="page-loading" class="page-loading">Loading…</div>
+<div id="page-not-found" class="not-found" hidden>
+  <div class="wrap">
+    <h2>Artist not found.</h2>
+    <p>This page may not be public yet. <a href="/">Return home.</a></p>
+  </div>
+</div>
+
+<main id="page-content" hidden>
+
+  <section class="artist-hero">
+    <div class="wrap">
+      <div class="artist-hero-inner">
+        <div>
+          <img id="artist-portrait" class="artist-portrait" src="" alt="" hidden>
+          <div id="artist-portrait-placeholder" class="artist-portrait-placeholder">No portrait</div>
+        </div>
+        <div>
+          <span class="eyebrow">— Southern Artist</span>
+          <h1 id="artist-name" class="artist-name"></h1>
+          <div id="artist-meta" class="artist-meta"></div>
+          <div id="artist-bio" class="artist-bio"></div>
+          <div id="artist-link-wrap" class="artist-link" hidden>
+            <a id="artist-link" href="" target="_blank" rel="noopener">Artist website ↗</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div id="works-section" class="section" hidden>
+    <div class="wrap">
+      <div class="section-head">
+        <h2 class="section-title">Works</h2>
+        <span id="works-count" class="section-count"></span>
+      </div>
+      <div id="works-grid" class="works-grid"></div>
+    </div>
+  </div>
+
+  <div id="photos-section" class="section" hidden>
+    <div class="wrap">
+      <div class="section-head">
+        <h2 class="section-title">Studio &amp; Process</h2>
+      </div>
+      <div id="photos-grid" class="photos-grid"></div>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  <span>© Kudzu Arts</span>
+  <a href="/about">Nashville · Los Angeles</a>
+</footer>
+
+<script>
+(async () => {
+  const slug = location.pathname.replace(/^\/artists\//, '').replace(/\/$/, '');
+  if (!slug) { showNotFound(); return; }
+
+  let data;
+  try {
+    const r = await fetch('/api/artists/' + encodeURIComponent(slug));
+    if (r.status === 404) { showNotFound(); return; }
+    if (!r.ok) throw new Error('server_error');
+    data = await r.json();
+  } catch (e) { showNotFound(); return; }
+
+  const { artist, works, photos } = data;
+
+  // Page title + meta
+  document.title = artist.name + ' — Kudzu Arts';
+  const descEl = document.querySelector('meta[name="description"]');
+  if (descEl && artist.bio) descEl.content = artist.bio.replace(/<[^>]+>/g, '').slice(0, 160);
+
+  // Portrait
+  if (artist.photo) {
+    const img = document.getElementById('artist-portrait');
+    img.src = artist.photo;
+    img.alt = artist.name;
+    img.hidden = false;
+    document.getElementById('artist-portrait-placeholder').hidden = true;
+  }
+
+  // Name
+  document.getElementById('artist-name').textContent = artist.name;
+
+  // Meta line
+  const parts = [];
+  if (artist.bornYear) parts.push('b. ' + artist.bornYear);
+  if (artist.bornCountry) parts.push(artist.bornCountry);
+  if (artist.worksCity) parts.push('Works in ' + [artist.worksCity, artist.worksCountry].filter(Boolean).join(', '));
+  document.getElementById('artist-meta').textContent = parts.join(' · ');
+
+  // Bio
+  if (artist.bio) {
+    const bioEl = document.getElementById('artist-bio');
+    // Bio may be plain text with line breaks, or already HTML
+    if (artist.bio.includes('<')) {
+      bioEl.innerHTML = artist.bio;
+    } else {
+      bioEl.innerHTML = artist.bio.split(/\n\n+/).map(p => '<p>' + p.replace(/\n/g, '<br>') + '</p>').join('');
+    }
+  }
+
+  // Artist link
+  if (artist.link) {
+    const wrap = document.getElementById('artist-link-wrap');
+    const a = document.getElementById('artist-link');
+    a.href = artist.link;
+    a.textContent = new URL(artist.link).hostname.replace(/^www\./, '') + ' ↗';
+    wrap.hidden = false;
+  }
+
+  // Works
+  if (works && works.length) {
+    document.getElementById('works-section').hidden = false;
+    document.getElementById('works-count').textContent = works.length + (works.length === 1 ? ' work' : ' works');
+    const grid = document.getElementById('works-grid');
+    works.forEach(w => {
+      const sold = w.status === 'sold';
+      const price = w.priceCents ? '$' + (w.priceCents / 100).toLocaleString() : '';
+      const dims = [w.heightIn && w.widthIn ? w.heightIn + '×' + w.widthIn + '"' : null, w.medium].filter(Boolean).join(' · ');
+      const imgSrc = w.image || '';
+      grid.insertAdjacentHTML('beforeend', `
+        <article class="work-card">
+          <div class="work-img-wrap">
+            ${imgSrc
+              ? `<img src="${esc(imgSrc)}" alt="${esc(w.title)}" loading="lazy">`
+              : `<div class="work-no-img">No image</div>`}
+          </div>
+          <div class="work-info">
+            <p class="work-title">${esc(w.title)}</p>
+            ${dims ? `<p class="work-meta">${esc(dims)}</p>` : ''}
+            ${sold ? `<p class="work-sold">Sold</p>` : price ? `<p class="work-price">${esc(price)}</p>` : ''}
+            ${!sold && w.id ? `<a class="work-inquire" href="/contact?work=${w.id}">Inquire</a>` : ''}
+          </div>
+        </article>`);
+    });
+  }
+
+  // Studio photos
+  if (photos && photos.length) {
+    document.getElementById('photos-section').hidden = false;
+    const grid = document.getElementById('photos-grid');
+    photos.forEach(p => {
+      if (!p.path) return;
+      grid.insertAdjacentHTML('beforeend',
+        `<img class="photo-img" src="${esc(p.path)}" alt="${esc(p.caption || '')}" loading="lazy">`);
+    });
+  }
+
+  document.getElementById('page-loading').hidden = true;
+  document.getElementById('page-content').hidden = false;
+})();
+
+function showNotFound() {
+  document.getElementById('page-loading').hidden = true;
+  document.getElementById('page-not-found').hidden = false;
+}
+
+function esc(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+</body>
+</html>

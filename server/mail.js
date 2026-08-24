@@ -652,8 +652,38 @@ async function handoffSigned({ bol, artistEmail }) {
 }
 
 module.exports = {
+  notifyAdminsNewArtist,
   isConfigured, send,
   inquiryReceived, inquiryAcknowledged,
   workSold, orderConfirmation, orderShipped, saleReversed,
   pickupIntroduction, handoffSigned
 };
+
+// Called from auth.redeemInvite so Andrew and Ian hear about new registrations.
+async function notifyAdminsNewArtist({ name, email, slug }) {
+  const ADMINS = ['andrewbubis@gmail.com', 'iancatoes@gmail.com'];
+  const profileUrl = `${BASE()}/artists/${encodeURIComponent(slug || '')}`;
+  const adminUrl   = `${BASE()}/workinprogress/admin.html`;
+  return send({
+    to: ADMINS,
+    subject: `New artist registered — ${name}`,
+    html: wrap(
+      `${esc(name)} just joined.`,
+      `<p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#544c5e;">
+         A new artist has completed registration on Kudzu Arts.</p>
+       <table style="margin:0 0 20px;font-size:14px;color:#544c5e;border-collapse:collapse;">
+         <tr><td style="padding:4px 16px 4px 0;color:#8a8072;">Name</td><td>${esc(name)}</td></tr>
+         <tr><td style="padding:4px 16px 4px 0;color:#8a8072;">Email</td><td>${esc(email)}</td></tr>
+         <tr><td style="padding:4px 16px 4px 0;color:#8a8072;">Slug</td><td>${esc(slug)}</td></tr>
+       </table>
+       <p style="margin:0 0 18px;">
+         <a href="${esc(adminUrl)}" style="display:inline-block;padding:12px 22px;background:#8a8f43;
+            color:#ffffff;text-decoration:none;font-size:14px;margin-right:12px;">Admin dashboard</a>
+         <a href="${esc(profileUrl)}" style="display:inline-block;padding:12px 22px;background:#5f5a2c;
+            color:#ffffff;text-decoration:none;font-size:14px;">View artist page</a>
+       </p>`,
+      'Kudzu Arts · Nashville, Tennessee'
+    ),
+    text: `New artist registered: ${name} (${email}) — slug: ${slug}\n\nAdmin: ${adminUrl}\nPage: ${profileUrl}`
+  });
+}

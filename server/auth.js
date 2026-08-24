@@ -13,6 +13,7 @@
 
 const crypto = require('crypto');
 const db = require('./db');
+const mail = require('./mail');
 
 const SESSION_COOKIE = 'kudzu_sid';
 const SESSION_DAYS = 30;
@@ -203,6 +204,11 @@ async function redeemInvite({ token, name, email, password, identity }) {
       [artist.id, inv.id]
     );
 
+    return artist;
+  }).then(artist => {
+    // Non-fatal: notify admins. Never block registration.
+    mail.notifyAdminsNewArtist({ name: artist.name, email: artist.email, slug: artist.slug })
+      .catch(err => console.error('admin notify failed:', err.message));
     return artist;
   });
 }
