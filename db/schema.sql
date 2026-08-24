@@ -622,3 +622,6 @@ BEGIN
     INSERT INTO kudzu_migrations (name) VALUES ('publish_stranded_drafts');
   END IF;
 END $$;
+
+-- Track when the one-time incomplete-profile reminder was sent to an artist.
+ALTER TABLE artists ADD COLUMN IF NOT EXISTS profile_reminder_sent_at timestamptz;

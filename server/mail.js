@@ -652,6 +652,7 @@ async function handoffSigned({ bol, artistEmail }) {
 }
 
 module.exports = {
+  notifyArtistIncompleteProfile,
   notifyAdminsNewArtist,
   isConfigured, send,
   inquiryReceived, inquiryAcknowledged,
@@ -685,5 +686,42 @@ async function notifyAdminsNewArtist({ name, email, slug }) {
       'Kudzu Arts · Nashville, Tennessee'
     ),
     text: `New artist registered: ${name} (${email}) — slug: ${slug}\n\nAdmin: ${adminUrl}\nPage: ${profileUrl}`
+  });
+}
+
+// One-time nudge sent ~7 days after registration if the artist hasn't
+// finished their bio, CV, or uploaded any works for sale.
+async function notifyArtistIncompleteProfile({ name, email }) {
+  const dashUrl = `${BASE()}/workinprogress/profile.html`;
+  return send({
+    to: email,
+    subject: 'Finish setting up your Kudzu Arts profile',
+    html: wrap(
+      `${esc(name)}, your profile isn't live yet.`,
+      `<p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#544c5e;">
+         You registered with Kudzu Arts a week ago — but your artist page isn't
+         visible to collectors yet. A few things still need to be added before
+         it goes live:</p>
+       <ul style="margin:0 0 20px;padding-left:20px;font-size:15px;line-height:1.8;color:#544c5e;">
+         <li>A short bio</li>
+         <li>A CV or résumé</li>
+         <li>At least one work you'd like us to list for sale</li>
+       </ul>
+       <p style="margin:0 0 20px;font-size:15px;line-height:1.6;color:#544c5e;">
+         Once those are in, your page goes live automatically and collectors
+         can start finding your work.</p>
+       <p style="margin:0 0 18px;">
+         <a href="${esc(dashUrl)}" style="display:inline-block;padding:12px 22px;
+            background:#8a8f43;color:#ffffff;text-decoration:none;font-size:14px;">
+           Complete my profile
+         </a>
+       </p>`,
+      'Questions? Reply to this email — it goes straight to the Kudzu team.'
+    ),
+    text:
+      `${name}, your Kudzu Arts profile isn't live yet.\n\n` +
+      `To appear to collectors, please add:\n` +
+      `  · A bio\n  · A CV\n  · At least one work for sale\n\n` +
+      `Log in here: ${dashUrl}\n\nReply to this email with any questions.`
   });
 }

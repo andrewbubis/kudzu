@@ -13,6 +13,7 @@ const fs = require('fs');
 const db = require('./server/db');
 const auth = require('./server/auth');
 const oauth = require('./server/oauth');
+const reminders = require('./server/reminders');
 const api = require('./server/api');
 const mail = require('./server/mail');
 const storage = require('./server/storage');
@@ -163,6 +164,10 @@ async function bootstrapFirstAdmin() {
   await bootstrapFirstAdmin();
 
   setInterval(() => db.sweep(), 60 * 60 * 1000).unref();
+  // Profile-reminder nudge: daily check, one-time email per artist.
+  setInterval(() => reminders.sendProfileReminders(), 24 * 60 * 60 * 1000).unref();
+  // Run once at startup too, so a fresh deploy doesn't wait a full day.
+  setTimeout(() => reminders.sendProfileReminders(), 30 * 1000).unref();
 
   app.listen(PORT, () => {
     console.log(`kudzu · listening on http://localhost:${PORT}`);
