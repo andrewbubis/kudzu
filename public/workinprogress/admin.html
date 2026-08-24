@@ -94,11 +94,9 @@
 <script src="js/account.js" defer></script>
 <script>
 (function () {
-  var IMAGE_BASE = '/uploads/';
-
   function img(path, alt) {
     if (!path) return '<div style="width:100%;aspect-ratio:1;background:var(--a-bg);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--a-soft);">no image</div>';
-    return '<img src="' + IMAGE_BASE + path + '" alt="' + esc(alt || '') + '" loading="lazy">';
+    return '<img src="' + path + '" alt="' + esc(alt || '') + '" loading="lazy">';
   }
 
   function esc(s) {
@@ -171,7 +169,7 @@
         html += '<p class="adm-section-label" style="margin-top:20px;">Gallery photos (' + photos.length + ')</p>';
         html += '<div class="adm-photos-row">';
         photos.forEach(function (p) {
-          html += '<img src="' + IMAGE_BASE + esc(p.image) + '" alt="' + esc(p.caption || '') + '" loading="lazy">';
+          html += '<img src="' + esc(p.image) + '" alt="' + esc(p.caption || '') + '" loading="lazy">';
         });
         html += '</div>';
       }
