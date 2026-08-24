@@ -30,8 +30,12 @@
   <div class="signin">
     <h1>artist login</h1>
 
+    <label class="remember-row" id="rememberRow">
+      <input type="checkbox" id="rememberMe" name="remember" checked> Stay signed in
+    </label>
+
     <div class="oauth">
-      <a href="/api/auth/google">
+      <a href="/api/auth/google" id="googleBtn">
         <svg viewBox="0 0 48 48" aria-hidden="true">
           <path fill="#4285F4" d="M45.1 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h11.8c-.5 2.7-2 5-4.4 6.6v5.5h7.1c4.1-3.8 6.6-9.4 6.6-16.1z"/>
           <path fill="#34A853" d="M24 46c5.9 0 10.9-2 14.5-5.4l-7.1-5.5c-2 1.3-4.5 2.1-7.4 2.1-5.7 0-10.5-3.8-12.2-9H4.5v5.7C8.1 41.1 15.5 46 24 46z"/>
@@ -60,10 +64,6 @@
 
       <label for="password">password</label>
       <input id="password" name="password" type="password" autocomplete="current-password" required>
-
-      <label class="remember-row">
-        <input type="checkbox" id="rememberMe" name="remember"> Remember me
-      </label>
 
       <button class="acct-btn" type="submit" id="submitBtn">Log in</button>
     </form>
@@ -137,6 +137,16 @@ document.getElementById('loginForm').addEventListener('submit', async function (
     err.hidden = false;
     btn.disabled = false; btn.textContent = 'Log in';
   }
+});
+
+// Wire "Stay signed in" to both login paths.
+// For Google, we set a short-lived cookie before the redirect;
+// the OAuth callback reads it and applies it to the session.
+document.getElementById('googleBtn').addEventListener('click', function () {
+  var remember = document.getElementById('rememberMe').checked;
+  document.cookie = 'kudzu_remember=' + (remember ? '1' : '0') +
+    '; path=/; max-age=600; samesite=lax' +
+    (location.protocol === 'https:' ? '; secure' : '');
 });
 </script>
 <script src="js/nav-auth.js" defer></script>

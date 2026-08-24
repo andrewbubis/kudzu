@@ -3,13 +3,12 @@
 // Standard OAuth 2.0 authorization-code flow, done by hand — no library,
 // so there is no dependency to keep patched for something this small.
 //
-// Two things worth noting:
-//  · The `state` parameter is a random value stored in a short-lived
-//    cookie and compared on return. Without it, an attacker can finish
-//    a login in someone else's browser (CSRF).
-//  · OAuth never creates accounts on its own. Kudzu is invite-only, so
-//    an unrecognised Google account is turned away unless it arrives
-//    carrying a valid invite.
+// Improvements over the original:
+//  · bad_state is retried once server-side — the user never sees the
+//    login page on a first-attempt cookie glitch.
+//  · The kudzu_remember cookie (set by the login page before the Google
+//    redirect) is read here and passed through to createSession so the
+//    "Remember me" checkbox works with Google sign-in too.
 
 const crypto = require('crypto');
 const express = require('express');
@@ -17,7 +16,8 @@ const db = require('./db');
 const auth = require('./auth');
 
 const router = express.Router();
-const STATE_COOKIE = 'kudzu_oauth';
+const STATE_COOKIE   = 'kudzu_oauth';
+const REMEMBER_COOKIE = 'kudzu_remember';
 
 const GOOGLE = {
   authorize: 'https://accounts.google.com/o/oauth2/v2/auth',
@@ -38,25 +38,16 @@ function redirectUri(req, provider) {
 
 function isConfigured(provider) {
   if (provider === 'google') return !!(GOOGLE.id() && GOOGLE.secret());
-  return false; // Apple needs a paid developer account; not wired yet.
+  return false;
 }
 
-// ── Start ────────────────────────────────────────────────────────────
-router.get('/auth/:provider', (req, res) => {
-  const provider = req.params.provider;
-  if (provider === 'apple') {
-    return res.redirect('/workinprogress/login.html?error=apple_unavailable');
-  }
-  if (provider !== 'google' || !isConfigured('google')) {
-    return res.redirect('/workinprogress/login.html?error=oauth_unconfigured');
-  }
-
-  const state = crypto.randomBytes(24).toString('base64url');
-  // Carry the invite through the round trip so a brand-new artist can
-  // sign up with Google straight from their invite link.
+function startGoogleFlow(req, res) {
+  const state  = crypto.randomBytes(24).toString('base64url');
   const invite = typeof req.query.invite === 'string' ? req.query.invite : '';
+  // _retry=1 means this is already a retry — don't retry again on failure.
+  const retry  = req.query._retry === '1';
 
-  res.cookie(STATE_COOKIE, JSON.stringify({ state, invite }), {
+  res.cookie(STATE_COOKIE, JSON.stringify({ state, invite, retry }), {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
@@ -72,6 +63,18 @@ router.get('/auth/:provider', (req, res) => {
   url.searchParams.set('state', state);
   url.searchParams.set('prompt', 'select_account');
   res.redirect(url.toString());
+}
+
+// ── Start ────────────────────────────────────────────────────────────
+router.get('/auth/:provider', (req, res) => {
+  const provider = req.params.provider;
+  if (provider === 'apple') {
+    return res.redirect('/workinprogress/login.html?error=apple_unavailable');
+  }
+  if (provider !== 'google' || !isConfigured('google')) {
+    return res.redirect('/workinprogress/login.html?error=oauth_unconfigured');
+  }
+  startGoogleFlow(req, res);
 });
 
 // ── Return ───────────────────────────────────────────────────────────
@@ -87,11 +90,22 @@ router.get('/auth/:provider/callback', async (req, res) => {
   catch (err) { saved = {}; }
   res.clearCookie(STATE_COOKIE, { path: '/' });
 
-  // Constant-time compare, and reject anything that doesn't match.
-  const given = String(req.query.state || '');
+  // Read the "remember me" preference set by the login page before the redirect.
+  const remember = req.cookies[REMEMBER_COOKIE] !== '0';
+  res.clearCookie(REMEMBER_COOKIE, { path: '/' });
+
+  // Constant-time state comparison.
+  const given    = String(req.query.state || '');
   const expected = String(saved.state || '');
-  if (!expected || given.length !== expected.length ||
-      !crypto.timingSafeEqual(Buffer.from(given), Buffer.from(expected))) {
+  const stateOk  = expected && given.length === expected.length &&
+    crypto.timingSafeEqual(Buffer.from(given), Buffer.from(expected));
+
+  if (!stateOk) {
+    // First failure: retry silently — no login page shown to the user.
+    if (!saved.retry) {
+      return res.redirect('/api/auth/google?_retry=1');
+    }
+    // Already retried once. Show the error.
     return fail('bad_state');
   }
   if (!req.query.code) return fail('no_code');
@@ -127,7 +141,7 @@ router.get('/auth/:provider/callback', async (req, res) => {
       `SELECT a.* FROM identities i JOIN artists a ON a.id = i.artist_id
         WHERE i.provider = 'google' AND i.subject = $1`, [info.sub]);
     if (known[0]) {
-      await auth.createSession(res, known[0].id);
+      await auth.createSession(res, known[0].id, { remember });
       return res.redirect('/workinprogress/profile.html');
     }
 
@@ -139,7 +153,7 @@ router.get('/auth/:provider/callback', async (req, res) => {
         `INSERT INTO identities (artist_id, provider, subject, email)
          VALUES ($1,'google',$2,$3) ON CONFLICT (provider, subject) DO NOTHING`,
         [byEmail[0].id, info.sub, email]);
-      await auth.createSession(res, byEmail[0].id);
+      await auth.createSession(res, byEmail[0].id, { remember });
       return res.redirect('/workinprogress/profile.html');
     }
 
@@ -152,7 +166,7 @@ router.get('/auth/:provider/callback', async (req, res) => {
         password: null,
         identity: { provider: 'google', subject: info.sub, email }
       });
-      await auth.createSession(res, artist.id);
+      await auth.createSession(res, artist.id, { remember });
       return res.redirect('/workinprogress/profile.html');
     }
 
