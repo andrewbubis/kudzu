@@ -12,18 +12,18 @@ const mail = require('./mail');
 
 const router = express.Router();
 
-// geoip-lite bundles MaxMind GeoLite2 — instant local lookup, no API calls.
-let geo = null;
-try { geo = require('geoip-lite'); } catch (_e) { /* not installed yet */ }
-
-function geoLookup(ip) {
-  if (!geo || !ip) return {};
+// Geo lookup via ipwho.is — free, no key, HTTPS, works from Railway servers.
+// Called async after the 204 response so it never delays the page.
+async function geoLookup(ip) {
+  if (!ip) return {};
   try {
-    // Strip IPv6 prefix from mapped IPv4 addresses
-    const clean = ip.replace(/^::ffff:/, '');
-    const r = geo.lookup(clean);
-    if (!r) return {};
-    return { city: r.city || null, region: r.region || null, country: r.country || null };
+    const clean = ip.replace(/^::ffff:/, '').trim();
+    if (!clean || clean === '::1' || clean.startsWith('127.') || clean.startsWith('192.168.')) return {};
+    const r = await fetch(`https://ipwho.is/${encodeURIComponent(clean)}`, { signal: AbortSignal.timeout(3000) });
+    if (!r.ok) return {};
+    const d = await r.json();
+    if (!d.success) return {};
+    return { city: d.city || null, region: d.region || null, country: d.country_code || null };
   } catch (_e) { return {}; }
 }
 
@@ -1461,9 +1461,9 @@ router.post('/track', async (req, res) => {
     const path = String(body.path || '').slice(0, 250);
     const referrer = String(body.referrer || '').slice(0, 500);
     if (!path) return;
-    // Geo lookup — use X-Forwarded-For set by Railway's proxy
+    // Geo lookup runs async — already responded 204 above so this won't delay anything
     const ip = (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.ip || '';
-    const location = geoLookup(ip);
+    const location = await geoLookup(ip);
     await db.query(
       'INSERT INTO page_views (path, referrer, city, region, country) VALUES ($1,$2,$3,$4,$5)',
       [path, referrer, location.city || null, location.region || null, location.country || null]
