@@ -56,6 +56,22 @@
 .adm-photos-row img { width: 80px; height: 80px; object-fit: cover; border-radius: 4px; border: 1px solid var(--a-line); }
 .adm-link { font-size: 12px; color: var(--a-link); text-decoration: underline; }
 .adm-loading { color: var(--a-soft); font-size: 13px; font-style: italic; }
+/* analytics panel */
+.adm-analytics { background: var(--a-bg); border: 1px solid var(--a-line); border-radius: 8px; padding: 20px 24px; margin-bottom: 28px; }
+.adm-analytics h2 { font-size: 14px; text-transform: uppercase; letter-spacing: .08em; color: var(--a-soft); margin: 0 0 16px; }
+.adm-an-stats { display: flex; gap: 28px; flex-wrap: wrap; margin-bottom: 20px; }
+.adm-an-stat .n { display: block; font-size: 26px; font-weight: 700; line-height: 1; }
+.adm-an-stat .l { display: block; font-size: 11px; text-transform: uppercase; letter-spacing:.07em; color: var(--a-soft); margin-top: 3px; }
+.adm-sparkline { display: flex; align-items: flex-end; gap: 3px; height: 40px; margin-bottom: 20px; }
+.adm-spark-bar { flex: 1; min-width: 4px; background: var(--a-link); border-radius: 2px 2px 0 0; opacity: 0.7; }
+.adm-spark-bar:hover { opacity: 1; }
+.adm-top-pages { font-size: 12px; }
+.adm-top-pages table { width: 100%; border-collapse: collapse; }
+.adm-top-pages td, .adm-top-pages th { padding: 4px 8px; text-align: left; border-bottom: 1px solid var(--a-line); }
+.adm-top-pages th { font-size: 10px; text-transform: uppercase; letter-spacing: .07em; color: var(--a-soft); border-bottom: 2px solid var(--a-line); }
+.adm-top-pages .views-col { text-align: right; font-weight: 600; white-space: nowrap; }
+.adm-top-pages .bar-col { width: 100px; }
+.adm-page-bar { height: 6px; background: var(--a-link); border-radius: 3px; opacity: 0.6; }
 /* artist detail header */
 .adm-artist-header { display: flex; gap: 20px; align-items: flex-start; margin-bottom: 20px; }
 .adm-artist-avatar { width: 72px; height: 72px; border-radius: 50%; object-fit: cover; border: 1px solid var(--a-line); flex-shrink: 0; background: var(--a-bg); }
@@ -107,6 +123,12 @@
   <button class="nav-toggle" type="button" aria-expanded="false">Menu</button>
 </header>
 
+<div class="adm" id="analyticsPanel" style="display:none;">
+  <div class="adm-analytics">
+    <h2>Site Analytics — last 30 days</h2>
+    <div id="analyticsContent"><p class="adm-loading">Loading analytics…</p></div>
+  </div>
+</div>
 <main class="adm" id="main">
   <p style="color:var(--a-soft);font-style:italic;">Loading…</p>
 </main>
@@ -333,6 +355,58 @@
 
       document.getElementById('main').innerHTML = html;
 
+      // Load analytics panel
+      document.getElementById('analyticsPanel').style.display = 'block';
+      (async function loadAnalytics() {
+        try {
+          var ar = await fetch('/api/admin/analytics', { credentials: 'same-origin' });
+          if (!ar.ok) throw new Error();
+          var an = await ar.json();
+          var t = an.totals || {};
+          var topPages = an.topPages || [];
+          var daily = an.daily || [];
+          var maxViews = topPages[0] ? Number(topPages[0].views) : 1;
+          var maxDay = daily.reduce(function(m,d){ return Math.max(m, Number(d.views)); }, 1);
+
+          var html = '<div class="adm-an-stats">';
+          html += '<div class="adm-an-stat"><span class="n">' + (t.total || 0) + '</span><span class="l">All time</span></div>';
+          html += '<div class="adm-an-stat"><span class="n">' + (t.last_30d || 0) + '</span><span class="l">Last 30 days</span></div>';
+          html += '<div class="adm-an-stat"><span class="n">' + (t.last_7d || 0) + '</span><span class="l">Last 7 days</span></div>';
+          html += '<div class="adm-an-stat"><span class="n">' + (t.today || 0) + '</span><span class="l">Today</span></div>';
+          html += '</div>';
+
+          // Sparkline (last 30 days, one bar per day)
+          if (daily.length) {
+            html += '<div class="adm-sparkline" title="Daily views, last 30 days">';
+            daily.forEach(function(d) {
+              var pct = Math.max(4, Math.round(Number(d.views) / maxDay * 100));
+              var label = new Date(d.day).toLocaleDateString('en-US',{month:'short',day:'numeric'}) + ': ' + d.views + ' views';
+              html += '<div class="adm-spark-bar" style="height:' + pct + '%" title="' + esc(label) + '"></div>';
+            });
+            html += '</div>';
+          }
+
+          // Top pages table
+          if (topPages.length) {
+            html += '<div class="adm-top-pages"><table><thead><tr><th>Page</th><th class="bar-col"></th><th class="views-col">Views</th></tr></thead><tbody>';
+            topPages.forEach(function(p) {
+              var pct = Math.round(Number(p.views) / maxViews * 100);
+              var label = p.path.replace('/workinprogress/','').replace('.html','');
+              html += '<tr><td>' + esc(label) + '</td>' +
+                '<td class="bar-col"><div class="adm-page-bar" style="width:' + pct + '%"></div></td>' +
+                '<td class="views-col">' + p.views + '</td></tr>';
+            });
+            html += '</tbody></table></div>';
+          } else {
+            html += '<p class="adm-empty">No page views recorded yet. Views appear here once artists and visitors start browsing.</p>';
+          }
+
+          document.getElementById('analyticsContent').innerHTML = html;
+        } catch(_e) {
+          document.getElementById('analyticsContent').innerHTML = '<p class="adm-empty">Analytics unavailable.</p>';
+        }
+      })();
+
       document.getElementById('main').addEventListener('click', function (e) {
         var row = e.target.closest('.adm-artist-row');
         if (!row) return;
@@ -351,5 +425,6 @@
   });
 })();
 </script>
+<script src="js/track.js" defer></script>
 </body>
 </html>

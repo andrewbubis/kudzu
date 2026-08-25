@@ -1432,4 +1432,66 @@ router.use((err, _req, res, _next) => {
   res.status(500).json({ error: 'server_error' });
 });
 
+
+// ── Page-view tracker (public, no auth) ─────────────────────────────
+// Receives a tiny beacon from every page. Skips obvious bots.
+// Responds immediately (204) before touching the database.
+router.post('/track', async (req, res) => {
+  res.sendStatus(204);
+  try {
+    const ua = req.get('user-agent') || '';
+    if (/bot|crawl|spider|slurp|headless|prerender|google|bing|yandex|baidu|semrush|ahrefs/i.test(ua)) return;
+    if (!db.isReady()) return;
+    const body = req.body || {};
+    const path = String(body.path || '').slice(0, 250);
+    const referrer = String(body.referrer || '').slice(0, 500);
+    if (!path) return;
+    await db.query('INSERT INTO page_views (path, referrer) VALUES ($1, $2)', [path, referrer]);
+  } catch (_e) { /* silent — never block the page */ }
+});
+
+// ── Admin analytics ─────────────────────────────────────────────────
+router.get('/admin/analytics', auth.requireArtist, auth.requireAdmin, async (_req, res) => {
+  try {
+    const [totals, topPages, daily, artistViews] = await Promise.all([
+      db.query(`
+        SELECT
+          count(*)                                                       AS total,
+          count(*) FILTER (WHERE created_at > now() - interval '7 days')  AS last_7d,
+          count(*) FILTER (WHERE created_at > now() - interval '30 days') AS last_30d,
+          count(*) FILTER (WHERE created_at > now() - interval '1 day')   AS today
+        FROM page_views`),
+      db.query(`
+        SELECT path, count(*) AS views
+          FROM page_views
+         WHERE created_at > now() - interval '30 days'
+         GROUP BY path
+         ORDER BY views DESC
+         LIMIT 20`),
+      db.query(`
+        SELECT date_trunc('day', created_at)::date AS day, count(*) AS views
+          FROM page_views
+         WHERE created_at > now() - interval '30 days'
+         GROUP BY day
+         ORDER BY day`),
+      db.query(`
+        SELECT path, count(*) AS views
+          FROM page_views
+         WHERE (path LIKE '%/artist-%' OR path LIKE '%/workinprogress/artist-%')
+           AND created_at > now() - interval '30 days'
+         GROUP BY path
+         ORDER BY views DESC`)
+    ]);
+    res.json({
+      totals: totals.rows[0],
+      topPages: topPages.rows,
+      daily: daily.rows,
+      artistViews: artistViews.rows
+    });
+  } catch (err) {
+    console.error('analytics failed:', err.message);
+    res.status(500).json({ error: 'server_error' });
+  }
+});
+
 module.exports = router;

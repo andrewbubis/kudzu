@@ -625,3 +625,18 @@ END $$;
 
 -- Track when the one-time incomplete-profile reminder was sent to an artist.
 ALTER TABLE artists ADD COLUMN IF NOT EXISTS profile_reminder_sent_at timestamptz;
+
+-- ── Page views ───────────────────────────────────────────────────────
+-- Lightweight first-party analytics. No cookies, no fingerprinting —
+-- just a path and an optional referrer, recorded each time the tracker
+-- fires. Admin-only queries aggregate these; they are never exposed
+-- publicly.
+CREATE TABLE IF NOT EXISTS page_views (
+  id          bigserial PRIMARY KEY,
+  path        text NOT NULL,
+  referrer    text,
+  created_at  timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS page_views_path_idx ON page_views (path, created_at DESC);
+CREATE INDEX IF NOT EXISTS page_views_created_at_idx ON page_views (created_at DESC);
