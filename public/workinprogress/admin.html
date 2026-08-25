@@ -227,6 +227,8 @@
       html += '<div class="adm-ps"><span class="n">' + (totalValue ? '$' + (totalValue/100).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g,',') : '—') + '</span><span class="l">Portfolio Value</span></div>';
       html += '<div class="adm-ps"><span class="n">' + photos.length + '</span><span class="l">Studio Photos</span></div>';
       html += '<div class="adm-ps"><span class="n">' + books.length + '</span><span class="l">Books</span></div>';
+      var pgViews = (window._kudzuArtistViews || {})[a.slug] || 0;
+      html += '<div class="adm-ps"><span class="n">' + (pgViews || '—') + '</span><span class="l">Page Views <span style="font-weight:400;font-size:9px;">(30d)</span></span></div>';
       html += '</div>';
 
       // ── Bio ────────────────────────────────────────────────────────
@@ -346,6 +348,7 @@
               '<div><strong>' + a.published + '</strong> <span>pub</span></div>' +
               '<div><strong>' + a.drafts + '</strong> <span>draft</span></div>' +
               '<div><strong>' + a.sold + '</strong> <span>sold</span></div>' +
+              '<div><span id="av-' + esc(a.slug) + '" title="page views last 30 days" style="display:inline-flex;align-items:center;gap:3px;cursor:default;"><span style="font-size:11px;opacity:.55;">👁</span> <strong>—</strong> <span>views</span></span></div>' +
             '</div>' +
             '<span class="adm-toggle">▾</span>' +
           '</div>' +
@@ -402,6 +405,24 @@
           }
 
           document.getElementById('analyticsContent').innerHTML = html;
+
+          // Expose for use in loadDetail
+          window._kudzuArtistViews = {};
+          (an.artistViews || []).forEach(function(av) {
+            var m2 = av.path.match(/artist-([^/]+)\.html/);
+            if (m2) window._kudzuArtistViews[m2[1]] = Number(av.views);
+          });
+
+          // Fill per-artist view counts into the roster cards
+          (an.artistViews || []).forEach(function(av) {
+            // Extract slug from path: /workinprogress/artist-<slug>.html
+            var m = av.path.match(/artist-([^/]+)\.html/);
+            if (!m) return;
+            var slug = m[1];
+            var el = document.getElementById('av-' + slug);
+            if (!el) return;
+            el.querySelector('strong').textContent = av.views;
+          });
         } catch(_e) {
           document.getElementById('analyticsContent').innerHTML = '<p class="adm-empty">Analytics unavailable.</p>';
         }
