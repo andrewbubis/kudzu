@@ -1258,18 +1258,24 @@ router.get('/admin/roster', auth.requireArtist, auth.requireAdmin, async (_req, 
 router.get('/admin/artists/:id/works', auth.requireArtist, auth.requireAdmin, async (req, res) => {
   try {
     const id = req.params.id;
-    const [artist, works, photos, books] = await Promise.all([
+    const [artist, works, photos, books, agreements] = await Promise.all([
       db.query('SELECT * FROM artists WHERE id = $1', [id]),
       db.query('SELECT * FROM artworks WHERE artist_id = $1 ORDER BY position, created_at', [id]),
       db.query('SELECT * FROM artist_photos WHERE artist_id = $1 ORDER BY position, created_at', [id]),
-      db.query('SELECT * FROM books WHERE artist_id = $1 ORDER BY position, created_at', [id])
+      db.query('SELECT * FROM books WHERE artist_id = $1 ORDER BY position, created_at', [id]),
+      db.query('SELECT version, legal_name, address, signed_at FROM agreements WHERE artist_id = $1 ORDER BY signed_at DESC', [id])
+        .catch(() => ({ rows: [] }))
     ]);
     if (!artist.rows[0]) return res.status(404).json({ error: 'not_found' });
     res.json({
       artist: publicArtist(artist.rows[0]),
       works: works.rows.map(publicWork),
       photos: photos.rows.map(publicPhoto),
-      books: books.rows.map(publicBook)
+      books: books.rows.map(publicBook),
+      agreements: agreements.rows.map((s) => ({
+        version: s.version, legalName: s.legal_name,
+        address: s.address, signedAt: s.signed_at
+      }))
     });
   } catch (err) {
     console.error('admin artist works failed:', err.message);

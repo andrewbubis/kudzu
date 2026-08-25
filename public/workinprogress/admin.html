@@ -56,6 +56,26 @@
 .adm-photos-row img { width: 80px; height: 80px; object-fit: cover; border-radius: 4px; border: 1px solid var(--a-line); }
 .adm-link { font-size: 12px; color: var(--a-link); text-decoration: underline; }
 .adm-loading { color: var(--a-soft); font-size: 13px; font-style: italic; }
+/* artist detail header */
+.adm-artist-header { display: flex; gap: 20px; align-items: flex-start; margin-bottom: 20px; }
+.adm-artist-avatar { width: 72px; height: 72px; border-radius: 50%; object-fit: cover; border: 1px solid var(--a-line); flex-shrink: 0; background: var(--a-bg); }
+.adm-artist-header-info { flex: 1; }
+.adm-artist-header-info h3 { margin: 0 0 4px; font-size: 16px; }
+.adm-artist-header-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+/* cv block */
+.adm-cv-text { font-size: 12px; line-height: 1.65; white-space: pre-wrap; color: var(--a-ink); background: var(--a-bg); border: 1px solid var(--a-line); border-radius: 4px; padding: 12px; max-height: 200px; overflow-y: auto; margin: 0 0 20px; }
+/* contract badge */
+.adm-contract { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; border: 1px solid; padding: 3px 10px; border-radius: 20px; margin-bottom: 16px; }
+.adm-contract.signed { color: #2e7d32; border-color: #a5d6a7; background: #f1f8f1; }
+.adm-contract.unsigned { color: #b71c1c; border-color: #ef9a9a; background: #fdf1f1; }
+/* stats row */
+.adm-portfolio-stats { display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 20px; padding: 12px 16px; background: var(--a-bg); border-radius: 6px; border: 1px solid var(--a-line); }
+.adm-ps { text-align: center; }
+.adm-ps .n { display: block; font-size: 18px; font-weight: 700; line-height: 1; }
+.adm-ps .l { display: block; font-size: 10px; text-transform: uppercase; letter-spacing: .07em; color: var(--a-soft); margin-top: 2px; }
+/* work card price */
+.adm-work-price { font-weight: 600; color: var(--a-ink); }
+.adm-work-dim { color: var(--a-soft); font-size: 11px; }
 </style>
 </head>
 <body>
@@ -129,33 +149,92 @@
       var works = data.works || [];
       var photos = data.photos || [];
       var books = data.books || [];
+      var agreements = data.agreements || [];
 
-      var html = '<div class="adm-detail-meta">';
+      var html = '';
+
+      // ── Artist header (photo + key links) ─────────────────────────
+      html += '<div class="adm-artist-header">';
+      if (a.photo) {
+        html += '<img class="adm-artist-avatar" src="' + esc(a.photo) + '" alt="' + esc(a.name) + '">';
+      } else {
+        html += '<div class="adm-artist-avatar" style="display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--a-soft);">no photo</div>';
+      }
+      html += '<div class="adm-artist-header-info">';
+      html += '<h3>' + esc(a.name) + '</h3>';
+      html += '<div style="font-size:12px;color:var(--a-soft);">' + esc(a.email) + '</div>';
+      html += '<div class="adm-artist-header-actions">';
+      html += '<a class="adm-link" href="/workinprogress/' + esc(a.slug) + '.html" target="_blank">public page ↗</a>';
+      html += ' &ensp;<a class="adm-link" href="/workinprogress/profile.html" target="_blank">edit profile</a>';
+      if (a.link) html += ' &ensp;<a class="adm-link" href="' + esc(a.link) + '" target="_blank" rel="noopener">website ↗</a>';
+      html += '</div></div></div>';
+
+      // ── Profile details table ──────────────────────────────────────
+      html += '<div class="adm-detail-meta">';
       html += '<div><dt>Joined</dt><dd>' + esc(fmt(a.joinedAt || a.createdAt)) + '</dd></div>';
-      html += '<div><dt>Email</dt><dd>' + esc(a.email || '—') + '</dd></div>';
       html += '<div><dt>Location</dt><dd>' + esc([a.worksCity, a.worksCountry].filter(Boolean).join(', ') || '—') + '</dd></div>';
-      html += '<div><dt>Link</dt><dd>' + (a.link ? '<a class="adm-link" href="' + esc(a.link) + '" target="_blank" rel="noopener">' + esc(a.link) + '</a>' : '—') + '</dd></div>';
-      html += '<div><dt>Public page</dt><dd><a class="adm-link" href="/workinprogress/' + esc(a.slug) + '.html" target="_blank">' + esc(a.slug) + '</a></dd></div>';
+      if (a.bornYear || a.bornCountry) {
+        html += '<div><dt>Born</dt><dd>' + esc([a.bornYear, a.bornCountry].filter(Boolean).join(', ')) + '</dd></div>';
+      }
+      if (a.notifyPhone) {
+        html += '<div><dt>Phone</dt><dd>' + esc(a.notifyPhone) + ' <span style="color:var(--a-soft);font-size:11px;">(' + esc(a.notifyChannel || 'email') + ')</span></dd></div>';
+      }
+      html += '<div><dt>Stripe</dt><dd>' + (a.stripeConnected ? '<span style="color:#2e7d32;">✓ connected</span>' : '<span style="color:#b71c1c;">✗ not connected</span>') + '</dd></div>';
       html += '</div>';
 
-      // Bio
+      // ── Contract / agreement status ────────────────────────────────
+      if (agreements.length) {
+        var ag = agreements[0];
+        html += '<div class="adm-contract signed">✓ Contract signed — ' + esc(ag.version || 'v1') + ' · ' + esc(fmt(ag.signedAt)) + ' · ' + esc(ag.legalName || a.name) + '</div>';
+        if (ag.address) {
+          html += '<p style="font-size:12px;color:var(--a-soft);margin:0 0 16px;padding-left:2px;">' + esc(ag.address).replace(/\n/g,'<br>') + '</p>';
+        }
+      } else {
+        html += '<div class="adm-contract unsigned">✗ No contract on file</div><br>';
+      }
+
+      // ── Portfolio stats ────────────────────────────────────────────
+      var totalValue = works.reduce(function(s,w){ return s + (w.priceCents || 0); }, 0);
+      var forSale = works.filter(function(w){ return w.forSale && w.status !== 'sold'; }).length;
+      var hasDims = works.filter(function(w){ return w.shipWeightOz; }).length;
+      html += '<div class="adm-portfolio-stats">';
+      html += '<div class="adm-ps"><span class="n">' + works.length + '</span><span class="l">Works</span></div>';
+      html += '<div class="adm-ps"><span class="n">' + forSale + '</span><span class="l">For Sale</span></div>';
+      html += '<div class="adm-ps"><span class="n">' + works.filter(function(w){return w.status==='published';}).length + '</span><span class="l">Published</span></div>';
+      html += '<div class="adm-ps"><span class="n">' + works.filter(function(w){return w.status==='sold';}).length + '</span><span class="l">Sold</span></div>';
+      html += '<div class="adm-ps"><span class="n">' + (totalValue ? '$' + (totalValue/100).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g,',') : '—') + '</span><span class="l">Portfolio Value</span></div>';
+      html += '<div class="adm-ps"><span class="n">' + photos.length + '</span><span class="l">Studio Photos</span></div>';
+      html += '<div class="adm-ps"><span class="n">' + books.length + '</span><span class="l">Books</span></div>';
+      html += '</div>';
+
+      // ── Bio ────────────────────────────────────────────────────────
+      html += '<p class="adm-section-label">Bio</p>';
       if (a.bio && a.bio.trim()) {
-        html += '<p class="adm-section-label">Bio</p>';
-        html += '<p style="font-size:13px;line-height:1.6;margin:0 0 20px;max-width:600px;">' + esc(a.bio).replace(/\n/g,'<br>') + '</p>';
+        html += '<p style="font-size:13px;line-height:1.6;margin:0 0 20px;max-width:640px;">' + esc(a.bio).replace(/\n/g,'<br>') + '</p>';
       } else {
         html += '<p class="adm-empty" style="margin-bottom:20px;">No bio entered.</p>';
       }
 
-      // Works
+      // ── CV / Artist Statement ──────────────────────────────────────
+      html += '<p class="adm-section-label">CV / Artist Statement</p>';
+      if (a.cv && a.cv.trim()) {
+        html += '<pre class="adm-cv-text">' + esc(a.cv) + '</pre>';
+      } else {
+        html += '<p class="adm-empty" style="margin-bottom:20px;">No CV entered.</p>';
+      }
+
+      // ── Artworks ──────────────────────────────────────────────────
       html += '<p class="adm-section-label">Artworks (' + works.length + ')</p>';
       if (works.length) {
         html += '<div class="adm-works-grid">';
         works.forEach(function (w) {
+          var meta = [w.year, w.medium].filter(Boolean).join(' · ');
           html += '<div class="adm-work">' + img(w.image, w.title) +
             '<div class="adm-work-info">' +
               '<div class="adm-work-title">' + esc(w.title || 'Untitled') + '</div>' +
-              '<div class="adm-work-meta">' + esc([w.year, w.medium].filter(Boolean).join(' · ')) + '</div>' +
-              '<div class="adm-work-meta">' + price(w.priceCents) + '</div>' +
+              (meta ? '<div class="adm-work-meta">' + esc(meta) + '</div>' : '') +
+              (w.dimensions ? '<div class="adm-work-dim">' + esc(w.dimensions) + '</div>' : '') +
+              '<div class="adm-work-meta adm-work-price">' + price(w.priceCents) + (w.forSale ? '' : ' <span style="color:var(--a-soft);font-weight:400;">(not for sale)</span>') + '</div>' +
               '<span class="adm-work-status status-' + esc(w.status) + '">' + esc(w.status) + '</span>' +
             '</div></div>';
         });
@@ -164,25 +243,28 @@
         html += '<p class="adm-empty">No artworks uploaded yet.</p>';
       }
 
-      // Gallery photos
+      // ── Studio / Gallery photos ────────────────────────────────────
       if (photos.length) {
-        html += '<p class="adm-section-label" style="margin-top:20px;">Gallery photos (' + photos.length + ')</p>';
+        html += '<p class="adm-section-label" style="margin-top:24px;">Studio & Gallery Photos (' + photos.length + ')</p>';
         html += '<div class="adm-photos-row">';
         photos.forEach(function (p) {
-          html += '<img src="' + esc(p.image) + '" alt="' + esc(p.caption || '') + '" loading="lazy">';
+          html += '<a href="' + esc(p.image) + '" target="_blank" rel="noopener">' +
+            '<img src="' + esc(p.image) + '" alt="' + esc(p.caption || '') + '" loading="lazy" title="' + esc(p.caption || 'Studio photo') + '"></a>';
         });
         html += '</div>';
       }
 
-      // Books
+      // ── Books / Publications ───────────────────────────────────────
       if (books.length) {
-        html += '<p class="adm-section-label" style="margin-top:20px;">Books (' + books.length + ')</p>';
+        html += '<p class="adm-section-label" style="margin-top:24px;">Books & Publications (' + books.length + ')</p>';
         html += '<div class="adm-works-grid">';
         books.forEach(function (b) {
           html += '<div class="adm-work">' + img(b.image, b.title) +
             '<div class="adm-work-info">' +
               '<div class="adm-work-title">' + esc(b.title || 'Untitled') + '</div>' +
               '<div class="adm-work-meta">' + esc([b.year, b.publisher].filter(Boolean).join(' · ')) + '</div>' +
+              (b.edition ? '<div class="adm-work-dim">' + esc(b.edition) + '</div>' : '') +
+              (b.priceCents ? '<div class="adm-work-meta adm-work-price">' + price(b.priceCents) + '</div>' : '') +
             '</div></div>';
         });
         html += '</div>';
