@@ -57,21 +57,42 @@
 .adm-link { font-size: 12px; color: var(--a-link); text-decoration: underline; }
 .adm-loading { color: var(--a-soft); font-size: 13px; font-style: italic; }
 /* analytics panel */
-.adm-analytics { background: var(--a-bg); border: 1px solid var(--a-line); border-radius: 8px; padding: 20px 24px; margin-bottom: 28px; }
-.adm-analytics h2 { font-size: 14px; text-transform: uppercase; letter-spacing: .08em; color: var(--a-soft); margin: 0 0 16px; }
-.adm-an-stats { display: flex; gap: 28px; flex-wrap: wrap; margin-bottom: 20px; }
-.adm-an-stat .n { display: block; font-size: 26px; font-weight: 700; line-height: 1; }
-.adm-an-stat .l { display: block; font-size: 11px; text-transform: uppercase; letter-spacing:.07em; color: var(--a-soft); margin-top: 3px; }
-.adm-sparkline { display: flex; align-items: flex-end; gap: 3px; height: 40px; margin-bottom: 20px; }
-.adm-spark-bar { flex: 1; min-width: 4px; background: var(--a-link); border-radius: 2px 2px 0 0; opacity: 0.7; }
+/* ── Analytics summary bar ── */
+.adm-an-bar { display: flex; align-items: center; gap: 0; background: var(--a-bg); border: 1px solid var(--a-line); border-radius: 8px; padding: 14px 20px; margin-bottom: 12px; flex-wrap: wrap; gap: 4px; }
+.adm-an-bar-stats { display: flex; gap: 24px; flex: 1; flex-wrap: wrap; }
+.adm-an-stat { display: flex; flex-direction: column; }
+.adm-an-stat .n { font-size: 22px; font-weight: 700; line-height: 1; }
+.adm-an-stat .l { font-size: 10px; text-transform: uppercase; letter-spacing:.07em; color: var(--a-soft); margin-top: 2px; }
+.adm-an-bar-spark { display: flex; align-items: flex-end; gap: 2px; height: 28px; width: 80px; flex-shrink: 0; margin: 0 16px; }
+.adm-an-bar-spark .b { flex: 1; background: var(--a-link); border-radius: 1px 1px 0 0; opacity: 0.55; min-width: 2px; }
+.adm-an-toggle { font-size: 12px; color: var(--a-link); background: none; border: 1px solid var(--a-line); border-radius: 4px; padding: 5px 12px; cursor: pointer; white-space: nowrap; flex-shrink: 0; }
+.adm-an-toggle:hover { background: var(--a-line); }
+/* ── Analytics detail panel ── */
+.adm-an-detail { display: none; background: var(--a-bg); border: 1px solid var(--a-line); border-radius: 8px; padding: 20px 24px; margin-bottom: 20px; }
+.adm-an-detail.open { display: block; }
+.adm-an-section { margin-bottom: 24px; }
+.adm-an-section:last-child { margin-bottom: 0; }
+.adm-an-section-title { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--a-soft); margin: 0 0 12px; }
+.adm-sparkline { display: flex; align-items: flex-end; gap: 3px; height: 52px; }
+.adm-spark-bar { flex: 1; min-width: 3px; background: var(--a-link); border-radius: 2px 2px 0 0; opacity: 0.65; cursor: default; }
 .adm-spark-bar:hover { opacity: 1; }
+/* filter tabs */
+.adm-an-tabs { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
+.adm-an-tab { font-size: 12px; padding: 4px 12px; border: 1px solid var(--a-line); border-radius: 20px; background: none; cursor: pointer; color: var(--a-soft); }
+.adm-an-tab.active { background: var(--a-ink); color: #fff; border-color: var(--a-ink); }
+/* top pages table */
 .adm-top-pages { font-size: 12px; }
 .adm-top-pages table { width: 100%; border-collapse: collapse; }
-.adm-top-pages td, .adm-top-pages th { padding: 4px 8px; text-align: left; border-bottom: 1px solid var(--a-line); }
+.adm-top-pages td, .adm-top-pages th { padding: 5px 8px; text-align: left; border-bottom: 1px solid var(--a-line); }
 .adm-top-pages th { font-size: 10px; text-transform: uppercase; letter-spacing: .07em; color: var(--a-soft); border-bottom: 2px solid var(--a-line); }
-.adm-top-pages .views-col { text-align: right; font-weight: 600; white-space: nowrap; }
-.adm-top-pages .bar-col { width: 100px; }
-.adm-page-bar { height: 6px; background: var(--a-link); border-radius: 3px; opacity: 0.6; }
+.adm-top-pages .views-col { text-align: right; font-weight: 600; white-space: nowrap; width: 60px; }
+.adm-top-pages .bar-col { width: 120px; padding-right: 12px; }
+.adm-page-bar { height: 6px; background: var(--a-link); border-radius: 3px; opacity: 0.55; }
+/* artist views list */
+.adm-av-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px,1fr)); gap: 8px; }
+.adm-av-item { display: flex; justify-content: space-between; align-items: center; background: #fff; border: 1px solid var(--a-line); border-radius: 4px; padding: 8px 12px; font-size: 12px; }
+.adm-av-item .name { font-weight: 600; }
+.adm-av-item .cnt { color: var(--a-soft); white-space: nowrap; }
 /* artist detail header */
 .adm-artist-header { display: flex; gap: 20px; align-items: flex-start; margin-bottom: 20px; }
 .adm-artist-avatar { width: 72px; height: 72px; border-radius: 50%; object-fit: cover; border: 1px solid var(--a-line); flex-shrink: 0; background: var(--a-bg); }
@@ -124,9 +145,15 @@
 </header>
 
 <div class="adm" id="analyticsPanel" style="display:none;">
-  <div class="adm-analytics">
-    <h2>Site Analytics — last 30 days</h2>
-    <div id="analyticsContent"><p class="adm-loading">Loading analytics…</p></div>
+  <!-- Summary bar (always visible) -->
+  <div class="adm-an-bar" id="anBar">
+    <div class="adm-an-bar-stats" id="anStats"><p class="adm-loading" style="margin:0;">Loading analytics…</p></div>
+    <div class="adm-an-bar-spark" id="anMiniSpark"></div>
+    <button class="adm-an-toggle" id="anToggle" onclick="(function(){var d=document.getElementById('anDetail');var open=d.classList.toggle('open');document.getElementById('anToggle').textContent=open?'▴ Less detail':'▾ More detail';})()">▾ More detail</button>
+  </div>
+  <!-- Expandable detail panel -->
+  <div class="adm-an-detail" id="anDetail">
+    <div id="analyticsContent"><p class="adm-loading">Loading…</p></div>
   </div>
 </div>
 <main class="adm" id="main">
@@ -368,63 +395,120 @@
           var t = an.totals || {};
           var topPages = an.topPages || [];
           var daily = an.daily || [];
+          var artistViews = an.artistViews || [];
           var maxViews = topPages[0] ? Number(topPages[0].views) : 1;
           var maxDay = daily.reduce(function(m,d){ return Math.max(m, Number(d.views)); }, 1);
 
-          var html = '<div class="adm-an-stats">';
-          html += '<div class="adm-an-stat"><span class="n">' + (t.total || 0) + '</span><span class="l">All time</span></div>';
-          html += '<div class="adm-an-stat"><span class="n">' + (t.last_30d || 0) + '</span><span class="l">Last 30 days</span></div>';
-          html += '<div class="adm-an-stat"><span class="n">' + (t.last_7d || 0) + '</span><span class="l">Last 7 days</span></div>';
-          html += '<div class="adm-an-stat"><span class="n">' + (t.today || 0) + '</span><span class="l">Today</span></div>';
-          html += '</div>';
+          // ── Summary bar ───────────────────────────────────────────
+          var statsHtml = '';
+          statsHtml += '<div class="adm-an-stat"><span class="n">' + (t.today || 0) + '</span><span class="l">Today</span></div>';
+          statsHtml += '<div class="adm-an-stat"><span class="n">' + (t.last_7d || 0) + '</span><span class="l">Last 7 days</span></div>';
+          statsHtml += '<div class="adm-an-stat"><span class="n">' + (t.last_30d || 0) + '</span><span class="l">Last 30 days</span></div>';
+          statsHtml += '<div class="adm-an-stat"><span class="n">' + (t.total || 0) + '</span><span class="l">All time</span></div>';
+          document.getElementById('anStats').innerHTML = statsHtml;
 
-          // Sparkline (last 30 days, one bar per day)
-          if (daily.length) {
-            html += '<div class="adm-sparkline" title="Daily views, last 30 days">';
-            daily.forEach(function(d) {
-              var pct = Math.max(4, Math.round(Number(d.views) / maxDay * 100));
-              var label = new Date(d.day).toLocaleDateString('en-US',{month:'short',day:'numeric'}) + ': ' + d.views + ' views';
-              html += '<div class="adm-spark-bar" style="height:' + pct + '%" title="' + esc(label) + '"></div>';
-            });
-            html += '</div>';
-          }
+          // Mini sparkline in summary bar
+          var miniHtml = '';
+          daily.forEach(function(d) {
+            var pct = Math.max(6, Math.round(Number(d.views) / maxDay * 100));
+            var label = new Date(d.day).toLocaleDateString('en-US',{month:'short',day:'numeric'}) + ': ' + d.views;
+            miniHtml += '<div class="b" style="height:' + pct + '%" title="' + esc(label) + '"></div>';
+          });
+          document.getElementById('anMiniSpark').innerHTML = miniHtml;
 
-          // Top pages table
-          if (topPages.length) {
-            html += '<div class="adm-top-pages"><table><thead><tr><th>Page</th><th class="bar-col"></th><th class="views-col">Views</th></tr></thead><tbody>';
-            topPages.forEach(function(p) {
-              var pct = Math.round(Number(p.views) / maxViews * 100);
-              var label = p.path.replace('/workinprogress/','').replace('.html','');
-              html += '<tr><td>' + esc(label) + '</td>' +
+          // ── Detail panel ──────────────────────────────────────────
+          // Categorise pages
+          var CATS = {
+            artist: function(p){ return /\/artist-/.test(p); },
+            public: function(p){ return /\/(index|gallery|artists|printshop|contact|grants|print-)/.test(p); },
+            dashboard: function(p){ return /\/(profile|sales|inquiries|documents|settings|admin|invites)/.test(p); }
+          };
+
+          function buildTable(pages) {
+            if (!pages.length) return '<p class="adm-empty" style="margin:0;">No views in this category yet.</p>';
+            var maxV = Number(pages[0].views) || 1;
+            var h = '<div class="adm-top-pages"><table><thead><tr><th>Page</th><th class="bar-col"></th><th class="views-col">Views (30d)</th></tr></thead><tbody>';
+            pages.forEach(function(p) {
+              var pct = Math.round(Number(p.views) / maxV * 100);
+              var label = p.path.replace('/workinprogress/','').replace('.html','') || p.path;
+              h += '<tr><td>' + esc(label) + '</td>' +
                 '<td class="bar-col"><div class="adm-page-bar" style="width:' + pct + '%"></div></td>' +
                 '<td class="views-col">' + p.views + '</td></tr>';
             });
-            html += '</tbody></table></div>';
-          } else {
-            html += '<p class="adm-empty">No page views recorded yet. Views appear here once artists and visitors start browsing.</p>';
+            h += '</tbody></table></div>';
+            return h;
           }
 
-          document.getElementById('analyticsContent').innerHTML = html;
+          function filterPages(cat) {
+            if (cat === 'all') return topPages;
+            return topPages.filter(function(p){ return CATS[cat] && CATS[cat](p.path); });
+          }
 
-          // Expose for use in loadDetail
+          var detail = '';
+
+          // Sparkline section
+          detail += '<div class="adm-an-section">';
+          detail += '<p class="adm-an-section-title">Daily traffic — last 30 days</p>';
+          detail += '<div class="adm-sparkline">';
+          daily.forEach(function(d) {
+            var pct = Math.max(4, Math.round(Number(d.views) / maxDay * 100));
+            var label = new Date(d.day).toLocaleDateString('en-US',{month:'short',day:'numeric'}) + ': ' + d.views + ' views';
+            detail += '<div class="adm-spark-bar" style="height:' + pct + '%" title="' + esc(label) + '"></div>';
+          });
+          detail += '</div></div>';
+
+          // Top pages with filter tabs
+          detail += '<div class="adm-an-section">';
+          detail += '<p class="adm-an-section-title">Top pages</p>';
+          detail += '<div class="adm-an-tabs">' +
+            '<button class="adm-an-tab active" data-cat="all">All</button>' +
+            '<button class="adm-an-tab" data-cat="artist">Artist pages</button>' +
+            '<button class="adm-an-tab" data-cat="public">Public pages</button>' +
+            '<button class="adm-an-tab" data-cat="dashboard">Dashboard</button>' +
+            '</div>';
+          detail += '<div id="anPageTable">' + (topPages.length ? buildTable(topPages) : '<p class="adm-empty">No data yet.</p>') + '</div>';
+          detail += '</div>';
+
+          // Artist page views grid
+          if (artistViews.length) {
+            detail += '<div class="adm-an-section">';
+            detail += '<p class="adm-an-section-title">Artist page views (30d)</p>';
+            detail += '<div class="adm-av-list">';
+            artistViews.forEach(function(av) {
+              var m = av.path.match(/artist-([^/]+)\.html/);
+              var name = m ? m[1].split('-').map(function(w){return w.charAt(0).toUpperCase()+w.slice(1);}).join(' ') : av.path;
+              detail += '<div class="adm-av-item"><span class="name">' + esc(name) + '</span><span class="cnt">' + av.views + ' views</span></div>';
+            });
+            detail += '</div></div>';
+          }
+
+          document.getElementById('analyticsContent').innerHTML = detail;
+
+          // Tab switching
+          document.getElementById('analyticsContent').addEventListener('click', function(e) {
+            var tab = e.target.closest('.adm-an-tab');
+            if (!tab) return;
+            document.querySelectorAll('.adm-an-tab').forEach(function(t){ t.classList.remove('active'); });
+            tab.classList.add('active');
+            document.getElementById('anPageTable').innerHTML = buildTable(filterPages(tab.dataset.cat));
+          });
+
+          // Expose for use in loadDetail + roster cards
           window._kudzuArtistViews = {};
-          (an.artistViews || []).forEach(function(av) {
+          artistViews.forEach(function(av) {
             var m2 = av.path.match(/artist-([^/]+)\.html/);
             if (m2) window._kudzuArtistViews[m2[1]] = Number(av.views);
           });
-
-          // Fill per-artist view counts into the roster cards
-          (an.artistViews || []).forEach(function(av) {
-            // Extract slug from path: /workinprogress/artist-<slug>.html
+          artistViews.forEach(function(av) {
             var m = av.path.match(/artist-([^/]+)\.html/);
             if (!m) return;
-            var slug = m[1];
-            var el = document.getElementById('av-' + slug);
+            var el = document.getElementById('av-' + m[1]);
             if (!el) return;
             el.querySelector('strong').textContent = av.views;
           });
         } catch(_e) {
-          document.getElementById('analyticsContent').innerHTML = '<p class="adm-empty">Analytics unavailable.</p>';
+          document.getElementById('anStats').innerHTML = '<span style="color:var(--a-soft);font-size:13px;">Analytics unavailable.</span>';
+          document.getElementById('analyticsContent').innerHTML = '';
         }
       })();
 
