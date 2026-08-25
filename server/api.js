@@ -12,6 +12,21 @@ const mail = require('./mail');
 
 const router = express.Router();
 
+// geoip-lite bundles MaxMind GeoLite2 — instant local lookup, no API calls.
+let geo = null;
+try { geo = require('geoip-lite'); } catch (_e) { /* not installed yet */ }
+
+function geoLookup(ip) {
+  if (!geo || !ip) return {};
+  try {
+    // Strip IPv6 prefix from mapped IPv4 addresses
+    const clean = ip.replace(/^::ffff:/, '');
+    const r = geo.lookup(clean);
+    if (!r) return {};
+    return { city: r.city || null, region: r.region || null, country: r.country || null };
+  } catch (_e) { return {}; }
+}
+
 // ── Shape helpers ────────────────────────────────────────────────────
 const publicArtist = (a) => ({
   id: a.id,
@@ -1446,14 +1461,20 @@ router.post('/track', async (req, res) => {
     const path = String(body.path || '').slice(0, 250);
     const referrer = String(body.referrer || '').slice(0, 500);
     if (!path) return;
-    await db.query('INSERT INTO page_views (path, referrer) VALUES ($1, $2)', [path, referrer]);
+    // Geo lookup — use X-Forwarded-For set by Railway's proxy
+    const ip = (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.ip || '';
+    const location = geoLookup(ip);
+    await db.query(
+      'INSERT INTO page_views (path, referrer, city, region, country) VALUES ($1,$2,$3,$4,$5)',
+      [path, referrer, location.city || null, location.region || null, location.country || null]
+    );
   } catch (_e) { /* silent — never block the page */ }
 });
 
 // ── Admin analytics ─────────────────────────────────────────────────
 router.get('/admin/analytics', auth.requireArtist, auth.requireAdmin, async (_req, res) => {
   try {
-    const [totals, topPages, daily, artistViews, referrers] = await Promise.all([
+    const [totals, topPages, daily, artistViews, locations, referrers] = await Promise.all([
       db.query(`
         SELECT
           count(*)                                                       AS total,
@@ -1482,6 +1503,17 @@ router.get('/admin/analytics', auth.requireArtist, auth.requireAdmin, async (_re
          GROUP BY path
          ORDER BY views DESC`),
       db.query(`
+        SELECT coalesce(city, 'Unknown') AS city,
+               coalesce(region, '') AS region,
+               coalesce(country, 'Unknown') AS country,
+               count(*) AS views
+          FROM page_views
+         WHERE created_at > now() - interval '30 days'
+           AND country IS NOT NULL
+         GROUP BY city, region, country
+         ORDER BY views DESC
+         LIMIT 20`),
+      db.query(`
         SELECT
           CASE
             WHEN referrer IS NULL OR referrer = ''
@@ -1508,6 +1540,7 @@ router.get('/admin/analytics', auth.requireArtist, auth.requireAdmin, async (_re
       topPages: topPages.rows,
       daily: daily.rows,
       artistViews: artistViews.rows,
+      locations: locations.rows,
       referrers: referrers.rows
     });
   } catch (err) {

@@ -640,3 +640,8 @@ CREATE TABLE IF NOT EXISTS page_views (
 
 CREATE INDEX IF NOT EXISTS page_views_path_idx ON page_views (path, created_at DESC);
 CREATE INDEX IF NOT EXISTS page_views_created_at_idx ON page_views (created_at DESC);
+
+-- ── Geo columns on page_views ────────────────────────────────────────
+ALTER TABLE page_views ADD COLUMN IF NOT EXISTS city    text;
+ALTER TABLE page_views ADD COLUMN IF NOT EXISTS region  text;
+ALTER TABLE page_views ADD COLUMN IF NOT EXISTS country text;

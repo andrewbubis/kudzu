@@ -93,6 +93,13 @@
 .adm-av-item { display: flex; justify-content: space-between; align-items: center; background: #fff; border: 1px solid var(--a-line); border-radius: 4px; padding: 8px 12px; font-size: 12px; }
 .adm-av-item .name { font-weight: 600; }
 .adm-av-item .cnt { color: var(--a-soft); white-space: nowrap; }
+/* location list */
+.adm-locations { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px,1fr)); gap: 6px; }
+.adm-loc { background: #fff; border: 1px solid var(--a-line); border-radius: 4px; padding: 8px 12px; font-size: 12px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.adm-loc-place { min-width: 0; }
+.adm-loc-city { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.adm-loc-region { color: var(--a-soft); font-size: 11px; }
+.adm-loc-cnt { white-space: nowrap; color: var(--a-soft); font-size: 11px; flex-shrink: 0; }
 /* referrer sources */
 .adm-sources { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px,1fr)); gap: 8px; }
 .adm-source { background: #fff; border: 1px solid var(--a-line); border-radius: 4px; padding: 10px 14px; font-size: 12px; display: flex; align-items: center; gap: 10px; }
@@ -487,6 +494,27 @@
               var m = av.path.match(/artist-([^/]+)\.html/);
               var name = m ? m[1].split('-').map(function(w){return w.charAt(0).toUpperCase()+w.slice(1);}).join(' ') : av.path;
               detail += '<div class="adm-av-item"><span class="name">' + esc(name) + '</span><span class="cnt">' + av.views + ' views</span></div>';
+            });
+            detail += '</div></div>';
+          }
+
+          // Locations section
+          var locs = an.locations || [];
+          if (locs.length) {
+            detail += '<div class="adm-an-section">';
+            detail += '<p class="adm-an-section-title">Top locations (30d)</p>';
+            detail += '<div class="adm-locations">';
+            locs.forEach(function(l) {
+              var flag = l.country ? String.fromCodePoint.apply(null,
+                l.country.toUpperCase().split('').map(function(c){return 127397 + c.charCodeAt(0);})) : '🌐';
+              var region = [l.region, l.country].filter(Boolean).join(', ');
+              detail += '<div class="adm-loc">' +
+                '<div class="adm-loc-place">' +
+                  '<div class="adm-loc-city">' + flag + ' ' + esc(l.city) + '</div>' +
+                  '<div class="adm-loc-region">' + esc(region) + '</div>' +
+                '</div>' +
+                '<span class="adm-loc-cnt">' + l.views + ' views</span>' +
+              '</div>';
             });
             detail += '</div></div>';
           }
