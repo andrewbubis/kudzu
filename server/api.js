@@ -1526,7 +1526,7 @@ router.get('/admin/analytics', auth.requireArtist, auth.requireAdmin, async (_re
             WHEN referrer LIKE '%bing.com%'       THEN 'Bing'
             WHEN referrer LIKE '%linkedin.com%'   THEN 'LinkedIn'
             WHEN referrer LIKE '%tiktok.com%'     THEN 'TikTok'
-            ELSE regexp_replace(referrer, '^https?://([^/]+).*', '\1')
+            ELSE split_part(split_part(regexp_replace(referrer, '^https?://', ''), '/', 1), '?', 1)
           END AS source,
           count(*) AS views
           FROM page_views
