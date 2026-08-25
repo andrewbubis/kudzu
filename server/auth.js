@@ -51,15 +51,21 @@ async function createSession(res, artistId, { remember = true } = {}) {
     'INSERT INTO sessions (id, artist_id, expires_at) VALUES ($1,$2,$3)',
     [id, artistId, expires]
   );
+  const isSecure = process.env.NODE_ENV === 'production'
+    || process.env.RAILWAY_ENVIRONMENT != null
+    || process.env.DATABASE_URL?.includes('railway');
   const cookieOpts = {
-    httpOnly: true,                                  // JavaScript cannot read it
-    secure: process.env.NODE_ENV === 'production',   // HTTPS only in production
-    sameSite: 'lax',                                 // blocks cross-site sends
+    httpOnly: true,
+    secure: !!isSecure,
+    sameSite: 'lax',
     path: '/'
   };
-  // "Remember me" → persistent cookie that survives browser restarts.
-  // Without it → session cookie (expires when the browser closes).
-  if (remember) cookieOpts.expires = expires;
+  // Set both expires (date) AND maxAge (seconds) — proxies and browsers
+  // differ on which they honour, so providing both maximises compatibility.
+  if (remember) {
+    cookieOpts.expires = expires;
+    cookieOpts.maxAge = SESSION_DAYS * 86400 * 1000; // ms → express converts to seconds
+  }
   res.cookie(SESSION_COOKIE, id, cookieOpts);
   return id;
 }
@@ -71,19 +77,37 @@ async function destroySession(req, res) {
 }
 
 // Attaches req.artist when a valid session cookie is present. Never throws.
-async function attachArtist(req, _res, next) {
+async function attachArtist(req, _res, next) { /* _res intentionally kept */
   req.artist = null;
   const sid = req.cookies && req.cookies[SESSION_COOKIE];
   if (!sid || !db.isReady()) return next();
   try {
     const { rows } = await db.query(
-      `SELECT a.* FROM sessions s
+      `SELECT a.*, s.expires_at AS session_expires_at FROM sessions s
          JOIN artists a ON a.id = s.artist_id
         WHERE s.id = $1 AND s.expires_at > now()`,
       [sid]
     );
     if (rows[0]) {
       req.artist = rows[0];
+
+      // Sliding renewal: if less than half the session lifetime remains,
+      // issue a fresh cookie so active users never get logged out.
+      try {
+        const halfLife = SESSION_DAYS * 0.5 * 864e5;
+        if (rows[0].session_expires_at && (new Date(rows[0].session_expires_at) - Date.now()) < halfLife) {
+          const newExpires = new Date(Date.now() + SESSION_DAYS * 864e5);
+          await db.query('UPDATE sessions SET expires_at = $1 WHERE id = $2', [newExpires, sid]);
+          const isSecure = process.env.NODE_ENV === 'production'
+            || process.env.RAILWAY_ENVIRONMENT != null
+            || process.env.DATABASE_URL?.includes('railway');
+          _res.cookie(SESSION_COOKIE, sid, {
+            httpOnly: true, secure: !!isSecure, sameSite: 'lax', path: '/',
+            expires: newExpires, maxAge: SESSION_DAYS * 86400 * 1000
+          });
+        }
+      } catch (_e) { /* non-fatal */ }
+
       if (!req.artist.is_admin && ADMIN_EMAILS.has((req.artist.email || '').toLowerCase())) {
         try {
           await db.query('UPDATE artists SET is_admin = true WHERE id = $1', [req.artist.id]);
