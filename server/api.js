@@ -1472,47 +1472,51 @@ router.post('/track', async (req, res) => {
 });
 
 // ── Admin analytics ─────────────────────────────────────────────────
-router.get('/admin/analytics', auth.requireArtist, auth.requireAdmin, async (_req, res) => {
+router.get('/admin/analytics', auth.requireArtist, auth.requireAdmin, async (req, res) => {
   try {
+    const rawDays = parseInt(req.query.days, 10);
+    const days = [7, 30, 90].includes(rawDays) ? rawDays : 30;
+    const interval = days + ' days';
     const [totals, topPages, daily, artistViews, locations, referrers] = await Promise.all([
       db.query(`
         SELECT
           count(*)                                                       AS total,
           count(*) FILTER (WHERE created_at > now() - interval '7 days')  AS last_7d,
           count(*) FILTER (WHERE created_at > now() - interval '30 days') AS last_30d,
+          count(*) FILTER (WHERE created_at > now() - interval '90 days') AS last_90d,
           count(*) FILTER (WHERE created_at > now() - interval '1 day')   AS today
         FROM page_views`),
       db.query(`
         SELECT path, count(*) AS views
           FROM page_views
-         WHERE created_at > now() - interval '30 days'
+         WHERE created_at > now() - $1::interval
          GROUP BY path
          ORDER BY views DESC
-         LIMIT 20`),
+         LIMIT 20`, [interval]),
       db.query(`
         SELECT date_trunc('day', created_at)::date AS day, count(*) AS views
           FROM page_views
-         WHERE created_at > now() - interval '30 days'
+         WHERE created_at > now() - $1::interval
          GROUP BY day
-         ORDER BY day`),
+         ORDER BY day`, [interval]),
       db.query(`
         SELECT path, count(*) AS views
           FROM page_views
          WHERE (path LIKE '%/artist-%' OR path LIKE '%/workinprogress/artist-%')
-           AND created_at > now() - interval '30 days'
+           AND created_at > now() - $1::interval
          GROUP BY path
-         ORDER BY views DESC`),
+         ORDER BY views DESC`, [interval]),
       db.query(`
         SELECT coalesce(city, 'Unknown') AS city,
                coalesce(region, '') AS region,
                coalesce(country, 'Unknown') AS country,
                count(*) AS views
           FROM page_views
-         WHERE created_at > now() - interval '30 days'
+         WHERE created_at > now() - $1::interval
            AND country IS NOT NULL
          GROUP BY city, region, country
          ORDER BY views DESC
-         LIMIT 20`),
+         LIMIT 20`, [interval]),
       db.query(`
         SELECT
           CASE
@@ -1530,10 +1534,10 @@ router.get('/admin/analytics', auth.requireArtist, auth.requireAdmin, async (_re
           END AS source,
           count(*) AS views
           FROM page_views
-         WHERE created_at > now() - interval '30 days'
+         WHERE created_at > now() - $1::interval
          GROUP BY source
          ORDER BY views DESC
-         LIMIT 15`)
+         LIMIT 15`, [interval])
     ]);
     res.json({
       totals: totals.rows[0],

@@ -403,178 +403,203 @@
 
       // Load analytics panel
       document.getElementById('analyticsPanel').style.display = 'block';
-      (async function loadAnalytics() {
-        try {
-          var ar = await fetch('/api/admin/analytics', { credentials: 'same-origin' });
-          if (!ar.ok) throw new Error();
-          var an = await ar.json();
-          var t = an.totals || {};
-          var topPages = an.topPages || [];
-          var daily = an.daily || [];
-          var artistViews = an.artistViews || [];
-          var maxViews = topPages[0] ? Number(topPages[0].views) : 1;
-          var maxDay = daily.reduce(function(m,d){ return Math.max(m, Number(d.views)); }, 1);
+      // ── Analytics ─────────────────────────────────────────────────
+      var CATS = {
+        artist: function(p){ return /\/artist-/.test(p); },
+        public: function(p){ return /\/(index|gallery|artists|printshop|contact|grants|print-)/.test(p); },
+        dashboard: function(p){ return /\/(profile|sales|inquiries|documents|settings|admin|invites)/.test(p); }
+      };
+      var _anActiveCat = 'all';
 
-          // ── Summary bar ───────────────────────────────────────────
-          var statsHtml = '';
-          statsHtml += '<div class="adm-an-stat"><span class="n">' + (t.today || 0) + '</span><span class="l">Today</span></div>';
-          statsHtml += '<div class="adm-an-stat"><span class="n">' + (t.last_7d || 0) + '</span><span class="l">Last 7 days</span></div>';
-          statsHtml += '<div class="adm-an-stat"><span class="n">' + (t.last_30d || 0) + '</span><span class="l">Last 30 days</span></div>';
-          statsHtml += '<div class="adm-an-stat"><span class="n">' + (t.total || 0) + '</span><span class="l">All time</span></div>';
-          document.getElementById('anStats').innerHTML = statsHtml;
+      function renderAnalytics(an, days) {
+        var t = an.totals || {};
+        var topPages = an.topPages || [];
+        var daily = an.daily || [];
+        var artistViews = an.artistViews || [];
+        var maxDay = daily.reduce(function(m,d){ return Math.max(m, Number(d.views)); }, 1);
+        var dLabel = days + 'd';
 
-          // Mini sparkline in summary bar
-          var miniHtml = '';
-          daily.forEach(function(d) {
-            var pct = Math.max(6, Math.round(Number(d.views) / maxDay * 100));
-            var label = new Date(d.day).toLocaleDateString('en-US',{month:'short',day:'numeric'}) + ': ' + d.views;
-            miniHtml += '<div class="b" style="height:' + pct + '%" title="' + esc(label) + '"></div>';
+        // ── Summary bar ───────────────────────────────────────────
+        var statsHtml = '';
+        statsHtml += '<div class="adm-an-stat"><span class="n">' + (t.today || 0) + '</span><span class="l">Today</span></div>';
+        statsHtml += '<div class="adm-an-stat"><span class="n">' + (t.last_7d || 0) + '</span><span class="l">Last 7 days</span></div>';
+        statsHtml += '<div class="adm-an-stat"><span class="n">' + (t.last_30d || 0) + '</span><span class="l">Last 30 days</span></div>';
+        statsHtml += '<div class="adm-an-stat"><span class="n">' + (t.last_90d || 0) + '</span><span class="l">Last 90 days</span></div>';
+        statsHtml += '<div class="adm-an-stat"><span class="n">' + (t.total || 0) + '</span><span class="l">All time</span></div>';
+        document.getElementById('anStats').innerHTML = statsHtml;
+
+        // Mini sparkline in summary bar
+        var miniHtml = '';
+        daily.forEach(function(d) {
+          var pct = Math.max(6, Math.round(Number(d.views) / maxDay * 100));
+          var label = new Date(d.day).toLocaleDateString('en-US',{month:'short',day:'numeric'}) + ': ' + d.views;
+          miniHtml += '<div class="b" style="height:' + pct + '%" title="' + esc(label) + '"></div>';
+        });
+        document.getElementById('anMiniSpark').innerHTML = miniHtml;
+
+        // ── Detail panel ──────────────────────────────────────────
+        function buildTable(pages) {
+          if (!pages.length) return '<p class="adm-empty" style="margin:0;">No views in this category yet.</p>';
+          var maxV = Number(pages[0].views) || 1;
+          var h = '<div class="adm-top-pages"><table><thead><tr><th>Page</th><th class="bar-col"></th><th class="views-col">Views (' + dLabel + ')</th></tr></thead><tbody>';
+          pages.forEach(function(p) {
+            var pct = Math.round(Number(p.views) / maxV * 100);
+            var label = p.path.replace('/workinprogress/','').replace('.html','') || p.path;
+            h += '<tr><td>' + esc(label) + '</td>' +
+              '<td class="bar-col"><div class="adm-page-bar" style="width:' + pct + '%"></div></td>' +
+              '<td class="views-col">' + p.views + '</td></tr>';
           });
-          document.getElementById('anMiniSpark').innerHTML = miniHtml;
+          h += '</tbody></table></div>';
+          return h;
+        }
 
-          // ── Detail panel ──────────────────────────────────────────
-          // Categorise pages
-          var CATS = {
-            artist: function(p){ return /\/artist-/.test(p); },
-            public: function(p){ return /\/(index|gallery|artists|printshop|contact|grants|print-)/.test(p); },
-            dashboard: function(p){ return /\/(profile|sales|inquiries|documents|settings|admin|invites)/.test(p); }
-          };
+        function filterPages(cat) {
+          if (cat === 'all') return topPages;
+          return topPages.filter(function(p){ return CATS[cat] && CATS[cat](p.path); });
+        }
 
-          function buildTable(pages) {
-            if (!pages.length) return '<p class="adm-empty" style="margin:0;">No views in this category yet.</p>';
-            var maxV = Number(pages[0].views) || 1;
-            var h = '<div class="adm-top-pages"><table><thead><tr><th>Page</th><th class="bar-col"></th><th class="views-col">Views (30d)</th></tr></thead><tbody>';
-            pages.forEach(function(p) {
-              var pct = Math.round(Number(p.views) / maxV * 100);
-              var label = p.path.replace('/workinprogress/','').replace('.html','') || p.path;
-              h += '<tr><td>' + esc(label) + '</td>' +
-                '<td class="bar-col"><div class="adm-page-bar" style="width:' + pct + '%"></div></td>' +
-                '<td class="views-col">' + p.views + '</td></tr>';
-            });
-            h += '</tbody></table></div>';
-            return h;
-          }
+        var detail = '';
 
-          function filterPages(cat) {
-            if (cat === 'all') return topPages;
-            return topPages.filter(function(p){ return CATS[cat] && CATS[cat](p.path); });
-          }
+        // Period switcher tabs at top of detail panel
+        detail += '<div class="adm-an-section" style="margin-bottom:16px;">' +
+          '<div class="adm-an-tabs" id="anPeriodTabs">' +
+            '<button class="adm-an-tab' + (days===7?' active':'') + '" data-days="7">Last 7 days</button>' +
+            '<button class="adm-an-tab' + (days===30?' active':'') + '" data-days="30">Last 30 days</button>' +
+            '<button class="adm-an-tab' + (days===90?' active':'') + '" data-days="90">Last 90 days</button>' +
+          '</div></div>';
 
-          var detail = '';
+        // Sparkline section
+        detail += '<div class="adm-an-section">';
+        detail += '<p class="adm-an-section-title">Daily traffic — last ' + days + ' days</p>';
+        detail += '<div class="adm-sparkline">';
+        daily.forEach(function(d) {
+          var pct = Math.max(4, Math.round(Number(d.views) / maxDay * 100));
+          var label = new Date(d.day).toLocaleDateString('en-US',{month:'short',day:'numeric'}) + ': ' + d.views + ' views';
+          detail += '<div class="adm-spark-bar" style="height:' + pct + '%" title="' + esc(label) + '"></div>';
+        });
+        detail += '</div></div>';
 
-          // Sparkline section
+        // Top pages with category filter tabs
+        detail += '<div class="adm-an-section">';
+        detail += '<p class="adm-an-section-title">Top pages</p>';
+        detail += '<div class="adm-an-tabs" id="anCatTabs">' +
+          '<button class="adm-an-tab' + (_anActiveCat==='all'?' active':'') + '" data-cat="all">All</button>' +
+          '<button class="adm-an-tab' + (_anActiveCat==='artist'?' active':'') + '" data-cat="artist">Artist pages</button>' +
+          '<button class="adm-an-tab' + (_anActiveCat==='public'?' active':'') + '" data-cat="public">Public pages</button>' +
+          '<button class="adm-an-tab' + (_anActiveCat==='dashboard'?' active':'') + '" data-cat="dashboard">Dashboard</button>' +
+          '</div>';
+        detail += '<div id="anPageTable">' + (topPages.length ? buildTable(filterPages(_anActiveCat)) : '<p class="adm-empty">No data yet.</p>') + '</div>';
+        detail += '</div>';
+
+        // Artist page views grid
+        if (artistViews.length) {
           detail += '<div class="adm-an-section">';
-          detail += '<p class="adm-an-section-title">Daily traffic — last 30 days</p>';
-          detail += '<div class="adm-sparkline">';
-          daily.forEach(function(d) {
-            var pct = Math.max(4, Math.round(Number(d.views) / maxDay * 100));
-            var label = new Date(d.day).toLocaleDateString('en-US',{month:'short',day:'numeric'}) + ': ' + d.views + ' views';
-            detail += '<div class="adm-spark-bar" style="height:' + pct + '%" title="' + esc(label) + '"></div>';
-          });
-          detail += '</div></div>';
-
-          // Top pages with filter tabs
-          detail += '<div class="adm-an-section">';
-          detail += '<p class="adm-an-section-title">Top pages</p>';
-          detail += '<div class="adm-an-tabs">' +
-            '<button class="adm-an-tab active" data-cat="all">All</button>' +
-            '<button class="adm-an-tab" data-cat="artist">Artist pages</button>' +
-            '<button class="adm-an-tab" data-cat="public">Public pages</button>' +
-            '<button class="adm-an-tab" data-cat="dashboard">Dashboard</button>' +
-            '</div>';
-          detail += '<div id="anPageTable">' + (topPages.length ? buildTable(topPages) : '<p class="adm-empty">No data yet.</p>') + '</div>';
-          detail += '</div>';
-
-          // Artist page views grid
-          if (artistViews.length) {
-            detail += '<div class="adm-an-section">';
-            detail += '<p class="adm-an-section-title">Artist page views (30d)</p>';
-            detail += '<div class="adm-av-list">';
-            artistViews.forEach(function(av) {
-              var m = av.path.match(/artist-([^/]+)\.html/);
-              var name = m ? m[1].split('-').map(function(w){return w.charAt(0).toUpperCase()+w.slice(1);}).join(' ') : av.path;
-              detail += '<div class="adm-av-item"><span class="name">' + esc(name) + '</span><span class="cnt">' + av.views + ' views</span></div>';
-            });
-            detail += '</div></div>';
-          }
-
-          // Locations section
-          var locs = an.locations || [];
-          if (locs.length) {
-            detail += '<div class="adm-an-section">';
-            detail += '<p class="adm-an-section-title">Top locations (30d)</p>';
-            detail += '<div class="adm-locations">';
-            locs.forEach(function(l) {
-              var flag = l.country ? String.fromCodePoint.apply(null,
-                l.country.toUpperCase().split('').map(function(c){return 127397 + c.charCodeAt(0);})) : '🌐';
-              var region = [l.region, l.country].filter(Boolean).join(', ');
-              detail += '<div class="adm-loc">' +
-                '<div class="adm-loc-place">' +
-                  '<div class="adm-loc-city">' + flag + ' ' + esc(l.city) + '</div>' +
-                  '<div class="adm-loc-region">' + esc(region) + '</div>' +
-                '</div>' +
-                '<span class="adm-loc-cnt">' + l.views + ' views</span>' +
-              '</div>';
-            });
-            detail += '</div></div>';
-          }
-
-          // Traffic sources section
-          var refs = an.referrers || [];
-          if (refs.length) {
-            var sourceIcons = {
-              'Instagram': '📸', 'Facebook': '👥', 'X / Twitter': '🐦',
-              'Pinterest': '📌', 'Google': '🔍', 'Bing': '🔍',
-              'LinkedIn': '💼', 'TikTok': '🎵', 'Direct / unknown': '🔗'
-            };
-            var maxRef = Number(refs[0].views) || 1;
-            detail += '<div class="adm-an-section">';
-            detail += '<p class="adm-an-section-title">Traffic sources (30d)</p>';
-            detail += '<div class="adm-sources">';
-            refs.forEach(function(r) {
-              var pct = Math.round(Number(r.views) / maxRef * 100);
-              var icon = sourceIcons[r.source] || '🌐';
-              detail += '<div class="adm-source">' +
-                '<span class="adm-source-icon">' + icon + '</span>' +
-                '<div class="adm-source-info">' +
-                  '<div class="adm-source-name">' + esc(r.source) + '</div>' +
-                  '<div class="adm-source-bar-wrap"><div class="adm-source-bar" style="width:' + pct + '%"></div></div>' +
-                '</div>' +
-                '<span class="adm-source-cnt">' + r.views + '</span>' +
-              '</div>';
-            });
-            detail += '</div></div>';
-          }
-
-          document.getElementById('analyticsContent').innerHTML = detail;
-
-          // Tab switching
-          document.getElementById('analyticsContent').addEventListener('click', function(e) {
-            var tab = e.target.closest('.adm-an-tab');
-            if (!tab) return;
-            document.querySelectorAll('.adm-an-tab').forEach(function(t){ t.classList.remove('active'); });
-            tab.classList.add('active');
-            document.getElementById('anPageTable').innerHTML = buildTable(filterPages(tab.dataset.cat));
-          });
-
-          // Expose for use in loadDetail + roster cards
-          window._kudzuArtistViews = {};
-          artistViews.forEach(function(av) {
-            var m2 = av.path.match(/artist-([^/]+)\.html/);
-            if (m2) window._kudzuArtistViews[m2[1]] = Number(av.views);
-          });
+          detail += '<p class="adm-an-section-title">Artist page views (' + dLabel + ')</p>';
+          detail += '<div class="adm-av-list">';
           artistViews.forEach(function(av) {
             var m = av.path.match(/artist-([^/]+)\.html/);
-            if (!m) return;
-            var el = document.getElementById('av-' + m[1]);
-            if (!el) return;
-            el.querySelector('strong').textContent = av.views;
+            var name = m ? m[1].split('-').map(function(w){return w.charAt(0).toUpperCase()+w.slice(1);}).join(' ') : av.path;
+            detail += '<div class="adm-av-item"><span class="name">' + esc(name) + '</span><span class="cnt">' + av.views + ' views</span></div>';
           });
+          detail += '</div></div>';
+        }
+
+        // Locations section
+        var locs = an.locations || [];
+        if (locs.length) {
+          detail += '<div class="adm-an-section">';
+          detail += '<p class="adm-an-section-title">Top locations (' + dLabel + ')</p>';
+          detail += '<div class="adm-locations">';
+          locs.forEach(function(l) {
+            var flag = l.country ? String.fromCodePoint.apply(null,
+              l.country.toUpperCase().split('').map(function(c){return 127397 + c.charCodeAt(0);})) : '🌐';
+            var region = [l.region, l.country].filter(Boolean).join(', ');
+            detail += '<div class="adm-loc">' +
+              '<div class="adm-loc-place">' +
+                '<div class="adm-loc-city">' + flag + ' ' + esc(l.city) + '</div>' +
+                '<div class="adm-loc-region">' + esc(region) + '</div>' +
+              '</div>' +
+              '<span class="adm-loc-cnt">' + l.views + ' views</span>' +
+            '</div>';
+          });
+          detail += '</div></div>';
+        }
+
+        // Traffic sources section
+        var refs = an.referrers || [];
+        if (refs.length) {
+          var sourceIcons = {
+            'Instagram': '📸', 'Facebook': '👥', 'X / Twitter': '🐦',
+            'Pinterest': '📌', 'Google': '🔍', 'Bing': '🔍',
+            'LinkedIn': '💼', 'TikTok': '🎵', 'Direct / unknown': '🔗'
+          };
+          var maxRef = Number(refs[0].views) || 1;
+          detail += '<div class="adm-an-section">';
+          detail += '<p class="adm-an-section-title">Traffic sources (' + dLabel + ')</p>';
+          detail += '<div class="adm-sources">';
+          refs.forEach(function(r) {
+            var pct = Math.round(Number(r.views) / maxRef * 100);
+            var icon = sourceIcons[r.source] || '🌐';
+            detail += '<div class="adm-source">' +
+              '<span class="adm-source-icon">' + icon + '</span>' +
+              '<div class="adm-source-info">' +
+                '<div class="adm-source-name">' + esc(r.source) + '</div>' +
+                '<div class="adm-source-bar-wrap"><div class="adm-source-bar" style="width:' + pct + '%"></div></div>' +
+              '</div>' +
+              '<span class="adm-source-cnt">' + r.views + '</span>' +
+            '</div>';
+          });
+          detail += '</div></div>';
+        }
+
+        document.getElementById('analyticsContent').innerHTML = detail;
+
+        // Category tab switching (client-side filter)
+        document.getElementById('analyticsContent').addEventListener('click', function(e) {
+          var catTab = e.target.closest('#anCatTabs .adm-an-tab');
+          if (catTab) {
+            _anActiveCat = catTab.dataset.cat;
+            document.querySelectorAll('#anCatTabs .adm-an-tab').forEach(function(t){ t.classList.remove('active'); });
+            catTab.classList.add('active');
+            document.getElementById('anPageTable').innerHTML = buildTable(filterPages(_anActiveCat));
+            return;
+          }
+          // Period tab switching (refetch)
+          var periodTab = e.target.closest('#anPeriodTabs .adm-an-tab');
+          if (periodTab) {
+            loadAnalytics(Number(periodTab.dataset.days));
+          }
+        });
+
+        // Expose for roster cards + loadDetail
+        window._kudzuArtistViews = {};
+        artistViews.forEach(function(av) {
+          var m2 = av.path.match(/artist-([^/]+)\.html/);
+          if (m2) window._kudzuArtistViews[m2[1]] = Number(av.views);
+        });
+        artistViews.forEach(function(av) {
+          var m = av.path.match(/artist-([^/]+)\.html/);
+          if (!m) return;
+          var el = document.getElementById('av-' + m[1]);
+          if (!el) return;
+          el.querySelector('strong').textContent = av.views;
+        });
+      }
+
+      async function loadAnalytics(days) {
+        days = days || 30;
+        try {
+          var ar = await fetch('/api/admin/analytics?days=' + days, { credentials: 'same-origin' });
+          if (!ar.ok) throw new Error();
+          var an = await ar.json();
+          renderAnalytics(an, days);
         } catch(_e) {
           document.getElementById('anStats').innerHTML = '<span style="color:var(--a-soft);font-size:13px;">Analytics unavailable.</span>';
           document.getElementById('analyticsContent').innerHTML = '';
         }
-      })();
+      }
+
+      loadAnalytics(30);
 
       document.getElementById('main').addEventListener('click', function (e) {
         var row = e.target.closest('.adm-artist-row');
