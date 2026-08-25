@@ -16,7 +16,7 @@ const db = require('./db');
 const mail = require('./mail');
 
 const SESSION_COOKIE = 'kudzu_sid';
-const SESSION_DAYS = 30;
+const SESSION_DAYS = 365;
 
 // Hard-coded owner emails. On their first authenticated request after
 // deploy, is_admin is set to true in the DB if it isn't already.

@@ -107,8 +107,9 @@ router.get('/auth/:provider/callback', async (req, res) => {
   if (provider !== 'google' || !isConfigured('google')) return fail('oauth_unconfigured');
   if (!db.isReady()) return fail('backend_unavailable');
 
-  // Read and immediately clear the "remember me" preference.
-  const remember = req.cookies[REMEMBER_COOKIE] !== '0';
+  // Always keep Google sign-ins persistent — artists use personal devices
+  // and should stay signed in for the full session duration.
+  const remember = true;
   res.clearCookie(REMEMBER_COOKIE, { path: '/' });
 
   const parsed = parseState(req.query.state);
