@@ -1453,7 +1453,7 @@ router.post('/track', async (req, res) => {
 // ── Admin analytics ─────────────────────────────────────────────────
 router.get('/admin/analytics', auth.requireArtist, auth.requireAdmin, async (_req, res) => {
   try {
-    const [totals, topPages, daily, artistViews] = await Promise.all([
+    const [totals, topPages, daily, artistViews, referrers] = await Promise.all([
       db.query(`
         SELECT
           count(*)                                                       AS total,
@@ -1480,13 +1480,35 @@ router.get('/admin/analytics', auth.requireArtist, auth.requireAdmin, async (_re
          WHERE (path LIKE '%/artist-%' OR path LIKE '%/workinprogress/artist-%')
            AND created_at > now() - interval '30 days'
          GROUP BY path
-         ORDER BY views DESC`)
+         ORDER BY views DESC`),
+      db.query(`
+        SELECT
+          CASE
+            WHEN referrer IS NULL OR referrer = ''
+              THEN 'Direct / unknown'
+            WHEN referrer LIKE '%instagram.com%'  THEN 'Instagram'
+            WHEN referrer LIKE '%facebook.com%'   THEN 'Facebook'
+            WHEN referrer LIKE '%twitter.com%' OR referrer LIKE '%x.com%' THEN 'X / Twitter'
+            WHEN referrer LIKE '%pinterest.com%'  THEN 'Pinterest'
+            WHEN referrer LIKE '%google.com%'     THEN 'Google'
+            WHEN referrer LIKE '%bing.com%'       THEN 'Bing'
+            WHEN referrer LIKE '%linkedin.com%'   THEN 'LinkedIn'
+            WHEN referrer LIKE '%tiktok.com%'     THEN 'TikTok'
+            ELSE regexp_replace(referrer, '^https?://([^/]+).*', '\1')
+          END AS source,
+          count(*) AS views
+          FROM page_views
+         WHERE created_at > now() - interval '30 days'
+         GROUP BY source
+         ORDER BY views DESC
+         LIMIT 15`)
     ]);
     res.json({
       totals: totals.rows[0],
       topPages: topPages.rows,
       daily: daily.rows,
-      artistViews: artistViews.rows
+      artistViews: artistViews.rows,
+      referrers: referrers.rows
     });
   } catch (err) {
     console.error('analytics failed:', err.message);

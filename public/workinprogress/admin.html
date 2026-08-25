@@ -93,6 +93,15 @@
 .adm-av-item { display: flex; justify-content: space-between; align-items: center; background: #fff; border: 1px solid var(--a-line); border-radius: 4px; padding: 8px 12px; font-size: 12px; }
 .adm-av-item .name { font-weight: 600; }
 .adm-av-item .cnt { color: var(--a-soft); white-space: nowrap; }
+/* referrer sources */
+.adm-sources { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px,1fr)); gap: 8px; }
+.adm-source { background: #fff; border: 1px solid var(--a-line); border-radius: 4px; padding: 10px 14px; font-size: 12px; display: flex; align-items: center; gap: 10px; }
+.adm-source-icon { font-size: 18px; flex-shrink: 0; }
+.adm-source-info { flex: 1; min-width: 0; }
+.adm-source-name { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.adm-source-bar-wrap { height: 4px; background: var(--a-line); border-radius: 2px; margin-top: 4px; }
+.adm-source-bar { height: 4px; background: var(--a-link); border-radius: 2px; opacity: 0.65; }
+.adm-source-cnt { font-size: 11px; color: var(--a-soft); margin-left: auto; white-space: nowrap; padding-left: 8px; flex-shrink: 0; }
 /* artist detail header */
 .adm-artist-header { display: flex; gap: 20px; align-items: flex-start; margin-bottom: 20px; }
 .adm-artist-avatar { width: 72px; height: 72px; border-radius: 50%; object-fit: cover; border: 1px solid var(--a-line); flex-shrink: 0; background: var(--a-bg); }
@@ -478,6 +487,33 @@
               var m = av.path.match(/artist-([^/]+)\.html/);
               var name = m ? m[1].split('-').map(function(w){return w.charAt(0).toUpperCase()+w.slice(1);}).join(' ') : av.path;
               detail += '<div class="adm-av-item"><span class="name">' + esc(name) + '</span><span class="cnt">' + av.views + ' views</span></div>';
+            });
+            detail += '</div></div>';
+          }
+
+          // Traffic sources section
+          var refs = an.referrers || [];
+          if (refs.length) {
+            var sourceIcons = {
+              'Instagram': '📸', 'Facebook': '👥', 'X / Twitter': '🐦',
+              'Pinterest': '📌', 'Google': '🔍', 'Bing': '🔍',
+              'LinkedIn': '💼', 'TikTok': '🎵', 'Direct / unknown': '🔗'
+            };
+            var maxRef = Number(refs[0].views) || 1;
+            detail += '<div class="adm-an-section">';
+            detail += '<p class="adm-an-section-title">Traffic sources (30d)</p>';
+            detail += '<div class="adm-sources">';
+            refs.forEach(function(r) {
+              var pct = Math.round(Number(r.views) / maxRef * 100);
+              var icon = sourceIcons[r.source] || '🌐';
+              detail += '<div class="adm-source">' +
+                '<span class="adm-source-icon">' + icon + '</span>' +
+                '<div class="adm-source-info">' +
+                  '<div class="adm-source-name">' + esc(r.source) + '</div>' +
+                  '<div class="adm-source-bar-wrap"><div class="adm-source-bar" style="width:' + pct + '%"></div></div>' +
+                '</div>' +
+                '<span class="adm-source-cnt">' + r.views + '</span>' +
+              '</div>';
             });
             detail += '</div></div>';
           }
