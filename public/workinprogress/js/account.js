@@ -115,6 +115,11 @@
     if (!me.photo) gaps.push('add a profile photo');
     if (!(me.bio && me.bio.trim())) gaps.push('write something in your bio');
     if (!(me.cv && me.cv.trim())) gaps.push('add your C.V.');
+    // Demo mode has no account behind it and nothing to sign against, so
+    // it must not nag about a contract that doesn't apply to it.
+    if (state.live && !me.agreementSigned) {
+      gaps.push('read and sign the artist agreement, under Documents');
+    }
     return gaps;
   }
 
@@ -197,7 +202,8 @@
     var done = {
       stripe:  !!me.stripeConnected,
       profile: !!me.photo,
-      bio:     !!(me.bio && me.bio.trim()) && !!(me.cv && me.cv.trim())
+      bio:     !!(me.bio && me.bio.trim()) && !!(me.cv && me.cv.trim()),
+      agreement: !state.live || !!me.agreementSigned
     };
     var all = true;
     document.querySelectorAll('.acct-todo li').forEach(function (li) {
@@ -515,7 +521,10 @@
           shipping_missing:
             'This piece needs its packed weight and box size before it can go up.',
           profile_incomplete:
-            'Finish your profile first — photo, bio, C.V., and Stripe.'
+            'Finish your profile first — photo, bio, C.V., and Stripe.',
+          agreement_unsigned:
+            'Before you can list work, please read and sign the artist ' +
+            'agreement.\n\nIt is under Documents in your account menu.'
         };
         alert((e && msgs[e.code]) || 'Upload failed. Try again.');
         return;

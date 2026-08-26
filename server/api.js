@@ -161,13 +161,17 @@ router.post('/auth/signup', async (req, res) => {
 // ── Me ───────────────────────────────────────────────────────────────
 router.get('/me', auth.requireArtist, async (req, res) => {
   try {
-    const [works, books, photos] = await Promise.all([
+    const [works, books, photos, signed] = await Promise.all([
       db.query('SELECT * FROM artworks WHERE artist_id = $1 ORDER BY position, created_at', [req.artist.id]),
       db.query('SELECT * FROM books    WHERE artist_id = $1 ORDER BY position, created_at', [req.artist.id]),
-      db.query('SELECT * FROM artist_photos WHERE artist_id = $1 ORDER BY position, created_at', [req.artist.id])
+      db.query('SELECT * FROM artist_photos WHERE artist_id = $1 ORDER BY position, created_at', [req.artist.id]),
+      agreementSigned(req.artist.id)
     ]);
     res.json({
-      artist: publicArtist(req.artist),
+      // The signature isn't a column on artists, so it rides along here
+      // rather than in publicArtist() — which is shared with endpoints
+      // that have no business doing an extra lookup.
+      artist: { ...publicArtist(req.artist), agreementSigned: signed },
       works: works.rows.map(publicWork),
       books: books.rows.map(publicBook),
       photos: photos.rows.map(publicPhoto)
@@ -396,9 +400,24 @@ function parseWorkFields(body) {
   };
 }
 
+// Has this artist signed the version currently in force? Mirrors
+// kudzu_agreement_signed() in the schema — including the part where an
+// unpublished agreement gates nothing, so a site with no contract yet
+// doesn't refuse every upload.
+async function agreementSigned(artistId) {
+  const { rows } = await db.query(
+    `SELECT NOT EXISTS (SELECT 1 FROM agreement_versions WHERE is_current)
+         OR EXISTS (
+              SELECT 1 FROM agreement_signatures s
+                JOIN agreement_versions v ON v.version = s.version
+               WHERE s.artist_id = $1 AND v.is_current
+            ) AS ok`, [artistId]);
+  return !!(rows[0] && rows[0].ok);
+}
+
 // What an artist is still missing before they can add work at all.
 // The database enforces this too — this is here so the UI can say which
-// of the four is outstanding instead of just refusing.
+// piece is outstanding instead of just refusing.
 function profileGaps(a) {
   const gaps = [];
   if (!a.stripe_account) gaps.push('stripe');
@@ -408,8 +427,14 @@ function profileGaps(a) {
   return gaps;
 }
 
-router.get('/me/readiness', auth.requireArtist, (req, res) => {
+router.get('/me/readiness', auth.requireArtist, async (req, res) => {
   const gaps = profileGaps(req.artist);
+  try {
+    if (!(await agreementSigned(req.artist.id))) gaps.push('agreement');
+  } catch (err) {
+    console.error('readiness agreement check failed:', err.message);
+    return res.status(500).json({ error: 'server_error' });
+  }
   res.json({ ready: gaps.length === 0, missing: gaps });
 });
 
@@ -423,6 +448,17 @@ router.post('/works', auth.requireArtist, storage.upload.single('image'), async 
   const gaps = profileGaps(req.artist);
   if (gaps.length) {
     return res.status(409).json({ error: 'profile_incomplete', missing: gaps });
+  }
+  // Listing a work puts it under the agreement, so the signature comes
+  // first. The trigger enforces this too; refusing here is what lets the
+  // page say which document is outstanding instead of failing on save.
+  try {
+    if (!(await agreementSigned(req.artist.id))) {
+      return res.status(409).json({ error: 'agreement_unsigned' });
+    }
+  } catch (err) {
+    console.error('agreement check failed:', err.message);
+    return res.status(500).json({ error: 'server_error' });
   }
   if (f.shipWeightOz == null || f.shipLengthIn == null ||
       f.shipWidthIn == null || f.shipDepthIn == null) {
@@ -478,6 +514,7 @@ router.post('/works', auth.requireArtist, storage.upload.single('image'), async 
     // flattening a rule the artist can actually act on into a 500.
     const RULES = {
       profile_incomplete: 409,
+      agreement_unsigned: 409,
       shipping_missing: 400,
       stripe_not_connected: 409,
       publish_limit_reached: 409
@@ -537,7 +574,8 @@ router.patch('/works/:id', auth.requireArtist, async (req, res) => {
     // `shipping_missing` is the one that fires when an artist tries to
     // publish a piece uploaded before the packed figures were required.
     for (const rule of ['publish_limit_reached', 'stripe_not_connected',
-                        'shipping_missing', 'profile_incomplete']) {
+                        'shipping_missing', 'profile_incomplete',
+                        'agreement_unsigned']) {
       if (String(err.message).includes(rule)) {
         return res.status(409).json({ error: rule });
       }
@@ -1278,8 +1316,16 @@ router.get('/admin/artists/:id/works', auth.requireArtist, auth.requireAdmin, as
       db.query('SELECT * FROM artworks WHERE artist_id = $1 ORDER BY position, created_at', [id]),
       db.query('SELECT * FROM artist_photos WHERE artist_id = $1 ORDER BY position, created_at', [id]),
       db.query('SELECT * FROM books WHERE artist_id = $1 ORDER BY position, created_at', [id]),
-      db.query('SELECT version, legal_name, address, signed_at FROM agreements WHERE artist_id = $1 ORDER BY signed_at DESC', [id])
-        .catch(() => ({ rows: [] }))
+      db.query(`SELECT version, legal_name, address, signed_at
+                  FROM agreement_signatures
+                 WHERE artist_id = $1 ORDER BY signed_at DESC`, [id])
+        // Never let a missing contract take the whole panel down with it —
+        // but say so in the log, rather than reporting "no contract on
+        // file" for an artist who has one.
+        .catch((err) => {
+          console.error('admin agreement lookup failed:', err.message);
+          return { rows: [] };
+        })
     ]);
     if (!artist.rows[0]) return res.status(404).json({ error: 'not_found' });
     res.json({

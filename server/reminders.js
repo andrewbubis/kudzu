@@ -8,8 +8,8 @@
 const db   = require('./db');
 const mail = require('./mail');
 
-// Artists who registered 7+ days ago but are still missing bio, CV, or
-// published works, and haven't been reminded yet.
+// Artists who registered 7+ days ago but are still missing bio, CV,
+// published works, or a signed agreement, and haven't been reminded yet.
 async function sendProfileReminders() {
   if (!db.isReady()) return;
   let rows;
@@ -28,6 +28,9 @@ async function sendProfileReminders() {
                   WHERE w.artist_id = a.id
                     AND w.status IN ('published','draft')
                )
+            -- An unsigned agreement blocks selling outright, so it is the
+            -- most worth chasing of anything on this list.
+            OR NOT kudzu_agreement_signed(a.id)
          )
     `);
     rows = r;
