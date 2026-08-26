@@ -176,7 +176,6 @@
   <p style="color:var(--a-soft);font-style:italic;">Loading…</p>
 </main>
 
-<script src="js/account.js" defer></script>
 <script>
 (function () {
   function img(path, alt) {
@@ -598,6 +597,32 @@
           document.getElementById('analyticsContent').innerHTML = '';
         }
       }
+
+      // ── Account menu wiring ──────────────────────────────────
+      (function() {
+        var menu = document.getElementById('acctMenu');
+        var menuBtn = document.getElementById('acctMenuBtn');
+        var logoutLink = document.getElementById('logoutLink');
+        if (menu && menuBtn) {
+          menuBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            var open = menu.dataset.open === 'true';
+            menu.dataset.open = String(!open);
+            menuBtn.setAttribute('aria-expanded', String(!open));
+          });
+          document.addEventListener('click', function() {
+            menu.dataset.open = 'false';
+            menuBtn.setAttribute('aria-expanded', 'false');
+          });
+        }
+        if (logoutLink) {
+          logoutLink.addEventListener('click', async function(e) {
+            e.preventDefault();
+            try { await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' }); } catch(_) {}
+            location.href = 'login.html';
+          });
+        }
+      })();
 
       loadAnalytics(30);
 
