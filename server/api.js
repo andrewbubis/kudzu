@@ -1265,10 +1265,20 @@ router.get('/admin/roster', auth.requireArtist, auth.requireAdmin, async (_req, 
              count(w.id) FILTER (WHERE w.status = 'sold')      AS sold_works,
              count(w.id) FILTER (
                WHERE w.status <> 'sold' AND w.ship_weight_oz IS NULL)  AS missing_ship,
-             max(w.created_at) AS last_upload
+             max(w.created_at) AS last_upload,
+             sig.signed_at    AS sig_signed_at,
+             sig.legal_name   AS sig_legal_name,
+             sig.version      AS sig_version
         FROM artists a
         LEFT JOIN artworks w ON w.artist_id = a.id
-    GROUP BY a.id
+        LEFT JOIN LATERAL (
+          SELECT signed_at, legal_name, version
+            FROM agreement_signatures
+           WHERE artist_id = a.id
+           ORDER BY signed_at DESC
+           LIMIT 1
+        ) sig ON true
+    GROUP BY a.id, sig.signed_at, sig.legal_name, sig.version
     ORDER BY a.created_at DESC`);
 
     res.json({
@@ -1298,12 +1308,51 @@ router.get('/admin/roster', auth.requireArtist, auth.requireAdmin, async (_req, 
           sold: Number(r.sold_works),
           missingShip: Number(r.missing_ship),
           lastUpload,
-          lastActivity: lastUpload && lastUpload > r.created_at ? lastUpload : r.created_at
+          lastActivity: lastUpload && lastUpload > r.created_at ? lastUpload : r.created_at,
+          hasSigned: !!r.sig_signed_at,
+          signedAt: r.sig_signed_at || null,
+          signedLegalName: r.sig_legal_name || null,
+          signedVersion: r.sig_version || null
         };
       })
     });
   } catch (err) {
     console.error('roster failed:', err.message);
+    res.status(500).json({ error: 'server_error' });
+  }
+});
+
+// ── Admin: view an artist's signed agreement ─────────────────────────
+router.get('/admin/artists/:id/agreement', auth.requireArtist, auth.requireAdmin, async (req, res) => {
+  try {
+    const id = req.params.id;
+    const [artistRes, sigRes, verRes] = await Promise.all([
+      db.query('SELECT id, name, email, slug FROM artists WHERE id = $1', [id]),
+      db.query(
+        `SELECT s.version, s.legal_name, s.address, s.signed_at, s.ip
+           FROM agreement_signatures s
+          WHERE s.artist_id = $1
+          ORDER BY s.signed_at DESC`, [id]),
+      db.query('SELECT version, title, body, effective FROM agreement_versions ORDER BY effective DESC LIMIT 10')
+    ]);
+    if (!artistRes.rows[0]) return res.status(404).json({ error: 'not_found' });
+    const versionMap = {};
+    verRes.rows.forEach(v => { versionMap[v.version] = v; });
+    res.json({
+      artist: artistRes.rows[0],
+      signatures: sigRes.rows.map(s => ({
+        version: s.version,
+        legalName: s.legal_name,
+        address: s.address,
+        signedAt: s.signed_at,
+        ip: s.ip,
+        agreementTitle: (versionMap[s.version] || {}).title || null,
+        agreementBody: (versionMap[s.version] || {}).body || null,
+        effective: (versionMap[s.version] || {}).effective || null
+      }))
+    });
+  } catch (err) {
+    console.error('admin agreement view failed:', err.message);
     res.status(500).json({ error: 'server_error' });
   }
 });

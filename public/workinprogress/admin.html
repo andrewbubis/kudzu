@@ -121,6 +121,20 @@
 .adm-contract { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; border: 1px solid; padding: 3px 10px; border-radius: 20px; margin-bottom: 16px; }
 .adm-contract.signed { color: #2e7d32; border-color: #a5d6a7; background: #f1f8f1; }
 .adm-contract.unsigned { color: #b71c1c; border-color: #ef9a9a; background: #fdf1f1; }
+
+/* agreement modal */
+.agr-modal-veil { position: fixed; inset: 0; background: rgba(0,0,0,.55); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 20px; }
+.agr-modal-veil[hidden] { display: none; }
+.agr-modal { background: #fff; border-radius: 8px; max-width: 720px; width: 100%; max-height: 85vh; display: flex; flex-direction: column; box-shadow: 0 16px 48px rgba(0,0,0,.25); }
+.agr-modal-head { padding: 20px 24px 16px; border-bottom: 1px solid #e8e8e8; display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.agr-modal-head h3 { margin: 0; font-size: 16px; font-weight: 600; }
+.agr-modal-close { background: none; border: none; font-size: 20px; cursor: pointer; color: #888; line-height: 1; padding: 2px 6px; }
+.agr-modal-meta { padding: 14px 24px; background: #f8f8f6; border-bottom: 1px solid #e8e8e8; font-size: 12px; color: #555; display: flex; flex-wrap: wrap; gap: 16px; }
+.agr-modal-meta strong { color: #222; }
+.agr-modal-body { padding: 20px 24px; overflow-y: auto; flex: 1; }
+.agr-modal-body pre { white-space: pre-wrap; font-family: var(--mono, monospace); font-size: 12px; line-height: 1.7; color: #333; margin: 0; }
+.agr-chip-link { cursor: pointer; text-decoration: none; }
+.agr-chip-link:hover { opacity: .85; }
 /* stats row */
 .adm-portfolio-stats { display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 20px; padding: 12px 16px; background: var(--a-bg); border-radius: 6px; border: 1px solid var(--a-line); }
 .adm-ps { text-align: center; }
@@ -385,6 +399,9 @@
               chip('bio', a.has.bio) +
               chip('cv', a.has.cv) +
               chip('stripe', a.has.stripe) +
+              (a.hasSigned
+                ? '<a class="chip ok agr-chip-link" data-agr-id="' + esc(String(a.id)) + '" title="View signed agreement">✓ contract · ' + new Date(a.signedAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) + '</a>'
+                : '<span class="chip no" title="No agreement on file">✗ contract</span>') +
             '</div>' +
             '<div class="adm-counts">' +
               '<div><strong>' + a.published + '</strong> <span>pub</span></div>' +
@@ -598,6 +615,58 @@
         }
       }
 
+      // ── Agreement modal ───────────────────────────────────────
+      (function() {
+        var modal = document.getElementById('agrModal');
+        var modalTitle = document.getElementById('agrModalTitle');
+        var modalMeta = document.getElementById('agrModalMeta');
+        var modalBody = document.getElementById('agrModalBody');
+        var closeBtn = document.getElementById('agrModalClose');
+
+        function closeModal() {
+          modal.hidden = true;
+          document.body.style.overflow = '';
+        }
+        closeBtn.addEventListener('click', closeModal);
+        modal.addEventListener('click', function(e) { if (e.target === modal) closeModal(); });
+        document.addEventListener('keydown', function(e) { if (e.key === 'Escape' && !modal.hidden) closeModal(); });
+
+        document.getElementById('main').addEventListener('click', async function(e) {
+          var chip = e.target.closest('.agr-chip-link[data-agr-id]');
+          if (!chip) return;
+          e.stopPropagation(); // don't expand the artist row
+          var artistId = chip.dataset.agrId;
+          modal.hidden = false;
+          document.body.style.overflow = 'hidden';
+          modalMeta.innerHTML = '';
+          modalBody.innerHTML = '<p style="color:#888;padding:20px 0;">Loading…</p>';
+          try {
+            var r = await fetch('/api/admin/artists/' + artistId + '/agreement', { credentials: 'same-origin' });
+            if (!r.ok) throw new Error('failed');
+            var data = await r.json();
+            var artist = data.artist || {};
+            var sigs = data.signatures || [];
+            modalTitle.textContent = (artist.name || 'Artist') + ' — Signed Agreement';
+            if (!sigs.length) {
+              modalMeta.innerHTML = '';
+              modalBody.innerHTML = '<p style="color:#b71c1c;padding:20px 0;">No signatures on file.</p>';
+              return;
+            }
+            var s = sigs[0];
+            modalMeta.innerHTML =
+              '<span><strong>Legal name:</strong> ' + esc(s.legalName || '—') + '</span>' +
+              '<span><strong>Version:</strong> ' + esc(s.version || '—') + '</span>' +
+              '<span><strong>Signed:</strong> ' + (s.signedAt ? new Date(s.signedAt).toLocaleString('en-US',{dateStyle:'medium',timeStyle:'short'}) : '—') + '</span>' +
+              (s.address ? '<span><strong>Address:</strong> ' + esc(s.address).replace(/\n/g,'<br>') + '</span>' : '');
+            modalBody.innerHTML =
+              (s.agreementTitle ? '<h4 style="margin:0 0 16px;font-size:15px;">' + esc(s.agreementTitle) + '</h4>' : '') +
+              (s.agreementBody ? '<pre>' + esc(s.agreementBody) + '</pre>' : '<p style="color:#888;">Agreement text not available.</p>');
+          } catch(_e) {
+            modalBody.innerHTML = '<p style="color:#b71c1c;">Could not load agreement.</p>';
+          }
+        });
+      })();
+
       // ── Account menu wiring ──────────────────────────────────
       (function() {
         var menu = document.getElementById('acctMenu');
@@ -645,5 +714,18 @@
 })();
 </script>
 <script src="js/track.js" defer></script>
+
+<!-- Agreement viewer modal -->
+<div class="agr-modal-veil" id="agrModal" hidden>
+  <div class="agr-modal" role="dialog" aria-modal="true" aria-labelledby="agrModalTitle">
+    <div class="agr-modal-head">
+      <h3 id="agrModalTitle">Signed Agreement</h3>
+      <button class="agr-modal-close" id="agrModalClose" aria-label="Close">&times;</button>
+    </div>
+    <div class="agr-modal-meta" id="agrModalMeta"></div>
+    <div class="agr-modal-body" id="agrModalBody"><p style="color:#888;">Loading…</p></div>
+  </div>
+</div>
+
 </body>
 </html>
