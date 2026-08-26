@@ -193,6 +193,26 @@
 .deadline-closed { color: var(--cream-dim) !important; }
 .deadline-rolling { color: #4f6020 !important; }
 
+/* ── Deadline Soon sticker ──────────────────────────────── */
+.deadline-sticker {
+  position: absolute;
+  top: 14px; right: -28px;
+  background: #c0392b;
+  color: #fff;
+  font-family: var(--sans);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 5px 34px;
+  transform: rotate(38deg);
+  transform-origin: top right;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+  pointer-events: none;
+  z-index: 2;
+  white-space: nowrap;
+}
+
 .tag-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; }
 .tag {
   font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.14em;
@@ -2333,5 +2353,43 @@ if (navToggle && nav) {
 </script>
 <script src="js/nav-auth.js" defer></script>
 <script src="js/track.js" defer></script>
+
+<script>
+(function() {
+  var now = new Date();
+  var curMonth = now.getMonth();  // 0-indexed
+  var curYear  = now.getFullYear();
+
+  // Month name → 0-indexed number
+  var MONTHS = {jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11};
+
+  function parseDeadlineDate(text) {
+    // Match patterns like "Aug 31, 2026" or "August 31, 2026"
+    var m = text.match(/([A-Za-z]{3,})\s+(\d{1,2}),?\s+(\d{4})/);
+    if (!m) return null;
+    var mo = MONTHS[m[1].toLowerCase().slice(0,3)];
+    if (mo === undefined) return null;
+    return { month: mo, year: parseInt(m[3], 10) };
+  }
+
+  document.querySelectorAll('.grant-card').forEach(function(card) {
+    // Look at all deadline spans in this card
+    var spans = card.querySelectorAll('.deadline-open,.deadline-soon');
+    for (var i = 0; i < spans.length; i++) {
+      var d = parseDeadlineDate(spans[i].textContent);
+      if (d && d.year === curYear && d.month === curMonth) {
+        // Add sticker to the card (only once)
+        if (!card.querySelector('.deadline-sticker')) {
+          var sticker = document.createElement('div');
+          sticker.className = 'deadline-sticker';
+          sticker.textContent = 'Deadline Soon';
+          card.appendChild(sticker);
+        }
+        break;
+      }
+    }
+  });
+})();
+</script>
 </body>
 </html>
