@@ -13,7 +13,7 @@ const shipping = require('./shipping');
 const auth = require('./auth');
 const lumaprints = require('./lumaprints');
 const mail = require('./mail');
-const { SHIPPING_COUNTRIES } = require('./shipping-countries');
+const { SHIPPING_COUNTRIES, SHIPPING_LAUNCH, canShipTo } = require('./shipping-countries');
 
 const router = express.Router();
 
@@ -211,6 +211,9 @@ router.post('/shipping/quote/:id', async (req, res) => {
   if (!shipping.isConfigured()) return res.status(503).json({ error: 'shipping_unavailable' });
 
   const to = normaliseAddress(req.body && req.body.to);
+  if (to === 'unsupported_country') {
+    return res.status(409).json({ error: 'unsupported_country' });
+  }
   if (!to) return res.status(400).json({ error: 'address_incomplete' });
 
   try {
@@ -256,6 +259,7 @@ function normaliseAddress(a) {
     phone:   str(a.phone, 40)
   };
   if (!to.line1 || !to.city || !to.country) return null;
+  if (!canShipTo(to.country)) return 'unsupported_country';
   // Everywhere Kudzu ships uses postcodes; a missing one silently
   // produces a rate for the wrong place.
   if (!to.postal) return null;
@@ -328,6 +332,9 @@ router.post('/checkout/work/:id', async (req, res) => {
     let ship = null;
     if (!isPickup && shipping.isConfigured()) {
       const to = normaliseAddress(req.body && req.body.shipTo);
+      if (to === 'unsupported_country') {
+        return res.status(409).json({ error: 'unsupported_country' });
+      }
       if (!to) return res.status(400).json({ error: 'address_incomplete' });
       try {
         ship = await shipping.quote({
@@ -422,7 +429,7 @@ router.post('/checkout/work/:id', async (req, res) => {
       // Once freight is priced here, asking again invites a buyer to type
       // a different destination than the one they were quoted for.
       ...(isPickup || ship ? {} : {
-        shipping_address_collection: { allowed_countries: SHIPPING_COUNTRIES }
+        shipping_address_collection: { allowed_countries: SHIPPING_LAUNCH }
       }),
       phone_number_collection: { enabled: true },
       // A real page. This used to point at the gallery with a ?bought=
@@ -826,16 +833,24 @@ async function fulfil(session) {
           });
           const saved = await db.query(
             `UPDATE orders SET label_url = $1, tracking = COALESCE(tracking, $2),
-                    carrier = COALESCE(carrier, $3)
-              WHERE id = $4 RETURNING label_url, tracking`,
-            [label.labelUrl, label.tracking, label.carrier, order.id]);
+                    carrier = COALESCE(carrier, $3), label_qr_url = $4
+              WHERE id = $5 RETURNING label_url, label_qr_url, tracking`,
+            [label.labelUrl, label.tracking, label.carrier, label.qrUrl, order.id]);
           if (saved.rows[0]) Object.assign(order, saved.rows[0]);
           console.log('label bought for order', order.id, label.tracking || '');
         } catch (err) {
           // Never fatal. The sale is done and the buyer has paid; a label
           // that failed to buy is something a person can sort out, and
           // losing the whole fulfilment over it would be far worse.
-          console.error('LABEL PURCHASE FAILED for order', order.id, '—', err.message);
+          //
+          // Said loudly, and with the likely cause named: labels are bought
+          // from a prepaid EasyPost wallet, and an empty wallet is what
+          // this will usually mean. The artist is told to hold the piece
+          // rather than being left with a sale and no postage.
+          console.error(
+            err.code === 'NO_FUNDS'
+              ? 'LABEL PURCHASE FAILED — EASYPOST WALLET IS EMPTY. Order ' + order.id
+              : 'LABEL PURCHASE FAILED for order ' + order.id + ' — ' + err.message);
         }
       }
 

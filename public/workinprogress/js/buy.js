@@ -33,7 +33,9 @@
     artist_ship_from_missing: 'This artist hasn\u2019t set their shipping address yet, '
                             + 'so we can\u2019t price postage. Contact us and we\u2019ll chase it.',
     quote_failed: 'Couldn\u2019t reach the carrier for a price. Try again in a moment.',
-    shipping_unavailable: 'Shipping isn\u2019t switched on yet.'
+    shipping_unavailable: 'Shipping isn\u2019t switched on yet.',
+    unsupported_country: 'We only ship originals within the US and Canada for now. '
+                       + 'Email info@kudzuarts.com and we\u2019ll quote your address by hand.'
   };
 
   function esc(s) {

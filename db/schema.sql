@@ -598,6 +598,11 @@ ALTER TABLE orders ADD COLUMN IF NOT EXISTS easypost_id     text;
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS easypost_rate   text;
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS label_url       text;
 
+-- The same postage as a scannable code. The artist packs the piece, walks
+-- into the post office, shows their phone, and hands the box over — no
+-- printer, no paying at the counter, nothing to claim back afterwards.
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS label_qr_url    text;
+
 -- Tracking is not optional. Marking something shipped without it gives
 -- the buyer nothing to look at and gives the artist nothing to prove,
 -- so the database refuses the halfway state rather than trusting a form.

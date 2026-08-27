@@ -39,4 +39,20 @@ const SHIPPING_COUNTRIES = [
   'WF', 'WS', 'XK', 'YE', 'YT', 'ZA', 'ZM', 'ZW'
 ];
 
-module.exports = { SHIPPING_COUNTRIES };
+// Where Kudzu will actually send an original at launch.
+//
+// The full list above is what Stripe would *accept*; this is what we
+// offer. A one-of-a-kind painting posted to the other side of the world
+// is a different proposition from one going to Ohio — customs forms,
+// weeks in transit, and an artist asked to pack for a journey they can't
+// picture. US and Canada are the two where a rate is predictable and a
+// signature actually comes back.
+//
+// Everywhere else is not refused silently: the piece page says to write
+// in, and those go one at a time, by hand, on purpose.
+const SHIPPING_LAUNCH = ['US', 'CA'];
+
+const canShipTo = (country) =>
+  SHIPPING_LAUNCH.indexOf(String(country || '').toUpperCase()) !== -1;
+
+module.exports = { SHIPPING_COUNTRIES, SHIPPING_LAUNCH, canShipTo };

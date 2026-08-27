@@ -35,10 +35,14 @@ async function call(path, body, method) {
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
-    const err = new Error(
-      (data.error && (data.error.message || data.error.code)) || res.statusText);
+    const detail = (data.error && (data.error.message || data.error.code)) || res.statusText;
+    const err = new Error(detail);
     err.status = res.status;
     err.data = data;
+    // Labels are bought from a prepaid EasyPost wallet. An empty one is
+    // the most likely reason a purchase fails, and it reads like a
+    // generic payment error unless it is named.
+    if (/insufficient|balance|fund/i.test(String(detail))) err.code = 'NO_FUNDS';
     throw err;
   }
   return data;
@@ -148,8 +152,31 @@ async function buyLabel({ shipmentId, rateId, insureCents }) {
     ...(insureCents ? { insurance: (insureCents / 100).toFixed(2) } : {})
   });
 
+  // And a QR code, so the artist doesn't need a printer.
+  //
+  // This is the whole point of Kudzu buying the postage rather than the
+  // artist paying at the counter: they pack the piece, walk in, show a
+  // code on their phone, and hand the box over. USPS prints the label
+  // there. Nothing to print at home, nothing to pay, nothing to claim
+  // back — and the insurance and signature are already on it.
+  //
+  // Best-effort. Not every carrier or service supports it, and a label
+  // that exists on paper is far better than no label at all, so a failure
+  // here is logged and the printable URL stands on its own.
+  let qrUrl = null;
+  try {
+    const form = await call('/shipments/' + shipmentId + '/forms',
+      { form: { type: 'label_qr_code' } });
+    const forms = form.forms || [];
+    const qr = forms.filter((f) => f.form_type === 'label_qr_code').pop() || forms.pop();
+    qrUrl = (qr && qr.form_url) || null;
+  } catch (err) {
+    console.error('QR label unavailable for', shipmentId, '—', err.message);
+  }
+
   return {
     labelUrl: bought.postage_label && bought.postage_label.label_url,
+    qrUrl:    qrUrl,
     tracking: bought.tracking_code || null,
     carrier:  bought.selected_rate && bought.selected_rate.carrier
   };
