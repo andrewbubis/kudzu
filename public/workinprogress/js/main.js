@@ -59,6 +59,28 @@
       var data = Object.fromEntries(new FormData(f).entries());
       var btn = f.querySelector('button[type="submit"]');
       var orig = btn.textContent; btn.disabled = true; btn.textContent = 'Sending…';
+      // Whoever asked for the newsletter gets put on the newsletter.
+      //
+      // Ticking a box in a form that emails somebody is not a signup —
+      // it is a sentence in an inbox, and it relied on a person noticing
+      // it and typing the address in somewhere else. This posts to
+      // Kudzu's own endpoint, which is wired to Buttondown, so the list
+      // grows on its own.
+      //
+      // Deliberately not awaited alongside the message: a newsletter
+      // that fails must never stop an inquiry from being sent, and
+      // somebody asking a question is the more important of the two.
+      if ((data.newsletter && data.newsletter !== 'no') ||
+          /newsletter/i.test(String(data.topic || ''))) {
+        fetch('/api/subscribe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: data.email, name: data.name || undefined })
+        }).catch(function (err) {
+          console.error('[kudzu] newsletter signup failed:', err);
+        });
+      }
+
       try {
         var endpoint = f.getAttribute('data-endpoint');
         var mailto = f.getAttribute('data-mailto');

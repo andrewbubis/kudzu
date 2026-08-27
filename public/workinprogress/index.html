@@ -127,6 +127,29 @@
       </label>
       <button type="submit" class="btn btn-clay btn-lg" style="width:100%; justify-content:center;">Send</button>
     </form>
+    <script>
+    // This form posts straight to a hosted mail service and navigates
+    // away, so the newsletter box was only ever a line of text in an
+    // inbox — nobody was actually added to anything.
+    //
+    // sendBeacon rather than fetch, because the page is leaving: the
+    // browser guarantees a beacon is delivered even as it unloads, where
+    // an in-flight fetch is simply cancelled. It also cannot delay the
+    // submit, which is the behaviour we want — a newsletter must never
+    // hold up somebody's message.
+    (function () {
+      var form = document.currentScript.previousElementSibling;
+      form.addEventListener('submit', function () {
+        var email = (form.querySelector('input[name="email"]') || {}).value;
+        var wants = (form.querySelector('input[name="newsletter"]') || {}).checked;
+        if (!wants || !email) return;
+        try {
+          navigator.sendBeacon('/api/subscribe',
+            new Blob([JSON.stringify({ email: email })], { type: 'application/json' }));
+        } catch (err) { /* the message still sends, which is the point */ }
+      });
+    })();
+    </script>
   </div>
 </section>
 
