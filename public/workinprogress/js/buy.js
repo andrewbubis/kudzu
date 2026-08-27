@@ -20,6 +20,8 @@
 
   var ERRORS = {
     already_sold: 'This piece has just sold.',
+    being_bought: 'Someone is buying this piece right now. If they don\u2019t '
+                + 'finish, it will come back up shortly \u2014 try again in a few minutes.',
     not_for_sale: 'This piece isn’t for sale.',
     artist_payout_not_set_up: 'This artist hasn’t finished setting up payouts yet.',
     payments_unavailable: 'Purchasing isn’t switched on yet.',

@@ -94,11 +94,11 @@ ALTER TABLE artworks ADD COLUMN IF NOT EXISTS ship_depth_in  numeric(6,2);
 CREATE OR REPLACE FUNCTION enforce_publish_limit() RETURNS trigger AS $$
 DECLARE
   n         int;
-  payout_to text;
+  payout_ready boolean;
 BEGIN
   IF NEW.status = 'published' THEN
-    SELECT stripe_account INTO payout_to FROM artists WHERE id = NEW.artist_id;
-    IF payout_to IS NULL OR payout_to = '' THEN
+    SELECT stripe_ready INTO payout_ready FROM artists WHERE id = NEW.artist_id;
+    IF NOT COALESCE(payout_ready, false) THEN
       RAISE EXCEPTION 'stripe_not_connected';
     END IF;
 
@@ -115,12 +115,39 @@ BEGIN
   RETURN NEW;
 END $$ LANGUAGE plpgsql;
 
--- If an artist disconnects Stripe, everything they have published comes
--- straight back down to draft.
+-- A painting is one object. Two people can open checkout on the same
+-- piece at the same moment, and without this both of them pay: nothing
+-- else stands between the two Stripe sessions. The first to reach
+-- checkout holds the piece; the second is told plainly that someone is
+-- buying it and to try again shortly.
+--
+-- Held for thirty minutes, matched to the Stripe session's own expiry —
+-- which is the shortest Stripe permits. Aligning them matters: a hold
+-- shorter than the session would let a lapsed session still pay for a
+-- piece somebody else had since started buying, which is the bug this
+-- exists to prevent. The hold is released the moment the session is paid
+-- or abandoned, so in practice it rarely runs its full length.
+ALTER TABLE artworks ADD COLUMN IF NOT EXISTS reserved_until   timestamptz;
+ALTER TABLE artworks ADD COLUMN IF NOT EXISTS reserved_session text;
+
+-- Whether Stripe will actually let this artist take a charge and receive
+-- a payout, which is not the same as having an account id.
+--
+-- Split out from `stripe_account` deliberately. The id used to carry
+-- both meanings, and readiness was expressed by wiping it — which lost
+-- the account. An artist whose ID check was still pending, or whose bank
+-- wanted re-verifying, came back to an empty field, and the next click
+-- opened a SECOND Express account while their sales history and any
+-- pending balance sat in the first one they could no longer reach.
+--
+-- The id is now permanent once issued. This flag moves.
+ALTER TABLE artists ADD COLUMN IF NOT EXISTS stripe_ready boolean NOT NULL DEFAULT false;
+
+-- If an artist's payouts stop working, everything they have published
+-- comes straight back down to draft.
 CREATE OR REPLACE FUNCTION unpublish_on_stripe_removal() RETURNS trigger AS $$
 BEGIN
-  IF (OLD.stripe_account IS NOT NULL AND OLD.stripe_account <> '')
-     AND (NEW.stripe_account IS NULL OR NEW.stripe_account = '') THEN
+  IF OLD.stripe_ready AND NOT NEW.stripe_ready THEN
     UPDATE artworks
        SET status = 'draft', updated_at = now()
      WHERE artist_id = NEW.id AND status = 'published';
@@ -133,7 +160,7 @@ END $$ LANGUAGE plpgsql;
 
 DROP TRIGGER IF EXISTS artists_stripe_removed ON artists;
 CREATE TRIGGER artists_stripe_removed
-  AFTER UPDATE OF stripe_account ON artists
+  AFTER UPDATE OF stripe_ready ON artists
   FOR EACH ROW EXECUTE FUNCTION unpublish_on_stripe_removal();
 
 DROP TRIGGER IF EXISTS artworks_publish_limit ON artworks;
@@ -158,7 +185,7 @@ CREATE TRIGGER artworks_publish_limit
 -- pages rot.
 CREATE OR REPLACE FUNCTION kudzu_profile_ready(a_id uuid)
 RETURNS boolean AS $$
-  SELECT COALESCE(stripe_account, '') <> ''
+  SELECT stripe_ready
      AND COALESCE(photo_path,     '') <> ''
      AND btrim(COALESCE(bio,      '')) <> ''
      AND btrim(COALESCE(cv,       '')) <> ''
@@ -651,6 +678,19 @@ CREATE TABLE IF NOT EXISTS kudzu_migrations (
   name       text PRIMARY KEY,
   applied_at timestamptz NOT NULL DEFAULT now()
 );
+
+-- Splitting readiness out of the account id starts everyone at false.
+-- Anyone already connected and selling is marked ready once, here, so the
+-- deploy doesn't quietly pull every published work down to draft. From
+-- then on Stripe's own webhook is the only thing that moves this flag.
+DO $stripe_ready$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM kudzu_migrations WHERE name = 'backfill_stripe_ready') THEN
+    UPDATE artists SET stripe_ready = true
+     WHERE COALESCE(stripe_account, '') <> '' AND NOT stripe_ready;
+    INSERT INTO kudzu_migrations (name) VALUES ('backfill_stripe_ready');
+  END IF;
+END $stripe_ready$;
 
 -- Removing the publish button left existing drafts stranded: there is no
 -- longer any control that could bring one out. Put up every draft that

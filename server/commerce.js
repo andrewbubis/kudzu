@@ -162,6 +162,16 @@ router.get('/connect/status', auth.requireArtist, async (req, res) => {
     const acct = await stripe.accounts.retrieve(req.artist.stripe_account);
     const ready = !!(acct.charges_enabled && acct.payouts_enabled);
 
+    // The webhook is the usual way this flag moves, but an artist landing
+    // back here from Stripe's onboarding shouldn't have to wait on it —
+    // and if the event was never delivered, this is what heals them.
+    if (ready !== !!req.artist.stripe_ready) {
+      await db.query(
+        'UPDATE artists SET stripe_ready = $1, updated_at = now() WHERE id = $2',
+        [ready, req.artist.id]).catch((err) =>
+          console.error('connect status persist failed:', err.message));
+    }
+
     res.json({
       connected: ready,
       reason: ready ? null : 'incomplete',
@@ -190,6 +200,11 @@ router.post('/connect/dashboard', auth.requireArtist, async (req, res) => {
   }
 });
 
+// How long a piece is held once someone opens checkout on it. Thirty
+// minutes is the shortest expiry Stripe will put on a session, and the
+// hold is matched to it deliberately — see the schema note.
+const HOLD_SECONDS = 30 * 60;
+
 // ── Checkout ─────────────────────────────────────────────────────────
 // Buying an original. Price and title come from the database, never from
 // the browser — otherwise anyone could set their own price.
@@ -199,7 +214,7 @@ router.post('/checkout/work/:id', async (req, res) => {
 
   try {
     const { rows } = await db.query(
-      `SELECT w.*, a.name AS artist_name, a.stripe_account,
+      `SELECT w.*, a.name AS artist_name, a.stripe_account, a.stripe_ready,
               a.works_city, a.works_country
          FROM artworks w JOIN artists a ON a.id = w.artist_id
         WHERE w.id = $1`, [req.params.id]);
@@ -214,8 +229,27 @@ router.post('/checkout/work/:id', async (req, res) => {
     // account there is nowhere for the payout to land, so the sale is
     // refused rather than taken. Belt and braces: the database also
     // refuses to publish a priced work under these conditions.
-    if (!work.stripe_account) {
+    // Having an account id is not the same as being able to receive
+    // money. Checking readiness here as well means a buyer gets an honest
+    // refusal rather than a 500 from Stripe rejecting the destination.
+    if (!work.stripe_account || !work.stripe_ready) {
       return res.status(409).json({ error: 'artist_payout_not_set_up' });
+    }
+
+    // Claim the piece. One UPDATE, so two simultaneous buyers cannot both
+    // win it — Postgres serialises them and the loser matches no row.
+    // An expired hold is claimable again, which is what makes an
+    // abandoned checkout self-healing even if Stripe never tells us.
+    const claim = await db.query(
+      `UPDATE artworks
+          SET reserved_until = now() + ($2 || ' seconds')::interval,
+              reserved_session = 'pending'
+        WHERE id = $1 AND status = 'published'
+          AND (reserved_until IS NULL OR reserved_until < now())
+    RETURNING id`, [work.id, String(HOLD_SECONDS)]);
+
+    if (!claim.rows[0]) {
+      return res.status(409).json({ error: 'being_bought' });
     }
 
     const site = baseUrl(req);
@@ -259,6 +293,8 @@ router.post('/checkout/work/:id', async (req, res) => {
     // capability, which /connect/start requests above.
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
+      // Matched to the hold above. Thirty minutes is Stripe's floor.
+      expires_at: Math.floor(Date.now() / 1000) + HOLD_SECONDS,
       line_items: [{
         quantity: 1,
         price_data: {
@@ -290,6 +326,8 @@ router.post('/checkout/work/:id', async (req, res) => {
         kind: 'original',
         workId: String(work.id),
         artistId: String(work.artist_id),
+        // Copied so a piece deleted mid-checkout can still be fulfilled.
+        workTitle: String(work.title || '').slice(0, 200),
         delivery: isPickup ? 'pickup' : 'ship',
         // Recorded now so the payout can't be recalculated later against
         // a price that has since been edited.
@@ -297,12 +335,34 @@ router.post('/checkout/work/:id', async (req, res) => {
       }
     });
 
+    // Tie the hold to the session, so the expiry webhook can find it.
+    await db.query(
+      'UPDATE artworks SET reserved_session = $1 WHERE id = $2', [session.id, work.id])
+      .catch((err) => console.error('reservation tag failed:', err.message));
+
     res.json({ url: session.url });
   } catch (err) {
     console.error('checkout failed:', err.message);
+    // Never leave a piece held for a checkout that never opened.
+    await db.query(
+      `UPDATE artworks SET reserved_until = NULL, reserved_session = NULL
+        WHERE id = $1 AND reserved_session = 'pending'`, [req.params.id])
+      .catch(() => {});
     res.status(500).json({ error: 'checkout_failed' });
   }
 });
+
+
+// Stripe tells us when a session is abandoned. Releasing on that event
+// rather than waiting out the clock is what keeps a piece from looking
+// sold-out for half an hour because somebody closed a tab.
+async function releaseHold(session) {
+  if (!db.isReady()) return;
+  const { rowCount } = await db.query(
+    `UPDATE artworks SET reserved_until = NULL, reserved_session = NULL
+      WHERE reserved_session = $1 AND status <> 'sold'`, [session.id]);
+  if (rowCount) console.log('checkout abandoned, released hold for session', session.id);
+}
 
 // ── Webhook ──────────────────────────────────────────────────────────
 // Mounted in server.js with express.raw() so the signature can be checked.
@@ -320,40 +380,39 @@ function webhookHandler(req, res) {
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
-  // Answer immediately — Stripe retries anything slow. Fulfilment
-  // continues after the response.
-  res.status(200).send('ok');
+  // The work happens before the answer, on purpose. This used to send
+  // 200 first and fulfil afterwards, which told Stripe the event was
+  // delivered and permanently gave up any retry — so a deploy, a restart,
+  // or a database blip mid-fulfilment lost the sale outright, silently.
+  //
+  // Everything awaited here is database work; the emails are fired and
+  // not waited on, so this stays well inside Stripe's timeout. If it does
+  // throw, answering 5xx is what earns the retry.
+  const handlers = {
+    'checkout.session.completed': fulfil,
+    'checkout.session.expired':   releaseHold,
+    // An artist finished — or lost — their Stripe onboarding.
+    'account.updated':            syncConnectState,
 
-  if (event.type === 'checkout.session.completed') {
-    fulfil(event.data.object).catch((err) => {
-      console.error('fulfilment failed for session', event.data.object.id, err.message);
-    });
-  }
+    // Money going back the other way. Neither of these used to be handled
+    // at all: a refunded piece stayed marked sold forever, and a
+    // chargeback was completely invisible — the first anyone would know
+    // is when the artist noticed money missing weeks later.
+    'charge.refunded': (charge) => markReversed(charge, 'refunded'),
+    'charge.dispute.created': (dispute) => markReversed(
+      // The event carries the dispute; the charge id is on it.
+      { payment_intent: dispute.payment_intent, id: dispute.charge }, 'disputed')
+  };
 
-  // An artist finished — or lost — their Stripe onboarding.
-  if (event.type === 'account.updated') {
-    syncConnectState(event.data.object).catch((err) => {
-      console.error('connect sync failed:', err.message);
-    });
-  }
+  const handle = handlers[event.type];
+  if (!handle) return res.status(200).send('ok');
 
-  // Money going back the other way. Neither of these used to be handled
-  // at all: a refunded piece stayed marked sold forever, and a chargeback
-  // was completely invisible — the first anyone would know is when the
-  // artist noticed money missing from their bank weeks later.
-  if (event.type === 'charge.refunded') {
-    markReversed(event.data.object, 'refunded').catch((err) => {
-      console.error('refund handling failed:', err.message);
+  handle(event.data.object).then(
+    () => res.status(200).send('ok'),
+    (err) => {
+      console.error(event.type, 'failed for', event.data.object.id, '—', err.message);
+      res.status(500).send('handler failed');
     });
-  }
-
-  if (event.type === 'charge.dispute.created') {
-    // event.data.object is the dispute; the charge id is on it.
-    markReversed({ payment_intent: event.data.object.payment_intent,
-                   id: event.data.object.charge }, 'disputed').catch((err) => {
-      console.error('dispute handling failed:', err.message);
-    });
-  }
 }
 
 // Find the order behind a charge and record what happened to it.
@@ -412,18 +471,40 @@ async function markReversed(charge, kind) {
 }
 
 // Stripe considers an account usable only when it can both take charges
-// and pay out. Anything less and we clear it, which the database trigger
-// then uses to pull that artist's work back to draft.
+// and pay out. This tracks that state on `stripe_ready`, which the
+// database trigger uses to pull work back to draft and put it back up.
+//
+// It moves in both directions, which is the whole point. Stripe raises
+// requirements routinely — an expiring ID, a periodic bank re-check — and
+// clears them again a day later. An earlier version only ever set the
+// unusable state, by wiping `stripe_account`, so an artist who tripped
+// one of those was stuck: work down, field empty, and the next click
+// opened a second Express account orphaning the first.
+//
+// The account id is never cleared here now. It is matched on directly, or
+// on the artist id stamped into the account's metadata at creation — the
+// latter covering accounts orphaned by that earlier behaviour, so those
+// artists heal on the next event Stripe sends.
 async function syncConnectState(account) {
   if (!db.isReady()) return;
   const ready = !!(account.charges_enabled && account.payouts_enabled);
-  if (ready) return;
+  const artistId = (account.metadata && account.metadata.kudzu_artist_id) || null;
 
-  const { rowCount } = await db.query(
-    `UPDATE artists SET stripe_account = NULL, updated_at = now()
-      WHERE stripe_account = $1`, [account.id]);
-  if (rowCount) {
-    console.log('connect account no longer usable, unpublished work for', account.id);
+  try {
+    const { rowCount } = await db.query(
+      `UPDATE artists
+          SET stripe_account = $1, stripe_ready = $2, updated_at = now()
+        WHERE (stripe_account = $1 OR (id::text = $3 AND stripe_account IS NULL))
+          AND stripe_ready IS DISTINCT FROM $2`,
+      [account.id, ready, artistId]);
+
+    if (rowCount) {
+      console.log(ready
+        ? 'connect account ready, work can go back up for ' + account.id
+        : 'connect account not usable, unpublished work for ' + account.id);
+    }
+  } catch (err) {
+    console.error('connect sync failed for', account.id, '—', err.message);
   }
 }
 
@@ -497,31 +578,44 @@ async function fulfil(session) {
   const md = session.metadata || {};
 
   if (md.kind === 'original' && md.workId) {
-    const { rows } = await db.query(
-      `UPDATE artworks SET status = 'sold', sold_at = now(), updated_at = now()
-        WHERE id = $1 AND status <> 'sold'
-    RETURNING title, artist_id`, [md.workId]);
+    // Read the piece without changing it. If it has been deleted since
+    // checkout opened, the metadata stamped on the session still carries
+    // what fulfilment needs — the sale happened and has to land.
+    const { rows: w } = await db.query(
+      'SELECT title, artist_id FROM artworks WHERE id = $1', [md.workId]);
+    const work = w[0] || { title: md.workTitle || 'Untitled', artist_id: md.artistId || null };
+    if (!w[0]) {
+      console.error('artwork', md.workId, 'no longer exists — fulfilling from session metadata');
+    }
+
+    // The order is written FIRST, and it is the guard for everything
+    // below: `orders` has a unique constraint on the session id, so a
+    // Stripe retry gets null back here and nothing happens twice.
+    //
+    // The artwork's status transition used to play that role, which meant
+    // any case where it matched no rows — a second buyer on the same
+    // piece, a deleted work, a momentary database error — threw away the
+    // order, both emails, and the one copy of the shipping address Stripe
+    // ever hands over, after the buyer had already been charged.
+    //
+    // A throw here is deliberately not caught. The webhook then answers
+    // 5xx and Stripe retries, which is the only way a transient failure
+    // gets a second chance at that address.
+    const order = await recordOrder(session, md, work);
+    if (!order) return;                       // already fulfilled
+
+    await db.query(
+      `UPDATE artworks
+          SET status = 'sold', sold_at = now(), updated_at = now(),
+              reserved_until = NULL, reserved_session = NULL
+        WHERE id = $1 AND status <> 'sold'`, [md.workId]);
     console.log('marked sold:', md.workId, 'session', session.id);
 
-    // Only on the transition — Stripe retries webhooks, and an artist
-    // should not be told twice that the same piece sold.
-    if (rows[0]) {
+    {
       const { rows: ar } = await db.query(
         `SELECT id, name, email, notify_channel, notify_phone, works_city
            FROM artists WHERE id = $1`,
-        [rows[0].artist_id]);
-
-      // Every sale becomes an order, on both routes. For a shipped piece
-      // this is the only record of where it has to go — Stripe collects
-      // the address and hands it over exactly once, in this webhook, and
-      // for a long time we let it fall on the floor.
-      let order = null;
-      try {
-        order = await recordOrder(session, md, rows[0]);
-      } catch (err) {
-        // Loud, because a lost address means an unfulfillable sale.
-        console.error('COULD NOT RECORD ORDER for session', session.id, '—', err.message);
-      }
+        [work.artist_id]);
 
       // A pickup sale is not finished when the money arrives — it's
       // finished when the work is in the buyer's hands and both have
@@ -542,7 +636,7 @@ async function fulfil(session) {
              VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
              ON CONFLICT DO NOTHING
              RETURNING *`,
-            [md.workId, rows[0].artist_id, rows[0].title,
+            [md.workId, work.artist_id, work.title,
              [d.medium, d.year, d.dimensions].filter(Boolean).join(' · ') || null,
              session.amount_total, session.currency || 'usd',
              cd.name || 'Buyer', cd.email || '',
@@ -579,7 +673,7 @@ async function fulfil(session) {
       if (ar[0]) {
         mail.workSold({
           artist: ar[0],
-          workTitle: rows[0].title,
+          workTitle: work.title,
           amountCents: session.amount_total,
           currency: session.currency,
           isPickup: md.delivery === 'pickup',
