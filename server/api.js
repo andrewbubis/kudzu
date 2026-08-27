@@ -8,6 +8,7 @@ const express = require('express');
 const db = require('./db');
 const auth = require('./auth');
 const storage = require('./storage');
+const lumaprints = require('./lumaprints');
 const mail = require('./mail');
 
 const router = express.Router();
@@ -1409,6 +1410,35 @@ router.get('/admin/artists/:id/works', auth.requireArtist, auth.requireAdmin, as
   } catch (err) {
     console.error('admin artist works failed:', err.message);
     res.status(500).json({ error: 'server_error' });
+  }
+});
+
+// Which Lumaprints store to order against.
+//
+// The id isn't shown anywhere in their dashboard — it only comes back
+// from their API — so this looks it up rather than leaving somebody to
+// find it by reading documentation. Set the key and secret in Railway,
+// open this, copy the id into LUMAPRINTS_STORE_ID.
+//
+// Admin only. It reveals nothing secret, but it does confirm whether a
+// set of credentials works, which is not a thing to leave open.
+router.get('/admin/lumaprints/stores', auth.requireArtist, auth.requireAdmin, async (req, res) => {
+  if (!lumaprints.hasCredentials()) {
+    return res.status(503).json({
+      error: 'lumaprints_not_configured',
+      needs: ['LUMAPRINTS_API_KEY', 'LUMAPRINTS_API_SECRET']
+    });
+  }
+  try {
+    const stores = await lumaprints.listStores();
+    res.json({
+      stores,
+      storeIdSet: !!lumaprints.getConfig().storeId,
+      apiBase: lumaprints.getConfig().apiBase
+    });
+  } catch (err) {
+    console.error('lumaprints stores lookup failed:', err.message);
+    res.status(502).json({ error: 'lookup_failed', detail: err.message });
   }
 });
 

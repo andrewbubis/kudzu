@@ -25,6 +25,35 @@ function isConfigured() {
   return !!(apiKey && apiSecret && storeId);
 }
 
+// Enough to talk to Lumaprints at all, which is a lower bar than being
+// ready to place an order — the store id can be looked up once these two
+// exist, and cannot be looked up before.
+function hasCredentials() {
+  const { apiKey, apiSecret } = getConfig();
+  return !!(apiKey && apiSecret);
+}
+
+// The stores this account can place orders against.
+//
+// LUMAPRINTS_STORE_ID is not printed anywhere on the dashboard — it comes
+// back from here, which is a strange thing to discover on your own. So
+// this exists to be called once from the admin page: set the key and the
+// secret, look up the id, save it, done.
+async function listStores() {
+  const { apiBase } = getConfig();
+  const res = await fetch(`${apiBase}/api/v1/stores`, {
+    headers: { Authorization: authHeader(), 'Content-Type': 'application/json' }
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const err = new Error('Lumaprints stores lookup failed: ' + (data.message || res.statusText));
+    err.status = res.status;
+    throw err;
+  }
+  // [{ storeId, storeName }]
+  return Array.isArray(data) ? data : (data.stores || []);
+}
+
 function authHeader() {
   const { apiKey, apiSecret } = getConfig();
   const token = Buffer.from(`${apiKey}:${apiSecret}`).toString('base64');
@@ -83,4 +112,4 @@ async function submitOrder({ externalId, subcategoryId, width, height, imageUrl,
   return data; // { message, orderNumber }
 }
 
-module.exports = { submitOrder, isConfigured, getConfig };
+module.exports = { submitOrder, isConfigured, hasCredentials, listStores, getConfig };
