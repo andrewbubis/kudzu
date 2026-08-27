@@ -115,6 +115,25 @@ BEGIN
   RETURN NEW;
 END $$ LANGUAGE plpgsql;
 
+-- Where a shipped work leaves from.
+--
+-- Rating a parcel needs an origin, and a city and country are not one —
+-- postage from Nashville 37206 is not postage from "Nashville, US". This
+-- is the artist's own address, never published: it goes to the carrier to
+-- price the box, and onto the label they print.
+--
+-- Deliberately NOT part of kudzu_profile_ready(). That function decides
+-- whether published work stays up, and adding a field nobody has filled
+-- in yet would pull every wall on the site down on the deploy that added
+-- it. An artist without one is refused at the point of quoting instead —
+-- the moment it actually matters — and asked for it on their profile.
+ALTER TABLE artists ADD COLUMN IF NOT EXISTS ship_from_line1   text;
+ALTER TABLE artists ADD COLUMN IF NOT EXISTS ship_from_line2   text;
+ALTER TABLE artists ADD COLUMN IF NOT EXISTS ship_from_city    text;
+ALTER TABLE artists ADD COLUMN IF NOT EXISTS ship_from_state   text;
+ALTER TABLE artists ADD COLUMN IF NOT EXISTS ship_from_postal  text;
+ALTER TABLE artists ADD COLUMN IF NOT EXISTS ship_from_country text;
+
 -- A painting is one object. Two people can open checkout on the same
 -- piece at the same moment, and without this both of them pay: nothing
 -- else stands between the two Stripe sessions. The first to reach
@@ -482,6 +501,7 @@ CREATE TABLE IF NOT EXISTS agreement_signatures (
 CREATE INDEX IF NOT EXISTS agreement_sig_artist_idx
   ON agreement_signatures (artist_id, signed_at DESC);
 
+
 -- ── Bills of lading ──────────────────────────────────────────────────
 -- The record of a hand-to-hand delivery. A shipped work has the
 -- carrier's signature as independent proof; a local pickup has nothing
@@ -563,6 +583,20 @@ CREATE TABLE IF NOT EXISTS orders (
 
 CREATE INDEX IF NOT EXISTS orders_artist_idx ON orders (artist_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS orders_artwork_idx ON orders (artwork_id);
+
+-- What the buyer paid to have it sent, and the carrier booking behind it.
+--
+-- Shipping is charged ON TOP of the retail price and passes straight
+-- through: it is added to Kudzu's application fee rather than to the
+-- artist's transfer, so the artist always nets 75% of the PIECE and not a
+-- cent of the postage comes out of their share. Kudzu holds that amount
+-- only as long as it takes to buy the label with it.
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_cents  int;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS ship_carrier    text;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS ship_service    text;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS easypost_id     text;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS easypost_rate   text;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS label_url       text;
 
 -- Tracking is not optional. Marking something shipped without it gives
 -- the buyer nothing to look at and gives the artist nothing to prove,

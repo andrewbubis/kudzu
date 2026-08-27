@@ -9,6 +9,7 @@
 
 const express = require('express');
 const db = require('./db');
+const shipping = require('./shipping');
 const auth = require('./auth');
 const lumaprints = require('./lumaprints');
 const mail = require('./mail');
@@ -200,6 +201,67 @@ router.post('/connect/dashboard', auth.requireArtist, async (req, res) => {
   }
 });
 
+// ── What will it cost to send? ───────────────────────────────────────
+// Called from the piece page once the buyer has typed an address, so they
+// see the real number before they commit to anything. Books nothing and
+// holds nothing — the price is worked out again server-side at checkout,
+// because a number that has been through a browser is not a price.
+router.post('/shipping/quote/:id', async (req, res) => {
+  if (!db.isReady()) return res.status(503).json({ error: 'backend_unavailable' });
+  if (!shipping.isConfigured()) return res.status(503).json({ error: 'shipping_unavailable' });
+
+  const to = normaliseAddress(req.body && req.body.to);
+  if (!to) return res.status(400).json({ error: 'address_incomplete' });
+
+  try {
+    const { rows } = await db.query(
+      `SELECT w.ship_weight_oz, w.ship_length_in, w.ship_width_in, w.ship_depth_in,
+              w.price_cents, w.status,
+              a.name, a.ship_from_line1, a.ship_from_line2, a.ship_from_city,
+              a.ship_from_state, a.ship_from_postal, a.ship_from_country
+         FROM artworks w JOIN artists a ON a.id = w.artist_id
+        WHERE w.id = $1`, [req.params.id]);
+    const row = rows[0];
+    if (!row) return res.status(404).json({ error: 'not_found' });
+    if (row.status !== 'published') return res.status(409).json({ error: 'not_for_sale' });
+
+    const q = await shipping.quote({ artist: row, work: row, to });
+    res.json({
+      cents: q.cents, carrier: q.carrier, service: q.service, days: q.days
+    });
+  } catch (err) {
+    if (err.code === 'ORIGIN') return res.status(409).json({ error: 'artist_ship_from_missing' });
+    if (err.code === 'NO_RATES') {
+      console.error('no rates for work', req.params.id, '—', err.detail || '');
+      return res.status(409).json({ error: 'cannot_ship_there' });
+    }
+    console.error('shipping quote failed:', err.message);
+    res.status(502).json({ error: 'quote_failed' });
+  }
+});
+
+// Everything a carrier needs, or nothing. A half-filled address produces
+// a rate that is wrong rather than an error, which is worse.
+function normaliseAddress(a) {
+  if (!a) return null;
+  const str = (v, n) => String(v || '').trim().slice(0, n);
+  const to = {
+    name:    str(a.name, 120),
+    line1:   str(a.line1, 200),
+    line2:   str(a.line2, 200),
+    city:    str(a.city, 100),
+    state:   str(a.state, 60),
+    postal:  str(a.postal, 20),
+    country: (str(a.country, 2) || 'US').toUpperCase(),
+    phone:   str(a.phone, 40)
+  };
+  if (!to.line1 || !to.city || !to.country) return null;
+  // Everywhere Kudzu ships uses postcodes; a missing one silently
+  // produces a rate for the wrong place.
+  if (!to.postal) return null;
+  return to;
+}
+
 // How long a piece is held once someone opens checkout on it. Thirty
 // minutes is the shortest expiry Stripe will put on a session, and the
 // hold is matched to it deliberately — see the schema note.
@@ -215,7 +277,9 @@ router.post('/checkout/work/:id', async (req, res) => {
   try {
     const { rows } = await db.query(
       `SELECT w.*, a.name AS artist_name, a.stripe_account, a.stripe_ready,
-              a.works_city, a.works_country
+              a.works_city, a.works_country,
+              a.ship_from_line1, a.ship_from_line2, a.ship_from_city,
+              a.ship_from_state, a.ship_from_postal, a.ship_from_country
          FROM artworks w JOIN artists a ON a.id = w.artist_id
         WHERE w.id = $1`, [req.params.id]);
     const work = rows[0];
@@ -252,6 +316,31 @@ router.post('/checkout/work/:id', async (req, res) => {
       return res.status(409).json({ error: 'being_bought' });
     }
 
+    // Price the freight from the address, on this side. The quote shown on
+    // the piece page is for the buyer's benefit; this is the one that is
+    // charged, because a price that has been through a browser is not a
+    // price. A pickup has no freight at all.
+    //
+    // With no carrier key set, this falls back to what the site did
+    // before: Stripe collects the address and no freight is charged.
+    // That keeps a deploy harmless — nothing about buying changes until
+    // EASYPOST_API_KEY exists, and then it changes everywhere at once.
+    let ship = null;
+    if (!isPickup && shipping.isConfigured()) {
+      const to = normaliseAddress(req.body && req.body.shipTo);
+      if (!to) return res.status(400).json({ error: 'address_incomplete' });
+      try {
+        ship = await shipping.quote({
+          artist: { name: work.artist_name, ...work }, work, to });
+        ship.to = to;
+      } catch (err) {
+        if (err.code === 'ORIGIN') return res.status(409).json({ error: 'artist_ship_from_missing' });
+        if (err.code === 'NO_RATES') return res.status(409).json({ error: 'cannot_ship_there' });
+        console.error('checkout rating failed:', err.message);
+        return res.status(502).json({ error: 'quote_failed' });
+      }
+    }
+
     const site = baseUrl(req);
     const commissionPct = Number(process.env.KUDZU_COMMISSION_PCT || 25);
 
@@ -279,9 +368,16 @@ router.post('/checkout/work/:id', async (req, res) => {
     // up — they'd be sitting on the work AND waiting on the money. A sale
     // is a sale. The bill of lading is still signed at the handoff, but
     // as a legal record of delivery rather than a condition of payment.
+    // The artist is paid 75% of the PIECE. Postage is charged on top and
+    // added to Kudzu's fee, not to the artist's transfer — so a buyer in
+    // Canada costs the artist nothing, and Kudzu holds that amount only
+    // long enough to buy the label with it. Commission is never taken on
+    // freight: 25% of the art, 0% of the postage.
+    const commissionCents = Math.round(work.price_cents * commissionPct / 100);
+    const shipCents = ship ? ship.cents : 0;
     const transfer = {
       transfer_data: { destination: work.stripe_account },
-      application_fee_amount: Math.round(work.price_cents * commissionPct / 100)
+      application_fee_amount: commissionCents + shipCents
     };
 
     // No payment_method_types here on purpose: that leaves Checkout on
@@ -308,11 +404,24 @@ router.post('/checkout/work/:id', async (req, res) => {
           }
         }
       }],
+      ...(ship ? {
+        shipping_options: [{
+          shipping_rate_data: {
+            type: 'fixed_amount',
+            fixed_amount: { amount: ship.cents, currency: work.currency || 'usd' },
+            display_name: ship.carrier + ' ' + ship.service +
+              ' · insured, signature required'
+          }
+        }]
+      } : {}),
       payment_intent_data: transfer,
       // Nothing to ship, so nothing to ask for. The artist's city is
       // already on their page; exactly where to meet is arranged between
       // the two of them, not published here.
-      ...(isPickup ? {} : {
+      // Stripe collects the address only when we haven't already got it.
+      // Once freight is priced here, asking again invites a buyer to type
+      // a different destination than the one they were quoted for.
+      ...(isPickup || ship ? {} : {
         shipping_address_collection: { allowed_countries: SHIPPING_COUNTRIES }
       }),
       phone_number_collection: { enabled: true },
@@ -331,7 +440,19 @@ router.post('/checkout/work/:id', async (req, res) => {
         delivery: isPickup ? 'pickup' : 'ship',
         // Recorded now so the payout can't be recalculated later against
         // a price that has since been edited.
-        payoutCents: String(work.price_cents - Math.round(work.price_cents * commissionPct / 100))
+        payoutCents: String(work.price_cents - commissionCents),
+        ...(ship ? {
+          // Stripe never sees this address, so fulfilment reads it here.
+          shipTo:      JSON.stringify(ship.to).slice(0, 480),
+          shipCents:   String(ship.cents),
+          shipCarrier: String(ship.carrier || ''),
+          shipService: String(ship.service || ''),
+          // The booking, so the label can be bought against this exact
+          // rate once the money is in rather than re-rated at a price
+          // that may have moved.
+          easypostId:   String(ship.shipmentId || ''),
+          easypostRate: String(ship.rateId || '')
+        } : {})
       }
     });
 
@@ -537,25 +658,43 @@ async function recordOrder(session, md, work) {
   const d = details.rows[0] || {};
   const cd = session.customer_details || {};
   const sd = session.shipping_details || {};
-  const addr = sd.address || {};
   const isPickup = md.delivery === 'pickup';
+
+  // When we priced the freight ourselves, Stripe was never asked for an
+  // address — the one we rated against is the one it ships to, and it
+  // travels on the session's metadata.
+  let rated = null;
+  if (md.shipTo) {
+    try { rated = JSON.parse(md.shipTo); } catch (err) {
+      console.error('could not read rated address for session', session.id);
+    }
+  }
+  const addr = rated
+    ? { line1: rated.line1, line2: rated.line2, city: rated.city,
+        state: rated.state, postal_code: rated.postal, country: rated.country }
+    : (sd.address || {});
 
   const { rows } = await db.query(
     `INSERT INTO orders
        (artwork_id, artist_id, work_title, work_details, price_cents, currency,
         payout_cents, delivery, buyer_name, buyer_email, buyer_phone,
         ship_name, ship_line1, ship_line2, ship_city, ship_state, ship_postal,
-        ship_country, ship_by, stripe_session_id)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20)
+        ship_country, ship_by, stripe_session_id,
+        shipping_cents, ship_carrier, ship_service, easypost_id, easypost_rate)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,
+             $21,$22,$23,$24,$25)
      ON CONFLICT (stripe_session_id) DO NOTHING
      RETURNING *`,
     [md.workId, work.artist_id, work.title,
      [d.medium, d.year, d.dimensions].filter(Boolean).join(' · ') || null,
-     session.amount_total, session.currency || 'usd',
+     // amount_total now includes freight; the piece's own price is what
+     // belongs here, or every sale reads as more expensive than it was.
+     (session.amount_total || 0) - (parseInt(md.shipCents, 10) || 0),
+     session.currency || 'usd',
      parseInt(md.payoutCents, 10) || null,
      isPickup ? 'pickup' : 'ship',
      cd.name || sd.name || 'Buyer', cd.email || '', cd.phone || null,
-     isPickup ? null : (sd.name || cd.name || null),
+     isPickup ? null : ((rated && rated.name) || sd.name || cd.name || null),
      isPickup ? null : (addr.line1 || null),
      isPickup ? null : (addr.line2 || null),
      isPickup ? null : (addr.city || null),
@@ -564,7 +703,10 @@ async function recordOrder(session, md, work) {
      isPickup ? null : (addr.country || null),
      // A pickup has no posting deadline — the two of them agree a time.
      isPickup ? null : shipByDate(new Date(), SHIP_DAYS),
-     session.id]);
+     session.id,
+     parseInt(md.shipCents, 10) || null,
+     md.shipCarrier || null, md.shipService || null,
+     md.easypostId || null, md.easypostRate || null]);
 
   if (!rows[0]) return null;                  // a retry; already recorded
 
@@ -667,6 +809,33 @@ async function fulfil(session) {
           }
         } catch (err) {
           console.error('could not open handoff for', md.workId, '—', err.message);
+        }
+      }
+
+      // The label, bought against the exact rate quoted at checkout and
+      // insured for what the piece sold for. This is the artist agreement's
+      // "signature-required and insured for the Retail Price" actually
+      // happening rather than being asserted in an email — and it is why
+      // the artist doesn't pay postage: the buyer already did.
+      if (order && order.delivery === 'ship' && order.easypost_id && order.easypost_rate) {
+        try {
+          const label = await shipping.buyLabel({
+            shipmentId:  order.easypost_id,
+            rateId:      order.easypost_rate,
+            insureCents: order.price_cents
+          });
+          const saved = await db.query(
+            `UPDATE orders SET label_url = $1, tracking = COALESCE(tracking, $2),
+                    carrier = COALESCE(carrier, $3)
+              WHERE id = $4 RETURNING label_url, tracking`,
+            [label.labelUrl, label.tracking, label.carrier, order.id]);
+          if (saved.rows[0]) Object.assign(order, saved.rows[0]);
+          console.log('label bought for order', order.id, label.tracking || '');
+        } catch (err) {
+          // Never fatal. The sale is done and the buyer has paid; a label
+          // that failed to buy is something a person can sort out, and
+          // losing the whole fulfilment over it would be far worse.
+          console.error('LABEL PURCHASE FAILED for order', order.id, '—', err.message);
         }
       }
 

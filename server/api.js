@@ -52,7 +52,17 @@ const publicArtist = (a) => ({
   // Internal only — how Kudzu reaches them about a sale or a message.
   // Deliberately absent from the public artist endpoint below.
   notifyChannel: a.notify_channel || 'email',
-  notifyPhone: a.notify_phone || ''
+  notifyPhone: a.notify_phone || '',
+  // Their own shipping origin. Present on /me and the admin view; the
+  // public artist endpoint below builds its own object and never sees it.
+  shipFrom: {
+    line1: a.ship_from_line1 || '', line2: a.ship_from_line2 || '',
+    city: a.ship_from_city || '', state: a.ship_from_state || '',
+    postal: a.ship_from_postal || '', country: a.ship_from_country || ''
+  },
+  canShip: !!(String(a.ship_from_line1 || '').trim()
+           && String(a.ship_from_city || '').trim()
+           && String(a.ship_from_postal || '').trim())
 });
 
 const publicWork = (w) => ({
@@ -184,6 +194,11 @@ router.get('/me', auth.requireArtist, async (req, res) => {
 
 const PROFILE_FIELDS = {
   name: 'name', bio: 'bio', cv: 'cv',
+  // Where their work ships from. Never public — it prices the box and
+  // goes on the label, nowhere else.
+  shipFromLine1: 'ship_from_line1', shipFromLine2: 'ship_from_line2',
+  shipFromCity: 'ship_from_city', shipFromState: 'ship_from_state',
+  shipFromPostal: 'ship_from_postal', shipFromCountry: 'ship_from_country',
   bornYear: 'born_year', bornCountry: 'born_country',
   worksCity: 'works_city', worksCountry: 'works_country', link: 'link_url'
 };
@@ -429,6 +444,10 @@ function profileGaps(a) {
 
 router.get('/me/readiness', auth.requireArtist, async (req, res) => {
   const gaps = profileGaps(req.artist);
+  if (!String(req.artist.ship_from_line1 || '').trim()
+      || !String(req.artist.ship_from_postal || '').trim()) {
+    gaps.push('ship_from');
+  }
   try {
     if (!(await agreementSigned(req.artist.id))) gaps.push('agreement');
   } catch (err) {
