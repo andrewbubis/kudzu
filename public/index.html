@@ -549,7 +549,11 @@
 
 <script>
   (function () {
-    var ENDPOINT = ''; // set to your Formspree/Basin/API URL when ready
+    // Kudzu's own endpoint, which forwards to Buttondown. This was an
+    // empty string for a long time, and an empty string here means the
+    // form thanks people and throws their address away — every signup
+    // this page has ever taken was discarded on submit.
+    var ENDPOINT = '/api/subscribe';
     var form = document.getElementById('signupForm');
     var input = document.getElementById('emailInput');
     var status = document.getElementById('signupStatus');

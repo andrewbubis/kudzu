@@ -280,7 +280,8 @@ router.post('/checkout/work/:id', async (req, res) => {
 
   try {
     const { rows } = await db.query(
-      `SELECT w.*, a.name AS artist_name, a.stripe_account, a.stripe_ready,
+      `SELECT w.*, a.name AS artist_name, a.slug AS artist_slug,
+              a.stripe_account, a.stripe_ready,
               a.works_city, a.works_country,
               a.ship_from_line1, a.ship_from_line2, a.ship_from_city,
               a.ship_from_state, a.ship_from_postal, a.ship_from_country
@@ -437,7 +438,17 @@ router.post('/checkout/work/:id', async (req, res) => {
       // thousand dollars was returned to a grid of paintings with no
       // acknowledgement that anything had happened.
       success_url: `${site}/workinprogress/order.html?session={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${site}/workinprogress/piece-${work.id}.html`,
+      // Back to the piece they were looking at, not a 404.
+      //
+      // This used to build `piece-<uuid>.html`, a filename that has never
+      // existed — the per-artist piece pages are hand-written and named
+      // after the artist, while the real page is dynamic and takes the
+      // work in the query string. So anyone who changed their mind at
+      // Stripe was thrown out onto an error page instead of back to the
+      // painting, at the exact moment they were deciding whether to buy.
+      cancel_url: `${site}/workinprogress/piece.html` +
+        `?a=${encodeURIComponent(work.artist_slug || '')}` +
+        `&w=${encodeURIComponent(work.id)}`,
       metadata: {
         kind: 'original',
         workId: String(work.id),

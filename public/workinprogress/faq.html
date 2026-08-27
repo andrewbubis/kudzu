@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How it works · Kudzu Arts</title>
+<meta name="description" content="Kudzu Arts is where Southern artists sell work directly to collectors. Artists set their own prices and keep 75%.">
+<meta name="theme-color" content="#fbfaf7">
+<link rel="icon" href="img/logo-k.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/v3.css">
+<meta property="og:title" content="How it works · Kudzu Arts">
+<meta property="og:description" content="Artists set their own prices and keep 75%. No gallery in the middle.">
+<meta property="og:image" content="img/og-image.png">
+<noscript><style>.reveal{opacity:1 !important;transform:none !important;}
+  .faq-panel{display:block !important;} .faq-tabs{display:none !important;}</style></noscript>
+
+<style>
+  /* Someone lands here with one question, not twelve. Split by who they
+     are, then let them scan headings until they hit theirs — nobody
+     reads a page like this end to end. */
+  .faq { max-width: 720px; margin: 0 auto; padding: 0 22px 90px; }
+  .faq h1 { font-family: var(--serif); font-weight: 400;
+            font-size: clamp(36px,5.5vw,54px); line-height: 1.04;
+            letter-spacing: -0.005em; margin: 0 0 14px; }
+  .faq .lede { font-size: 19px; line-height: 1.65; color: #3f3a48; margin: 0 0 34px; }
+
+  /* Two audiences, one page. The tabs are a progressive enhancement —
+     with no JS both panels simply show, which is the honest fallback for
+     a page whose whole job is answering questions. */
+  .faq-tabs { display: flex; gap: 26px; border-bottom: 1px solid rgba(33,28,42,0.13);
+              margin-bottom: 34px; }
+  .faq-tab { appearance: none; background: none; border: 0; cursor: pointer;
+             font-family: var(--serif); font-size: 18px; color: #8a8072;
+             padding: 0 0 12px; margin-bottom: -1px; border-bottom: 2px solid transparent; }
+  .faq-tab[aria-selected="true"] { color: var(--ink, #211c2a); border-bottom-color: #8a8f43; }
+  .faq-tab:focus-visible { outline: 2px solid #8a8f43; outline-offset: 3px; }
+
+  .faq-panel[hidden] { display: none; }
+  .faq-q { border-top: 1px solid rgba(33,28,42,0.13); padding-top: 26px; margin-top: 34px; }
+  .faq-q:first-child { border-top: 0; padding-top: 0; margin-top: 0; }
+  .faq-q h2 { font-family: var(--serif); font-weight: 400; font-size: 25px;
+              margin: 0 0 12px; }
+  .faq-q p, .faq-q li { font-size: 16.5px; line-height: 1.7; color: #3f3a48; }
+  .faq-q p { margin: 0 0 13px; }
+  .faq-q p:last-child { margin-bottom: 0; }
+  .faq-q ul { padding-left: 20px; margin: 0 0 13px; }
+  .faq-q li { margin-bottom: 7px; }
+  .faq a { color: var(--olive, #5f5a2c); }
+
+  /* The commission, said plainly and given room. It is the most
+     persuasive thing on the page and it used to live only inside a
+     contract nobody reads until after they have already decided. */
+  .split { display: flex; gap: 0; margin: 22px 0; border: 1px solid rgba(33,28,42,0.13);
+           background: #fbfaf7; }
+  .split div { flex: 1; padding: 20px 22px; }
+  .split div + div { border-left: 1px solid rgba(33,28,42,0.13); }
+  .split .n { font-family: var(--serif); font-size: 34px; line-height: 1;
+              display: block; margin-bottom: 7px; }
+  .split .them .n { color: #8a8072; }
+  .split .us .n { color: #5f5a2c; }
+  .split .l { font-size: 13.5px; color: #6b6577; line-height: 1.5; }
+  @media (max-width: 560px) {
+    .split { flex-direction: column; }
+    .split div + div { border-left: 0; border-top: 1px solid rgba(33,28,42,0.13); }
+  }
+
+  .faq-cta { background: #fbfaf7; border-left: 2px solid #8a8f43;
+             padding: 20px 22px; margin: 34px 0 0; }
+  .faq-cta p { margin: 0 0 10px; font-size: 16px; }
+  .faq-cta p:last-child { margin: 0; }
+</style>
+</head>
+<body>
+<header class="site-header">
+  <a href="index.html" class="brand"><img class="mark" src="img/logo-k.png" alt="" aria-hidden="true"><span class="word"><b>KUDZU</b><span class="arts">arts</span></span></a>
+  <nav class="nav" aria-label="Primary">
+    <a href="artists.html">Artists</a>
+    <a href="gallery.html">Virtual Gallery</a>
+    <a href="printshop.html">Print Shop</a>
+    <a href="faq.html">How it works</a>
+    <a href="contact.html">Contact</a>
+  </nav>
+  <a href="login.html" class="btn btn-olive nav-cta">Artist Login</a>
+  <button class="nav-toggle" type="button" aria-expanded="false">Menu</button>
+</header>
+
+<main class="faq">
+
+  <h1>How it works</h1>
+  <p class="lede">Kudzu Arts is where Southern artists sell their work directly to the
+  people who want it. Artists set their own prices and keep 75%.</p>
+
+  <div class="faq-tabs" role="tablist" aria-label="Who are you?">
+    <button class="faq-tab" role="tab" id="tab-collectors"
+            aria-controls="panel-collectors" aria-selected="true">for collectors</button>
+    <button class="faq-tab" role="tab" id="tab-artists"
+            aria-controls="panel-artists" aria-selected="false">for artists</button>
+  </div>
+
+  <!-- ── For collectors ─────────────────────────────────────────── -->
+  <div class="faq-panel" id="panel-collectors" role="tabpanel" aria-labelledby="tab-collectors">
+
+    <div class="faq-q">
+      <h2>What is Kudzu Arts?</h2>
+      <p>A place where Southern artists list the work they have available, and you buy it
+      from them directly.</p>
+      <p>There is no dealer in the middle marking the work up, and nobody deciding on your
+      behalf what is worth showing you. The artist sets the price, keeps the piece until it
+      sells, and is paid the moment it does.</p>
+    </div>
+
+    <div class="faq-q">
+      <h2>Is Kudzu a gallery?</h2>
+      <p>No. A gallery takes work on consignment, sets the price, and sells it on the
+      artist's behalf — typically for 40 to 50% of the sale.</p>
+
+      <div class="split">
+        <div class="them">
+          <span class="n">40&ndash;50%</span>
+          <span class="l">What a traditional gallery commission takes from the artist</span>
+        </div>
+        <div class="us">
+          <span class="n">25%</span>
+          <span class="l">What Kudzu takes. The artist keeps the rest, and sets the price
+          themselves</span>
+        </div>
+      </div>
+
+      <p>That 25% covers promotion, the cost of running the sale, and underwrites Kudzu's
+      programming — workshops, residencies and public art. Nothing is consigned: the artist
+      holds the physical work until a buyer has paid for it.</p>
+      <p>Artists apply to join. What appears on their page, and what it costs, is theirs.</p>
+    </div>
+
+    <div class="faq-q">
+      <h2>How do I buy something?</h2>
+      <p>Find a piece and buy it. Payment runs through Stripe and goes to the artist's own
+      account — not into a Kudzu balance that somebody has to release.</p>
+      <p>You enter your address before you pay, so you see the real shipping cost for your
+      address rather than an estimate or a flat rate. Nothing is charged until you've seen
+      the full total.</p>
+    </div>
+
+    <div class="faq-q">
+      <h2>How does shipping work?</h2>
+      <p>Shipping is priced live against the packed size and weight of the actual piece and
+      the address it's going to, and added on top. It is never taken out of the artist's
+      share.</p>
+      <p>Every original ships <b>insured for its full sale price and signature-required</b>.
+      Kudzu buys the postage, so the artist packs the work and hands it over — they never pay
+      at the counter and never wait to be paid back.</p>
+      <p>Some artists also offer local pickup. You arrange a time between you, and you both
+      sign a receipt at the handoff which is emailed to each of you.</p>
+    </div>
+
+    <div class="faq-q">
+      <h2>Where do you ship?</h2>
+      <p>The United States and Canada.</p>
+      <p>Somewhere else? Write to <a href="mailto:info@kudzuarts.com">info@kudzuarts.com</a>
+      and we'll quote it by hand. A one-of-a-kind painting travelling a long way deserves a
+      conversation rather than a checkbox.</p>
+    </div>
+
+    <div class="faq-q">
+      <h2>What if something arrives damaged?</h2>
+      <p>Tell us within 72 hours of delivery, with photographs. Every original is insured for
+      what you paid, and we handle the claim rather than leaving it between you and the
+      artist.</p>
+      <p>Otherwise sales are final — these are singular objects, not stock.</p>
+    </div>
+
+    <div class="faq-cta">
+      <p><b>Still wondering something?</b></p>
+      <p><a href="contact.html">Ask us directly</a> — a person reads it.</p>
+    </div>
+  </div>
+
+  <!-- ── For artists ────────────────────────────────────────────── -->
+  <div class="faq-panel" id="panel-artists" role="tabpanel" aria-labelledby="tab-artists" hidden>
+
+    <div class="faq-q">
+      <h2>What does it cost me?</h2>
+      <p>Nothing to join, nothing monthly, and nothing when a piece doesn't sell.</p>
+      <p>Kudzu takes 25% when a work sells. You keep 75% of the price <em>you</em> set —
+      against the 40 to 50% a gallery would take for setting the price itself.</p>
+      <p>Shipping doesn't come out of your share either. The buyer pays it on top, and Kudzu
+      buys the label.</p>
+    </div>
+
+    <div class="faq-q">
+      <h2>When do I get paid?</h2>
+      <p>At the moment of purchase. Not in thirty days, not after delivery, not once someone
+      remembers to send it.</p>
+      <p>You connect your own Stripe account and the buyer's payment goes straight into it,
+      with Kudzu's commission taken in transit. <b>Kudzu never holds your money at any
+      point</b> — there is no balance to chase and nothing to invoice for. That's true of a
+      posted sale and a local pickup alike.</p>
+    </div>
+
+    <div class="faq-q">
+      <h2>Do you take my work?</h2>
+      <p>No. Nothing is consigned and nothing is shipped to us. You keep every piece in your
+      own studio until somebody buys it, and then it goes straight from you to them.</p>
+    </div>
+
+    <div class="faq-q">
+      <h2>What do I have to do when something sells?</h2>
+      <p>Pack it and hand it over.</p>
+      <p>We buy the postage and send you a code — you show it at the post office on your
+      phone and they print the label at the counter. No printer, nothing to pay, nothing to
+      claim back. The label is already insured for the sale price and marked
+      signature-required.</p>
+      <p>For a local pickup you meet the buyer, both sign a receipt on your phone, and it's
+      emailed to both of you as the record of delivery.</p>
+    </div>
+
+    <div class="faq-q">
+      <h2>Can I take my work back down?</h2>
+      <p>Whenever you like, for any reason. A piece is exclusive to Kudzu only while it is
+      listed here, and that ends the moment you remove it.</p>
+      <p>The one thing we ask is good faith: if a piece comes down and then sells within six
+      months to somebody who first found it through Kudzu, bring that sale back through us.
+      It rests on mutual respect rather than surveillance.</p>
+    </div>
+
+    <div class="faq-q">
+      <h2>How do I join?</h2>
+      <p>Kudzu is invite-based. Once you have an invite you'll:</p>
+      <ul>
+        <li>connect a Stripe account, so buyers pay you directly</li>
+        <li>add a photo, a bio and a C.V.</li>
+        <li>read and sign the artist agreement</li>
+        <li>upload work, set your own prices, and go live</li>
+      </ul>
+      <p>Up to ten pieces live at once, so a page stays a considered selection rather than an
+      inventory.</p>
+    </div>
+
+    <div class="faq-cta">
+      <p><b>Want to be considered?</b></p>
+      <p><a href="contact.html">Send us your work</a> — tell us what you make and where you
+      make it.</p>
+    </div>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <div class="vine-corner br"></div>
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <div class="footer-lockup">
+        <a href="index.html" class="brand"><img class="mark" src="img/logo-k.png" alt="" aria-hidden="true"><span class="word"><b>KUDZU</b><span class="arts">arts</span></span></a>
+        <a href="https://instagram.com/kudzu.arts" target="_blank" rel="noopener"
+           class="footer-ig-big" aria-label="Kudzu Arts on Instagram"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4.1"/><circle cx="17.5" cy="6.5" r="1.15" fill="currentColor" stroke="none"/></svg></a>
+      </div>
+      <p class="blurb">Helping art take root — a southern art practice, climbing everywhere it can.</p>
+    </div>
+    <div class="footer-col"><h4>Visit</h4><a href="artists.html">Artists</a><a href="gallery.html">Virtual Gallery</a><a href="printshop.html">Print Shop</a></div>
+    <div class="footer-col"><h4>Gallery</h4><a href="faq.html">How it works</a><a href="contact.html">Contact</a><a href="contact.html">Submit work</a></div>
+    <div class="footer-col"><h4>Details</h4><a href="shipping.html">Shipping &amp; returns</a><a href="terms.html">Terms</a><a href="privacy.html">Privacy</a></div>
+    <div class="footer-col"><h4>Connect</h4><a href="https://instagram.com/kudzu.arts" target="_blank" rel="noopener">@kudzu.arts</a><a href="mailto:info@kudzuarts.com">info@kudzuarts.com</a><p>Rooted in Nashville &amp; Los Angeles</p>
+  </div>
+  </div>
+  <div class="footer-bot"><span>© Kudzu Arts MMXXVI</span><span>kudzuarts.com — the gallery is the door</span><a href="login.html" class="btn btn-olive" style="font-size:13px;padding:6px 18px;">Artist Login</a></div>
+</footer>
+
+<script>
+(function () {
+  var tabs = [].slice.call(document.querySelectorAll('.faq-tab'));
+  if (!tabs.length) return;
+
+  function show(id) {
+    tabs.forEach(function (t) {
+      var on = t.id === id;
+      t.setAttribute('aria-selected', String(on));
+      document.getElementById(t.getAttribute('aria-controls')).hidden = !on;
+    });
+  }
+
+  tabs.forEach(function (t) {
+    t.addEventListener('click', function () {
+      show(t.id);
+      // Shareable: "read the artist half" should be one link, not an
+      // instruction to click something once you arrive.
+      history.replaceState({}, '', t.id === 'tab-artists' ? '?for=artists' : location.pathname);
+    });
+  });
+
+  if (/[?&]for=artists/.test(location.search)) show('tab-artists');
+})();
+</script>
+<script src="js/main.js" defer></script>
+<script src="js/nav-auth.js" defer></script>
+<script src="js/track.js" defer></script>
+</body>
+</html>
