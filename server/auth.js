@@ -51,6 +51,9 @@ async function createSession(res, artistId, { remember = true } = {}) {
     'INSERT INTO sessions (id, artist_id, expires_at) VALUES ($1,$2,$3)',
     [id, artistId, expires]
   );
+  // Non-fatal: track sign-in count for admin dashboard.
+  db.query('UPDATE artists SET login_count = login_count + 1 WHERE id = $1', [artistId])
+    .catch(err => console.error('login_count update failed:', err.message));
   const isSecure = process.env.NODE_ENV === 'production'
     || process.env.RAILWAY_ENVIRONMENT != null
     || process.env.DATABASE_URL?.includes('railway');

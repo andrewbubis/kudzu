@@ -1280,6 +1280,10 @@ router.get('/admin/roster', auth.requireArtist, auth.requireAdmin, async (_req, 
     const { rows } = await db.query(`
       SELECT a.id, a.name, a.slug, a.email, a.created_at, a.is_admin, a.admin_hidden,
              a.photo_path, a.bio, a.cv, a.stripe_account,
+             a.login_count,
+             (SELECT count(*) FROM page_views pv WHERE pv.path = '/artists/' || a.slug)                               AS page_views_total,
+             (SELECT count(*) FROM page_views pv WHERE pv.path = '/artists/' || a.slug AND pv.viewer_id IS NOT NULL)   AS page_views_loggedin,
+             (SELECT count(*) FROM page_views pv WHERE pv.path = '/artists/' || a.slug AND pv.viewer_id IS NULL)       AS page_views_anon,
              count(w.id) FILTER (WHERE w.status = 'draft')     AS drafts,
              count(w.id) FILTER (WHERE w.status = 'published') AS published_works,
              count(w.id) FILTER (WHERE w.status = 'sold')      AS sold_works,
@@ -1329,6 +1333,10 @@ router.get('/admin/roster', auth.requireArtist, auth.requireAdmin, async (_req, 
           missingShip: Number(r.missing_ship),
           lastUpload,
           lastActivity: lastUpload && lastUpload > r.created_at ? lastUpload : r.created_at,
+          loginCount: Number(r.login_count || 0),
+          pageViewsTotal: Number(r.page_views_total || 0),
+          pageViewsLoggedIn: Number(r.page_views_loggedin || 0),
+          pageViewsAnon: Number(r.page_views_anon || 0),
           hasSigned: !!r.sig_signed_at,
           signedAt: r.sig_signed_at || null,
           signedLegalName: r.sig_legal_name || null,
@@ -1640,9 +1648,10 @@ router.post('/track', async (req, res) => {
     // Geo lookup runs async — already responded 204 above so this won't delay anything
     const ip = (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.ip || '';
     const location = await geoLookup(ip);
+    const viewerId = (req.artist && req.artist.id) ? req.artist.id : null;
     await db.query(
-      'INSERT INTO page_views (path, referrer, city, region, country) VALUES ($1,$2,$3,$4,$5)',
-      [path, referrer, location.city || null, location.region || null, location.country || null]
+      'INSERT INTO page_views (path, referrer, city, region, country, viewer_id) VALUES ($1,$2,$3,$4,$5,$6)',
+      [path, referrer, location.city || null, location.region || null, location.country || null, viewerId]
     );
   } catch (_e) { /* silent — never block the page */ }
 });

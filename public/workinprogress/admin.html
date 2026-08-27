@@ -286,7 +286,24 @@
       html += '<div class="adm-ps"><span class="n">' + books.length + '</span><span class="l">Books</span></div>';
       var pgViews = (window._kudzuArtistViews || {})[a.slug] || 0;
       html += '<div class="adm-ps"><span class="n">' + (pgViews || '—') + '</span><span class="l">Page Views <span style="font-weight:400;font-size:9px;">(30d)</span></span></div>';
+      html += '<div class="adm-ps"><span class="n">' + (a.loginCount || '—') + '</span><span class="l">Total Logins</span></div>';
+      html += '<div class="adm-ps"><span class="n">' + (a.pageViewsTotal || '—') + '</span><span class="l">Page Views <span style="font-weight:400;font-size:9px;">(all time)</span></span></div>';
       html += '</div>';
+      // ── View breakdown: logged-in vs anonymous ─────────────────
+      if (a.pageViewsTotal > 0) {
+        var pctIn  = a.pageViewsTotal ? Math.round(a.pageViewsLoggedIn / a.pageViewsTotal * 100) : 0;
+        var pctAnon = 100 - pctIn;
+        html += '<div style="margin:0 0 16px;">';
+        html += '<div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--a-soft);margin-bottom:8px;">Page View Breakdown</div>';
+        html += '<div style="display:flex;gap:0;border-radius:3px;overflow:hidden;height:22px;">';
+        if (pctIn > 0)   html += '<div title="Logged-in visitors: ' + a.pageViewsLoggedIn + '" style="flex:' + pctIn  + ';background:#8a8f43;display:flex;align-items:center;justify-content:center;"><span style="font-size:10px;color:#fff;white-space:nowrap;padding:0 6px;">' + pctIn + '% logged in</span></div>';
+        if (pctAnon > 0) html += '<div title="Anonymous visitors: ' + a.pageViewsAnon  + '" style="flex:' + pctAnon + ';background:#cdbf86;display:flex;align-items:center;justify-content:center;"><span style="font-size:10px;color:#342d40;white-space:nowrap;padding:0 6px;">' + pctAnon + '% anonymous</span></div>';
+        html += '</div>';
+        html += '<div style="display:flex;gap:24px;margin-top:6px;font-size:12px;color:var(--a-soft);">';
+        html += '<span><span style="display:inline-block;width:8px;height:8px;background:#8a8f43;border-radius:50%;margin-right:4px;"></span>Logged in: ' + a.pageViewsLoggedIn + '</span>';
+        html += '<span><span style="display:inline-block;width:8px;height:8px;background:#cdbf86;border-radius:50%;margin-right:4px;"></span>Anonymous: ' + a.pageViewsAnon + '</span>';
+        html += '</div></div>';
+      }
 
       // ── Bio ────────────────────────────────────────────────────────
       html += '<p class="adm-section-label">Bio</p>';

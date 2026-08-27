@@ -976,3 +976,8 @@ Date: [recorded automatically]$agreement$,
   UPDATE agreement_versions SET is_current = true
    WHERE version = v AND NOT is_current;
 END $seed$;
+
+-- ── Login count + authenticated page-view tracking ───────────────────
+ALTER TABLE artists    ADD COLUMN IF NOT EXISTS login_count integer NOT NULL DEFAULT 0;
+ALTER TABLE page_views ADD COLUMN IF NOT EXISTS viewer_id uuid REFERENCES artists(id) ON DELETE SET NULL;
+CREATE INDEX IF NOT EXISTS page_views_viewer_idx ON page_views (viewer_id) WHERE viewer_id IS NOT NULL;
