@@ -1430,14 +1430,46 @@ router.get('/admin/lumaprints/stores', auth.requireArtist, auth.requireAdmin, as
     });
   }
   try {
-    const stores = await lumaprints.listStores();
+    const cfg = lumaprints.getConfig();
+    const probes = await lumaprints.probeBases();
+    const working = probes.filter((p) => p.ok)[0] || null;
+
     res.json({
-      stores,
-      storeIdSet: !!lumaprints.getConfig().storeId,
-      apiBase: lumaprints.getConfig().apiBase
+      // The short version, which is what anyone actually needs.
+      answer: working
+        ? {
+            environment: working.env,
+            LUMAPRINTS_API_BASE: working.base,
+            LUMAPRINTS_STORE_ID: working.stores.length === 1
+              ? working.stores[0].storeId : null,
+            stores: working.stores,
+            live: working.env === 'production',
+            note: working.env === 'production'
+              ? 'These are production credentials. Orders placed here are printed and charged for real.'
+              : 'These are sandbox credentials. Orders are accepted and nothing is ever printed. '
+                + 'To sell real prints you need a production key from dashboard.lumaprints.com.'
+          }
+        : null,
+
+      // Everything tried, so a failure says which door was knocked on.
+      currentlyConfigured: {
+        LUMAPRINTS_API_BASE: cfg.apiBase,
+        LUMAPRINTS_STORE_ID: cfg.storeId || null,
+        matchesWorking: !!(working && working.base === cfg.apiBase)
+      },
+      tried: probes.map((p) => ({
+        base: p.base, environment: p.env, ok: p.ok,
+        status: p.status || null, error: p.ok ? null : p.error
+      })),
+      ...(working ? {} : {
+        problem: 'None of the known Lumaprints addresses accepted these credentials. '
+          + 'A 401 usually means the key and secret belong to the other environment — '
+          + 'production keys come from dashboard.lumaprints.com, sandbox keys from '
+          + 'sandbox.lumaprints.com, and they are not interchangeable.'
+      })
     });
   } catch (err) {
-    console.error('lumaprints stores lookup failed:', err.message);
+    console.error('lumaprints lookup failed:', err.message);
     res.status(502).json({ error: 'lookup_failed', detail: err.message });
   }
 });

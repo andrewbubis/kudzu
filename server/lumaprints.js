@@ -39,8 +39,8 @@ function hasCredentials() {
 // back from here, which is a strange thing to discover on your own. So
 // this exists to be called once from the admin page: set the key and the
 // secret, look up the id, save it, done.
-async function listStores() {
-  const { apiBase } = getConfig();
+async function listStores(base) {
+  const apiBase = base || getConfig().apiBase;
   const res = await fetch(`${apiBase}/api/v1/stores`, {
     headers: { Authorization: authHeader(), 'Content-Type': 'application/json' }
   });
@@ -52,6 +52,46 @@ async function listStores() {
   }
   // [{ storeId, storeName }]
   return Array.isArray(data) ? data : (data.stores || []);
+}
+
+// Which Lumaprints environment do these credentials belong to?
+//
+// Sandbox and production are separate systems with separate keys, and
+// Lumaprints publishes neither base URL — the sandbox one is only known
+// here because it was written down when this client was built. Guessing
+// wrong is not harmless: a production key against the sandbox base fails
+// to authenticate, and a sandbox key against production would place
+// orders that nobody prints.
+//
+// So rather than assume, ask. Listing stores is a read — it costs
+// nothing and prints nothing — and the base that authenticates is the
+// one these credentials belong to.
+const KNOWN_BASES = [
+  { base: 'https://us.api.lumaprints.com',         env: 'production' },
+  { base: 'https://us.api-sandbox.lumaprints.com', env: 'sandbox' }
+];
+
+async function probeBases() {
+  const configured = getConfig().apiBase;
+  const seen = new Set([configured]);
+  const known = KNOWN_BASES.filter((k) => k.base === configured)[0];
+
+  // Whatever is configured is tried first, so a working setup simply
+  // confirms itself rather than being second-guessed.
+  const candidates = [{ base: configured, env: known ? known.env : 'unrecognised' }];
+  KNOWN_BASES.forEach((k) => {
+    if (!seen.has(k.base)) { candidates.push(k); seen.add(k.base); }
+  });
+
+  const results = [];
+  for (const c of candidates) {
+    try {
+      results.push({ ...c, ok: true, stores: await listStores(c.base) });
+    } catch (err) {
+      results.push({ ...c, ok: false, status: err.status || null, error: err.message });
+    }
+  }
+  return results;
 }
 
 function authHeader() {
@@ -112,4 +152,4 @@ async function submitOrder({ externalId, subcategoryId, width, height, imageUrl,
   return data; // { message, orderNumber }
 }
 
-module.exports = { submitOrder, isConfigured, hasCredentials, listStores, getConfig };
+module.exports = { submitOrder, isConfigured, hasCredentials, listStores, probeBases, getConfig };
