@@ -21,7 +21,6 @@
             margin: 22px auto 0; max-width: 720px; white-space: pre-line; }
   .ap-cv { font-family: var(--sans); font-size: 13px; color: var(--ink-soft); max-width: 720px; margin-inline: auto; overflow-x: auto; }
   .cv-row { white-space: nowrap; line-height: 2; }
-  .cv-row strong { color: var(--ink); font-weight: 600; }
   .ap-works { display: grid; grid-template-columns: repeat(3, 1fr); gap: clamp(20px,2.5vw,36px); }
   .ap-work .fr { background: #fff; padding: 7%; box-shadow: 0 12px 26px rgba(33,28,42,0.10); overflow: hidden; }
   .ap-work .fr img { display: block; width: 100%; height: auto; transition: transform .45s ease; }
@@ -263,11 +262,7 @@
         var rows = a.cv.split('\n').map(function(line) {
           var t = line.trim();
           if (!t) return '';
-          // Bold show names in quotes
-          var bolded = t.replace(/“([^”]*)”|"([^"]*)"/g, function(m, a1, a2) {
-            return '<strong>“' + (a1 !== undefined ? a1 : a2) + '”</strong>';
-          });
-          return '<div class="cv-row">' + bolded + '</div>';
+          return '<div class="cv-row">' + t + '</div>';
         }).filter(Boolean).join('');
         $('apCv').innerHTML = rows;
         $('apCvSection').hidden = false;
