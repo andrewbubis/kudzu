@@ -19,8 +19,9 @@
   .ap-links { display: flex; gap: 12px; margin-top: 20px; flex-wrap: wrap; }
   .ap-bio { font-family: var(--serif); font-size: 16px; line-height: 1.65; color: var(--ink-soft);
             margin-top: 22px; max-width: 620px; white-space: pre-line; }
-  .ap-cv { font-family: var(--sans); font-size: 13px; line-height: 1.9; color: var(--ink-soft);
-           white-space: pre-line; max-width: 620px; }
+  .ap-cv { font-family: var(--sans); font-size: 13px; color: var(--ink-soft); max-width: 720px; overflow-x: auto; }
+  .cv-row { white-space: nowrap; line-height: 2; }
+  .cv-row strong { color: var(--ink); font-weight: 600; }
   .ap-works { display: grid; grid-template-columns: repeat(3, 1fr); gap: clamp(20px,2.5vw,36px); }
   .ap-work .fr { background: #fff; padding: 7%; box-shadow: 0 12px 26px rgba(33,28,42,0.10); overflow: hidden; }
   .ap-work .fr img { display: block; width: 100%; height: auto; transition: transform .45s ease; }
@@ -117,7 +118,7 @@
 <section class="tight" id="apCvSection" hidden>
   <div class="wrap">
     <div class="sec-head"><div><span class="num">Background</span><h2>C.<em>V.</em></h2></div></div>
-    <p class="ap-cv" id="apCv"></p>
+    <div class="ap-cv" id="apCv"></div>
   </div>
 </section>
 
@@ -258,7 +259,23 @@
       (d.works || []).forEach(function (w) { grid.appendChild(workCard(w)); });
       $('apEmpty').hidden = (d.works || []).length > 0;
 
-      if (a.cv) { $('apCv').textContent = a.cv; $('apCvSection').hidden = false; }
+      if (a.cv) {
+        var VENUE = /\b(?:Gallery|Galleries|Museum|Center|Centre|Foundation|Arts?\b|Space|Studio|Institute|Hall|House|Library|Club|Society|Collection)\b/;
+        var rows = a.cv.split('\n').map(function(line) {
+          var t = line.trim();
+          if (!t) return '';
+          // Bold sequences of title-cased words that include a venue keyword
+          var bolded = t.replace(
+            /([A-Z][A-Za-z&''’.,]*(?:\s+[A-Z][A-Za-z&''’.,]*)*)/g,
+            function(m) {
+              return VENUE.test(m) ? '<strong>' + m + '</strong>' : m;
+            }
+          );
+          return '<div class="cv-row">' + bolded + '</div>';
+        }).filter(Boolean).join('');
+        $('apCv').innerHTML = rows;
+        $('apCvSection').hidden = false;
+      }
     } catch (e) {
       $('apName').textContent = 'Artist not found';
       $('apEmpty').hidden = false;
