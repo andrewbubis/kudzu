@@ -84,19 +84,18 @@
           </div>
           <h3 style="font-family:var(--serif);font-weight:400;font-size:19px;margin:14px 0 3px;color:var(--ink);">Current Simulation</h3>
           <p class="by" style="color:var(--ink-soft);">Ian Patrick Cato</p>
-          <p style="font-family:var(--sans);font-size:13px;color:var(--ink-mute);margin:6px 0 12px;">From $40</p>
         </a>
         <div style="display:flex;gap:6px;align-items:center;">
           <select id="idx-size-ian" aria-label="Select size"
             style="flex:1;padding:8px 10px;font-family:var(--serif);font-size:14px;
                    background:var(--bone);border:1px solid var(--line);color:var(--ink);border-radius:2px;cursor:pointer;">
-            <option value="Small">Small — 8×10 in</option>
-            <option value="Medium">Medium — 16×20 in</option>
-            <option value="Large">Large — 24×36 in</option>
+            <option value="Small">Small — 8×10 · $40</option>
+            <option value="Medium">Medium — 16×20 · $95</option>
+            <option value="Large">Large — 24×36 · $180</option>
           </select>
           <a id="idx-buy-ian"
              href="mailto:info@kudzuarts.com?subject=Print%20order%3A%20Current%20Simulation%20(Small)%20%E2%80%94%20Ian%20Patrick%20Cato"
-             class="btn btn-olive" style="flex:0 0 auto;white-space:nowrap;">Buy Now</a>
+             class="btn btn-olive" style="flex:1;white-space:nowrap;">Buy Now</a>
         </div>
       </div>
 
@@ -107,8 +106,10 @@
 (function(){
   var sel=document.getElementById('idx-size-ian'), btn=document.getElementById('idx-buy-ian');
   if(!sel||!btn) return;
+  var prices={"Small":"$40","Medium":"$95","Large":"$180"};
   sel.addEventListener('change',function(){
-    btn.href='mailto:info@kudzuarts.com?subject=Print%20order%3A%20Current%20Simulation%20('+encodeURIComponent(sel.value)+')%20%E2%80%94%20Ian%20Patrick%20Cato';
+    var pr=prices[sel.value]||"";
+    btn.href='mailto:info@kudzuarts.com?subject=Print%20order%3A%20Current%20Simulation%20('+encodeURIComponent(sel.value+" "+pr)+')%20%E2%80%94%20Ian%20Patrick%20Cato';
   });
 })();
 </script>
