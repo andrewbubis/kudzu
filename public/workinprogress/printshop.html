@@ -36,6 +36,11 @@
   .print { display: block; text-decoration: none; }
   .pprice { font-family: var(--serif); font-size: 15px; color: var(--ink); margin: 10px 0 8px; opacity: 0.7; }
   .print .btn-olive { display: block; width: 100%; text-align: center; box-sizing: border-box; margin-top: 4px; }
+  .print-size-row { display: flex; gap: 6px; align-items: center; margin-top: 8px; }
+  .print-size-row select { flex: 1; padding: 8px 10px; font-family: var(--serif); font-size: 14px;
+    background: var(--bone, #f4eedb); border: 1px solid var(--line, rgba(33,28,42,.15));
+    color: var(--ink, #211c2a); border-radius: 2px; cursor: pointer; }
+  .print-size-row .btn-olive { flex: 1.4; margin-top: 0; }
 </style>
 </head>
 <body style="position:relative;">
@@ -77,7 +82,14 @@
           <p class="pby">Ian Patrick Cato</p>
         </a>
         <p class="pprice">From $40</p>
-        <a href="mailto:info@kudzuarts.com?subject=Print%20order%3A%20Current%20Simulation%20%E2%80%94%20Ian%20Patrick%20Cato" class="btn btn-olive">Buy Now</a>
+        <div class="print-size-row">
+          <select id="size-ian" aria-label="Select size">
+            <option value="Small">Small — 8×10 in</option>
+            <option value="Medium">Medium — 16×20 in</option>
+            <option value="Large">Large — 24×36 in</option>
+          </select>
+          <a id="buy-ian" href="mailto:info@kudzuarts.com?subject=Print%20order%3A%20Current%20Simulation%20(Small)%20%E2%80%94%20Ian%20Patrick%20Cato" class="btn btn-olive">Buy Now</a>
+        </div>
       </div>
     </div>
   </div>
@@ -160,5 +172,17 @@
 <script src="js/live-works.js" defer></script>
 <script src="js/nav-auth.js" defer></script>
 <script src="js/track.js" defer></script>
+<script>
+(function(){
+  var sel = document.getElementById("size-ian");
+  var btn = document.getElementById("buy-ian");
+  if (!sel || !btn) return;
+  function update() {
+    var sz = encodeURIComponent(sel.value);
+    btn.href = "mailto:info@kudzuarts.com?subject=Print%20order%3A%20Current%20Simulation%20(" + sz + ")%20%E2%80%94%20Ian%20Patrick%20Cato";
+  }
+  sel.addEventListener("change", update);
+})();
+</script>
 </body>
 </html>
