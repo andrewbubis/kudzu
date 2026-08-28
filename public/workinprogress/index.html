@@ -49,16 +49,66 @@
 <section class="band-dark" style="padding-block: clamp(44px,5.5vw,72px);">
   <div class="wrap">
     <div class="shop-grid">
-        <a href="piece.html?a=ian-patrick-cato&w=67093e6f-bf4b-4e6a-b963-79792ec5d77f" class="work reveal">
-          <div class="frame" style="background:var(--paper-3);aspect-ratio:4/5;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative;"><img src="/uploads/67877ff0-380b-43a5-8b81-5e1dca395b5d/work-1785290008451-192ac72cdde4.webp" alt="Study of my Dad by Ian Patrick Cato" style="max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;display:block;"><span class="tag">Available</span></div>
-          <div class="top"><h3>Study of my Dad</h3><span class="price">$550</span></div>
-          <div class="by">Ian Patrick Cato</div>
-          <div class="spec">Acrylic, colored pencil on paper · 9 × 11 in</div>
-        </a>
+        <div class="work reveal">
+          <a href="piece.html?a=ian-patrick-cato&w=67093e6f-bf4b-4e6a-b963-79792ec5d77f" style="text-decoration:none;color:inherit;display:block;">
+            <div class="frame" style="background:var(--paper-3);aspect-ratio:4/5;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative;"><img src="/uploads/67877ff0-380b-43a5-8b81-5e1dca395b5d/work-1785290008451-192ac72cdde4.webp" alt="Study of my Dad by Ian Patrick Cato" style="max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;display:block;"><span class="tag">Available</span></div>
+            <div class="top"><h3>Study of my Dad</h3><span class="price">$550</span></div>
+            <div class="by">Ian Patrick Cato</div>
+            <div class="spec">Acrylic, colored pencil on paper · 9 × 11 in</div>
+          </a>
+          <a href="piece.html?a=ian-patrick-cato&w=67093e6f-bf4b-4e6a-b963-79792ec5d77f" class="btn btn-clay btn-lg" style="display:block;text-align:center;margin-top:16px;width:100%;box-sizing:border-box;">Buy Now</a>
+        </div>
     </div>
     <div style="text-align:center; margin-top:48px;"><a href="gallery.html" class="btn btn-clay btn-lg">Browse the gallery</a></div>
   </div>
 </section>
+
+
+<!-- PRINT SHOP ───────────────────────────────────────────────── -->
+<section style="padding-block: clamp(44px,5.5vw,72px); background: var(--paper);">
+  <div class="wrap">
+    <div class="sec-head" style="margin-bottom: clamp(28px,3.5vw,44px);">
+      <div><span class="num">— Print Shop</span><h2>Limited-edition <em>prints.</em></h2></div>
+      <a href="printshop.html" class="link-arrow">See all prints →</a>
+    </div>
+    <div class="print-strip" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:clamp(20px,3vw,36px);">
+
+      <!-- Ian Patrick Cato — Current Simulation -->
+      <div class="pr reveal">
+        <a href="print-ian-patrick-cato.html" style="text-decoration:none;color:inherit;display:block;">
+          <div class="frame" style="border:1px solid var(--line);padding:6%;background:var(--bone);overflow:hidden;">
+            <img src="img/ian-patrick-cato-pinned.jpg" alt="Current Simulation — Ian Patrick Cato" style="width:100%;height:auto;display:block;">
+          </div>
+          <h3 style="font-family:var(--serif);font-weight:400;font-size:19px;margin:14px 0 3px;color:var(--ink);">Current Simulation</h3>
+          <p class="by" style="color:var(--ink-soft);">Ian Patrick Cato</p>
+          <p style="font-family:var(--sans);font-size:13px;color:var(--ink-mute);margin:6px 0 12px;">From $40</p>
+        </a>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <select id="idx-size-ian" aria-label="Select size"
+            style="flex:1;padding:8px 10px;font-family:var(--serif);font-size:14px;
+                   background:var(--bone);border:1px solid var(--line);color:var(--ink);border-radius:2px;cursor:pointer;">
+            <option value="Small">Small — 8×10 in</option>
+            <option value="Medium">Medium — 16×20 in</option>
+            <option value="Large">Large — 24×36 in</option>
+          </select>
+          <a id="idx-buy-ian"
+             href="mailto:info@kudzuarts.com?subject=Print%20order%3A%20Current%20Simulation%20(Small)%20%E2%80%94%20Ian%20Patrick%20Cato"
+             class="btn btn-olive" style="flex:0 0 auto;white-space:nowrap;">Buy Now</a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+<script>
+(function(){
+  var sel=document.getElementById('idx-size-ian'), btn=document.getElementById('idx-buy-ian');
+  if(!sel||!btn) return;
+  sel.addEventListener('change',function(){
+    btn.href='mailto:info@kudzuarts.com?subject=Print%20order%3A%20Current%20Simulation%20('+encodeURIComponent(sel.value)+')%20%E2%80%94%20Ian%20Patrick%20Cato';
+  });
+})();
+</script>
 
 <!-- ARTISTS ROSTER ───────────────────────────────────────────── -->
 <!-- Framing this on all four walls boxed the roster in and read as
