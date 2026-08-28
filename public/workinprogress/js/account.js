@@ -113,8 +113,7 @@
     var gaps = [];
     if (!me.stripeConnected) gaps.push('connect your Stripe account');
     if (!me.photo) gaps.push('add a profile photo');
-    if (!(me.bio && me.bio.trim())) gaps.push('write something in your bio');
-    if (!(me.cv && me.cv.trim())) gaps.push('add your C.V.');
+    if (!(me.bio && me.bio.trim()) && !(me.cv && me.cv.trim())) gaps.push('write a bio or add your C.V.');
     // Demo mode has no account behind it and nothing to sign against, so
     // it must not nag about a contract that doesn't apply to it.
     if (state.live && !me.agreementSigned) {
@@ -520,8 +519,14 @@
             'Remove one to make room for this piece.',
           shipping_missing:
             'This piece needs its packed weight and box size before it can go up.',
+          medium_required:
+            'Please add a medium for this work (e.g. Oil on canvas, Sculpture).',
+          dimensions_required:
+            'Please add the artwork dimensions (e.g. 24 x 36 in).',
+          price_required:
+            'Please set a price for this work before listing it.',
           profile_incomplete:
-            'Finish your profile first — photo, bio, C.V., and Stripe.',
+            'Finish your profile first — photo, bio or C.V., and Stripe.',
           agreement_unsigned:
             'Before you can list work, please read and sign the artist ' +
             'agreement.\n\nIt is under Documents in your account menu.'

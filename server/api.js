@@ -438,8 +438,8 @@ function profileGaps(a) {
   const gaps = [];
   if (!a.stripe_account) gaps.push('stripe');
   if (!a.photo_path) gaps.push('photo');
-  if (!String(a.bio || '').trim()) gaps.push('bio');
-  if (!String(a.cv || '').trim()) gaps.push('cv');
+  // Bio OR cv — one is enough for an active artist page
+  if (!String(a.bio || '').trim() && !String(a.cv || '').trim()) gaps.push('bio_or_cv');
   return gaps;
 }
 
@@ -462,6 +462,9 @@ router.post('/works', auth.requireArtist, storage.upload.single('image'), async 
   if (!req.file) return res.status(400).json({ error: 'no_file' });
   const f = parseWorkFields(req.body || {});
   if (!f.title) return res.status(400).json({ error: 'title_required' });
+  if (!f.medium) return res.status(400).json({ error: 'medium_required' });
+  if (!f.dimensions) return res.status(400).json({ error: 'dimensions_required' });
+  if (f.priceCents == null || f.priceCents <= 0) return res.status(400).json({ error: 'price_required' });
 
   // Refuse before touching disk, so a rejected upload doesn't leave an
   // orphaned image behind.
