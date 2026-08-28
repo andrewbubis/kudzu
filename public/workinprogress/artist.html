@@ -260,17 +260,13 @@
       $('apEmpty').hidden = (d.works || []).length > 0;
 
       if (a.cv) {
-        var VENUE = /\b(?:Gallery|Galleries|Museum|Center|Centre|Foundation|Arts?\b|Space|Studio|Institute|Hall|House|Library|Club|Society|Collection)\b/;
         var rows = a.cv.split('\n').map(function(line) {
           var t = line.trim();
           if (!t) return '';
-          // Bold sequences of title-cased words that include a venue keyword
-          var bolded = t.replace(
-            /([A-Z][A-Za-z&''’.,]*(?:\s+[A-Z][A-Za-z&''’.,]*)*)/g,
-            function(m) {
-              return VENUE.test(m) ? '<strong>' + m + '</strong>' : m;
-            }
-          );
+          // Bold show names in quotes
+          var bolded = t.replace(/“([^”]*)”|"([^"]*)"/g, function(m, a1, a2) {
+            return '<strong>“' + (a1 !== undefined ? a1 : a2) + '”</strong>';
+          });
           return '<div class="cv-row">' + bolded + '</div>';
         }).filter(Boolean).join('');
         $('apCv').innerHTML = rows;
