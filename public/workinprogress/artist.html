@@ -259,11 +259,23 @@
       $('apEmpty').hidden = (d.works || []).length > 0;
 
       if (a.cv) {
-        var rows = a.cv.split('\n').map(function(line) {
-          var t = line.trim();
-          if (!t) return '';
-          return '<div class="cv-row">' + t + '</div>';
-        }).filter(Boolean).join('');
+        // Pair show-name lines (no comma) with the following venue/location line (has comma)
+        var cvLines = a.cv.split('\n').map(function(l){ return l.trim(); }).filter(Boolean);
+        var paired = [];
+        var ci = 0;
+        while (ci < cvLines.length) {
+          var cur = cvLines[ci];
+          var nxt = cvLines[ci + 1] || '';
+          // If current line has no comma and next line has a comma, they're a show+venue pair
+          if (cur.indexOf(',') === -1 && nxt.indexOf(',') !== -1) {
+            paired.push(cur + ' ' + nxt);
+            ci += 2;
+          } else {
+            paired.push(cur);
+            ci += 1;
+          }
+        }
+        var rows = paired.map(function(r){ return '<div class="cv-row">' + r + '</div>'; }).join('');
         $('apCv').innerHTML = rows;
         $('apCvSection').hidden = false;
       }
