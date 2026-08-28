@@ -12,14 +12,14 @@
 <link rel="stylesheet" href="css/v3.css">
 <link rel="stylesheet" href="css/pages.css">
 <style>
-  .ap-head { display: grid; grid-template-columns: 190px 1fr; gap: 34px; align-items: start; }
+  .ap-head { display: grid; grid-template-columns: 190px 1fr; gap: 34px; align-items: start; max-width: 720px; margin-inline: auto; }
   .ap-photo { width: 190px; aspect-ratio: 1/1; background: var(--paper-3) center/cover no-repeat; }
   .ap-head h1 { font-family: var(--serif); font-weight: 300; font-size: clamp(30px,4vw,46px); line-height: 1.05; }
   .ap-meta { font-family: var(--sans); font-size: 13px; color: var(--ink-soft); margin-top: 12px; }
   .ap-links { display: flex; gap: 12px; margin-top: 20px; flex-wrap: wrap; }
   .ap-bio { font-family: var(--serif); font-size: 16px; line-height: 1.65; color: var(--ink-soft);
-            margin-top: 22px; max-width: 620px; white-space: pre-line; }
-  .ap-cv { font-family: var(--sans); font-size: 13px; color: var(--ink-soft); max-width: 720px; overflow-x: auto; }
+            margin: 22px auto 0; max-width: 720px; white-space: pre-line; }
+  .ap-cv { font-family: var(--sans); font-size: 13px; color: var(--ink-soft); max-width: 720px; margin-inline: auto; overflow-x: auto; }
   .cv-row { white-space: nowrap; line-height: 2; }
   .cv-row strong { color: var(--ink); font-weight: 600; }
   .ap-works { display: grid; grid-template-columns: repeat(3, 1fr); gap: clamp(20px,2.5vw,36px); }
