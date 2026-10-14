@@ -986,9 +986,6 @@ END $seed$;
 --
 -- Raising v2 to current means every artist who signed v1 must sign v2
 -- before kudzu_agreement_signed() lets them add work again.
---
--- DO NOT DEPLOY until the Kudzu Arts execution block at the end of the
--- body has been completed by a Member — it is a placeholder.
 DO $seed$
 DECLARE v CONSTANT text := 'v2-2026-10';
 BEGIN
@@ -1154,11 +1151,11 @@ By signing below, the Parties agree to the terms of this Agreement as of the Eff
 
 Kudzu Arts LLC · Nashville, Tennessee · kudzuarts.com
 
-KUDZU ARTS LLC — to be executed
-Signature: [TO BE EXECUTED BEFORE THIS VERSION GOES LIVE]
-Name: [Member]
+KUDZU ARTS LLC — executed
+Signature: /s/ Andrew Bubis
+Name: Andrew Bubis
 Title: Member, Kudzu Arts LLC
-Date: [date executed]
+Date: October 14, 2026
 Email: andrewbubis@gmail.com and iancatoes@gmail.com
 
 Executed by Kudzu Arts LLC as of the effective date of this version and
