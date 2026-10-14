@@ -977,6 +977,212 @@ Date: [recorded automatically]$agreement$,
    WHERE version = v AND NOT is_current;
 END $seed$;
 
+-- ── Agreement v2 (2026-10): authorship / no-AI warranties ────────────
+-- Adds to v1: a recital that Kudzu sells only work made by real artists,
+-- §5.3 (source of print files), §8(v)–(vi) authorship warranties, §8.1
+-- (definition of AI-Generated Content) and §8.2 (remedy for breach).
+-- Everything else is v1 verbatim. v1 above is left untouched, per the
+-- rule above; this block runs after it and stands it down.
+--
+-- Raising v2 to current means every artist who signed v1 must sign v2
+-- before kudzu_agreement_signed() lets them add work again.
+--
+-- DO NOT DEPLOY until the Kudzu Arts execution block at the end of the
+-- body has been completed by a Member — it is a placeholder.
+DO $seed$
+DECLARE v CONSTANT text := 'v2-2026-10';
+BEGIN
+  INSERT INTO agreement_versions (version, title, body, effective, is_current)
+  VALUES (
+    v,
+    'Kudzu Arts LLC — Artist Sales Agreement',
+    $agreement$KUDZU ARTS LLC
+
+Artist Sales Agreement
+
+An Arts Consultancy
+
+――――――――――――――――――――――――――――――――――――――――――――
+
+PARTIES
+
+This Artist Sales Agreement (“Agreement”) is entered into as of the date of the Artist’s electronic signature below (“Effective Date”) by and between:
+
+Kudzu Arts LLC, a Tennessee limited liability company located in Nashville, Tennessee (“Kudzu Arts” or “Gallery”); and
+
+The individual artist identified in the signature block below, whose full legal name and address are typed by the Artist at the moment of signing and recorded with this Agreement under Section 12.7, together with the email address on the Artist’s kudzuarts.com account (“Artist”).
+
+Kudzu Arts and Artist are each a “Party” and together the “Parties.”
+
+RECITALS
+
+Artist creates original works of art and fine-art prints and wishes to offer them for sale. Kudzu Arts LLC advocates for artists and wishes to promote and sell Artist’s original works and prints on the terms set out below. This Agreement governs both categories. No separate agreement is required for either.
+
+Kudzu Arts sells work made by real artists. Each Original Work is made by the Artist who sells it, and each Print reproduces that Artist’s own original work. AI-generated work is not accepted, and the Artist confirms this in Section 8.
+
+1.  SCOPE & AUTHORIZED LISTINGS
+
+1.1  Original Works.  This Agreement applies to each original, one-of-a-kind work the Artist uploads and lists for sale on kudzuarts.com. The act of listing an Original Work adds it to this Agreement. No separate exhibit, amendment, or countersignature is required.
+
+1.2  Fine-Art Prints.  This Agreement also applies to each fine-art print the Artist uploads and lists for sale on kudzuarts.com. Original Works and Prints are referred to collectively as “Works.” The act of listing a Print adds it to this Agreement. No separate exhibit, amendment, or countersignature is required.
+
+1.3  Pricing.  The Artist sets the retail price for each Work at the time of listing (“Retail Price”). That price is the authorized price. No Work shall be offered, discounted, or sold at any other price without the Artist’s agreement.
+
+1.4  Removal.  The Artist may remove any Work from listing at any time. A removed Work ceases to be subject to this Agreement, except as provided in Section 3.5.
+
+2.  REVENUE SPLIT & PAYMENT
+
+Split — unchanged from prior agreements. Artist 75% of the Retail Price. Kudzu Arts 25%, retained to cover promotion, sales facilitation, and operational costs, and to underwrite Kudzu Arts’ programming.
+
+Note: The industry standard gallery commission is typically 40–50%. Kudzu Arts’ 25% rate reflects its mission to keep the majority of proceeds with the Artist.
+
+2.1  Method.  All payments are processed through Stripe. The Artist maintains a connected Stripe account; the Artist’s share is transferred directly to it, and Kudzu Arts’ 25% is taken in transit. Kudzu Arts does not invoice the Artist and the Artist has nothing to chase.
+
+2.2  Shipped Works & Prints.  The buyer pays in full before the Work ships or is fulfilled. The Artist’s 75% transfers upon successful payment. Kudzu Arts does not hold these funds at any point.
+
+2.3  Local Pickup (Original Works).  The buyer pays in full at the time of purchase, and the Artist’s 75% transfers upon successful payment exactly as with a shipped Work. Kudzu Arts does not hold these funds at any point, and is not a stakeholder or custodian of them. The Bill of Lading described in Section 4.2(a) is signed at the handoff as the Parties’ record of delivery; it is not a condition of payment.
+
+2.4  Statements.  Kudzu Arts shall provide a sales statement for any month in which a sale occurs.
+
+3.  EXCLUSIVITY
+
+3.1  Scope.  While a Work is listed on kudzuarts.com, Kudzu Arts has the exclusive right to market and sell that Work. The Artist shall not offer that Work for sale through any other gallery, dealer, marketplace (including online platforms such as Etsy, Saatchi Art, or similar), or direct-to-buyer channel while it remains listed.
+
+3.2  Removal Ends Exclusivity.  The Artist may remove a Work at any time and for any reason. Exclusivity as to that Work ends on removal.
+
+3.3  Renewal.  Either Party may request amendment of listing terms or pricing in writing at any time. Any amendment requires written agreement of both Parties.
+
+3.4  Post-Term.  Upon expiration or termination of this Agreement, exclusivity lapses immediately. Provisions regarding payment for sales made during the Agreement, the Good Faith obligations for Introduced Buyers in Section 7.2, and any dispute-resolution obligations survive termination.
+
+3.5  Good Faith on Removal.  The Artist may remove a Work from listing at any time and for any reason. If a Work is removed and subsequently sold within six (6) months to a buyer who first encountered that Work through Kudzu Arts, the Artist agrees in good faith to notify Kudzu Arts and to complete the sale through Kudzu Arts, with Kudzu Arts receiving its 25% share. This obligation rests on good faith and mutual respect rather than on surveillance; Kudzu Arts trusts the Artist to honor it, as Kudzu Arts undertakes to honor its own obligations to the Artist.
+
+4.  POSSESSION & DELIVERY — ORIGINAL WORKS
+
+4.1  Artist Retains Possession.  Artist shall retain physical possession and title to each Original Work until a sale is fully confirmed and payment has been received in full. No Original Work is consigned to or held by Kudzu Arts at any time.
+
+4.2  Delivery
+
+(a) Local Pickup.  Buyer and Artist arrange the handoff directly. Kudzu Arts provides a pre-filled Bill of Lading for the sale, stating the Work, the Artist, the buyer, the Retail Price, the order number, the date, and the condition of the Work, with signature blocks for both parties. The Artist prints it; both parties sign at the handoff; the buyer keeps a copy; the Artist files a photograph or scan of the signed document against the order. Delivery is deemed to occur upon signature. The Artist has already been paid under Section 2.3; the signed document is the Parties’ record of delivery and their evidence in the event of a chargeback, not a condition of payment.
+
+(b) Shipping.  Where local pickup is impracticable, the Work ships to the buyer. All Original Works ship signature-required and insured for the Retail Price, and the tracking number is recorded against the order. Delivery is deemed to occur upon the carrier’s confirmed signature. The Parties shall agree in writing on carrier, packaging, and cost allocation before the Work leaves the Artist’s possession.
+
+(c) No Third Path.  An Original Work shall not change hands other than by (a) or (b). A sale with neither a signed Bill of Lading nor a carrier signature record leaves both Parties without proof of delivery and protects neither.
+
+(d) Risk of Loss.  Risk passes to the buyer on delivery as defined above.
+
+4.3  Artist’s Care While in Possession.  While each Original Work remains in Artist’s possession, Artist shall store and maintain it in a manner appropriate for fine art, protecting it from damage, deterioration, and theft.
+
+4.4  Photographs & Documentation.  Artist shall provide Kudzu Arts with high-quality photographs and written descriptions of each Original Work sufficient for marketing purposes. Artist warrants that the photographs accurately represent the Work’s current condition.
+
+5.  PRINT PRODUCTION & QUALITY
+
+5.1  Artist’s Responsibility.  Artist is responsible for authorizing the production of, Prints of professional quality. Prints shall be produced by a pre-approved online print shop or drop-ship fulfillment service connected to kudzuarts.com. Artist shall ensure that each Print accurately reproduces the underlying original work, meets the specifications listed on kudzuarts.com and is consistent with the platform’s stated requirements.
+
+5.2  Edition Accuracy.  Where an edition size is stated in the listing, Artist warrants that the total number of prints of that image produced in that edition does not and will not exceed the stated edition size. Artist shall number and sign each print where specified in the listing.
+
+5.3  Source of Print Files.  Each Print shall be produced from a photograph or scan of an original work created by the Artist or, for an original work created digitally, from the Artist’s own source file, and shall faithfully reproduce that original work, subject to Section 8(vi).
+
+6.  CONDITION
+
+6.1  Upload Warranty.  The Artist warrants that the photographs and description provided at upload accurately represent each Original Work’s current condition, including any pre-existing damage, framing, and special handling requirements. No separate written Condition Report is required.
+
+6.2  Condition of Record.  The condition stated on the Bill of Lading or shipping record at the point of delivery is the condition of record for that sale. Any material change in condition between listing and sale shall be disclosed to the buyer before the sale is finalized.
+
+7.  GOOD FAITH OBLIGATIONS
+
+7.1  Kudzu Arts’ Good Faith Commitment.  Kudzu Arts agrees to promote Artist’s works in good faith and in a manner consistent with Artist’s stated artistic vision, brand, and community values. Kudzu Arts shall not misrepresent the Artist’s work, pricing, or availability, and shall act in the Artist’s best interest in all sales and marketing activities.
+
+7.2  Artist’s Non-Circumvention Commitment.  If Kudzu Arts introduces a buyer or collector (“Introduced Buyer”) to Artist’s work and that Introduced Buyer expresses intent to purchase a Work, Artist agrees not to circumvent Kudzu Arts by completing the sale outside of kudzuarts.com for a period of six (6) months following the introduction. This commitment applies to both Original Works and Prints.
+
+7.3  Mutual Good Faith.  Both Parties agree to deal with each other honestly, communicate promptly, and resolve disputes in the spirit of mutual respect before pursuing formal remedies.
+
+8.  REPRESENTATIONS & WARRANTIES
+
+Each Party represents and warrants that: (a) it has full legal authority to enter into this Agreement; (b) this Agreement does not conflict with any other agreement to which it is a party; and (c) it will perform its obligations in compliance with all applicable laws and regulations.
+
+Artist additionally warrants that: (i) Artist is the sole creator and owner of each Work; (ii) each Work is free and clear of any liens, encumbrances, or third-party claims; (iii) the sale of each Work does not infringe any third party’s intellectual property rights; (iv) for Prints, no third party holds any claim that would prevent Artist from granting the rights described in Section 9 below; (v) each Work, and each original work from which a Print is made, is the Artist’s own original creative work, conceived and executed by the Artist, and no part of it consists of AI-Generated Content; and (vi) each Print is a faithful reproduction of an original work described in item (v) and has not been altered, extended, or recomposed by any generative artificial-intelligence system. Non-generative technical adjustments to a print file, such as color correction, noise reduction, or resolution scaling, are permitted, provided they do not add, remove, or alter the content of the original work.
+
+8.1  AI-Generated Content.  “AI-Generated Content” means any image, composition, design, or element of one that is created in whole or in part by a generative artificial-intelligence system, including text-to-image and image-to-image tools and generative fill, expansion, or replacement tools, whether or not the output is later modified by a person.
+
+8.2  Breach of Authorship Warranties.  If Kudzu Arts reasonably believes that a Work breaches Section 8(v) or (vi), Kudzu Arts may remove the Work from listing immediately. On request, the Artist shall provide reasonable evidence of authorship, such as sketches, in-progress photographs, or working or layered files. If Kudzu Arts reasonably determines that a breach has occurred: (a) the Artist shall refund in full the price paid by each buyer of the Work; (b) the Artist shall hold Kudzu Arts harmless from any resulting claims, refunds, chargebacks, and costs; and (c) Kudzu Arts may terminate this Agreement immediately upon written notice, without the cure period in Section 11.1.
+
+9.  INTELLECTUAL PROPERTY
+
+9.1  Artist Retains Copyright.  Artist retains all copyright and intellectual property rights in each Work, notwithstanding the sale of the physical object or a Print. Sale of an Original Work conveys only the physical object to the buyer and does not transfer any reproduction rights. Sale of a Print conveys only that physical print to the buyer.
+
+9.2  License to Kudzu Arts.  Kudzu Arts is granted a limited, non-exclusive license to use photographs and images of the Works provided by Artist solely for marketing, promotional, and sales purposes on kudzuarts.com and associated channels during the period in which those Works are listed. This license terminates when the Work is removed from listing.
+
+9.3  No Further Exploitation.  Kudzu Arts shall not reproduce, sublicense, or commercially exploit Artist’s images beyond the scope of this Agreement without Artist’s prior written consent.
+
+10.  DISPUTE RESOLUTION
+
+10.1  Informal Resolution.  Before initiating any formal proceeding, the Parties agree to attempt to resolve any dispute in good faith through direct negotiation for at least thirty (30) days after written notice of the dispute.
+
+10.2  Mediation.  If informal resolution fails, either Party may submit the dispute to non-binding mediation in Nashville, Tennessee, with costs split equally, before pursuing arbitration or litigation.
+
+10.3  Governing Law.  This Agreement is governed by the laws of the State of Tennessee without regard to conflict-of-law principles. Venue for any legal proceeding shall lie exclusively in Nashville, Davidson County, Tennessee.
+
+10.4  Attorney’s Fees.  In any action to enforce this Agreement, the prevailing Party shall be entitled to reasonable attorney’s fees and costs.
+
+11.  TERMINATION
+
+11.1  For Cause.  Either Party may terminate this Agreement immediately upon written notice if the other Party materially breaches this Agreement and fails to cure such breach within seven (7) days of receiving written notice.
+
+11.2  For Convenience.  Either Party may terminate this Agreement without cause by providing thirty (30) days’ prior written notice, or immediately upon mutual written agreement of both Parties. Termination does not affect any sale already in process.
+
+11.3  Effect of Termination.  Because Artist retains physical possession of all Original Works throughout the term of this Agreement, no return of works is required upon termination. On termination, Kudzu Arts shall promptly cancel any pending unfulfilled Print orders as of the termination date. Any sale in process at the time of termination shall be completed on the terms of this Agreement.
+
+12.  GENERAL PROVISIONS
+
+12.1  Entire Agreement.  This Agreement constitutes the entire agreement between the Parties regarding its subject matter and supersedes all prior discussions, representations, and agreements, including any separate Original Work Sales Agreement or Print Sales Agreement previously signed.
+
+12.2  Amendments.  No amendment is effective unless in writing and signed by authorized representatives of both Parties.
+
+12.3  No Waiver.  Failure to enforce any provision shall not constitute a waiver of the right to enforce it in the future.
+
+12.4  Severability.  If any provision is held unenforceable, the remaining provisions continue in full force.
+
+12.5  Notices.  All notices under this Agreement shall be in writing and delivered by email with read-receipt confirmation or by certified mail to the addresses set out in the signature block below.
+
+12.6  Independent Contractor.  The Parties are independent contractors. Nothing in this Agreement creates an employment, partnership, or joint-venture relationship.
+
+12.7  Electronic Signature.  This Agreement may be executed in counterparts, including electronic or PDF signature, each of which shall be deemed an original. The Artist’s act of typing their full legal name into the signature field on kudzuarts.com and submitting the agreement form constitutes a valid and binding electronic signature to the same extent as a handwritten signature. Kudzu Arts records the Artist’s full legal name, address, the exact version of the agreement, timestamp, IP address, and browser at the moment of signing. Existing artists remain bound to the version they signed and may be asked to sign a revised version when this Agreement is updated.
+
+SIGNATURES
+
+By signing below, the Parties agree to the terms of this Agreement as of the Effective Date.
+
+Kudzu Arts LLC · Nashville, Tennessee · kudzuarts.com
+
+KUDZU ARTS LLC — to be executed
+Signature: [TO BE EXECUTED BEFORE THIS VERSION GOES LIVE]
+Name: [Member]
+Title: Member, Kudzu Arts LLC
+Date: [date executed]
+Email: andrewbubis@gmail.com and iancatoes@gmail.com
+
+Executed by Kudzu Arts LLC as of the effective date of this version and
+standing for every Artist who countersigns it. Kudzu Arts LLC is
+member-managed; the signatory above is a Member with authority to bind
+the Company.
+
+ARTIST — completed at signing on kudzuarts.com
+Full legal name: [typed by Artist]
+Address: [typed by Artist]
+Email: [from account]
+Signature: [typed full legal name]
+Date: [recorded automatically]$agreement$,
+    DATE '2026-10-14',
+    false
+  )
+  ON CONFLICT (version) DO NOTHING;
+
+  UPDATE agreement_versions SET is_current = false
+   WHERE is_current AND version <> v;
+  UPDATE agreement_versions SET is_current = true
+   WHERE version = v AND NOT is_current;
+END $seed$;
+
 -- ── Login count + authenticated page-view tracking ───────────────────
 ALTER TABLE artists    ADD COLUMN IF NOT EXISTS login_count integer NOT NULL DEFAULT 0;
 ALTER TABLE page_views ADD COLUMN IF NOT EXISTS viewer_id uuid REFERENCES artists(id) ON DELETE SET NULL;
